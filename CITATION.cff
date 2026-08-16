@@ -1,0 +1,26 @@
+cff-version: 1.2.0
+message: >-
+  If you use this software or the STEMBench dataset in your research, please cite
+  it as below.
+title: LLM-STEMBench
+type: software
+authors:
+  - name: LLM-STEMBench contributors
+repository-code: https://github.com/aayushkrm/llm-stembench
+url: https://github.com/aayushkrm/llm-stembench
+abstract: >-
+  Provider-agnostic LLM evaluation pipeline (accuracy, calibration, paired model
+  comparison statistics, error taxonomy tooling) and STEMBench, an original bilingual
+  Russian-English benchmark of mathematics, physics, and chemistry problems with
+  procedurally generated, independently verified answers.
+keywords:
+  - large language models
+  - benchmark
+  - STEM
+  - evaluation
+  - calibration
+  - bilingual
+license: MIT
+commit: filled-at-release
+version: 0.1.0
+date-released: "2026-08-17"

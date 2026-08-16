@@ -1,0 +1,347 @@
+% references.bib — LLM-STEMBench literature (all entries verified 2026-08-17)
+% Venues stated only where confirmed on the fetched page; otherwise cited as arXiv preprints.
+
+% ============================================================
+% 1. Benchmark design and exact-science evaluation
+% ============================================================
+
+@inproceedings{hendrycks2021mmlu,
+  title     = {Measuring Massive Multitask Language Understanding},
+  author    = {Hendrycks, Dan and Burns, Collin and Basart, Steven and Zou, Andy and Mazeika, Mantas and Song, Dawn and Steinhardt, Jacob},
+  booktitle = {International Conference on Learning Representations (ICLR)},
+  year      = {2021},
+  url       = {https://arxiv.org/abs/2009.03300}
+}
+
+@article{wang2024mmlupro,
+  title   = {{MMLU-Pro}: A More Robust and Challenging Multi-Task Language Understanding Benchmark},
+  author  = {Wang, Yubo and Ma, Xueguang and Zhang, Ge and Ni, Yuansheng and Chandra, Abhranil and Guo, Shiguang and Ren, Weiming and Arulraj, Aaran and He, Xuan and Jiang, Ziyan and Li, Tianle and Ku, Max and Wang, Kai and Zhuang, Alex and Fan, Rongqi and Yue, Xiang and Chen, Wenhu},
+  journal = {arXiv preprint arXiv:2406.01574},
+  year    = {2024},
+  url     = {https://arxiv.org/abs/2406.01574}
+}
+
+@inproceedings{hendrycks2021math,
+  title     = {Measuring Mathematical Problem Solving With the {MATH} Dataset},
+  author    = {Hendrycks, Dan and Burns, Collin and Kadavath, Saurav and Arora, Akul and Basart, Steven and Tang, Eric and Song, Dawn and Steinhardt, Jacob},
+  booktitle = {Advances in Neural Information Processing Systems (NeurIPS), Datasets and Benchmarks Track},
+  year      = {2021},
+  url       = {https://arxiv.org/abs/2103.03874}
+}
+
+@article{cobbe2021gsm8k,
+  title   = {Training Verifiers to Solve Math Word Problems},
+  author  = {Cobbe, Karl and Kosaraju, Vineet and Bavarian, Mohammad and Chen, Mark and Jun, Heewoo and Kaiser, Lukasz and Plappert, Matthias and Tworek, Jerry and Hilton, Jacob and Nakano, Reiichiro and Hesse, Christopher and Schulman, John},
+  journal = {arXiv preprint arXiv:2110.14168},
+  year    = {2021},
+  url     = {https://arxiv.org/abs/2110.14168}
+}
+
+@inproceedings{sun2024scieval,
+  title     = {{SciEval}: A Multi-Level Large Language Model Evaluation Benchmark for Scientific Research},
+  author    = {Sun, Liangtai and Han, Yang and Zhao, Zihan and Ma, Da and Shen, Zhennan and Chen, Baocai and Chen, Lu and Yu, Kai},
+  booktitle = {Proceedings of the AAAI Conference on Artificial Intelligence (AAAI)},
+  year      = {2024},
+  note      = {Venue confirmed on arXiv page; arXiv:2308.13149},
+  url       = {https://arxiv.org/abs/2308.13149}
+}
+
+@inproceedings{lin2022truthfulqa,
+  title     = {{TruthfulQA}: Measuring How Models Mimic Human Falsehoods},
+  author    = {Lin, Stephanie and Hilton, Jacob and Evans, Owain},
+  booktitle = {Proceedings of the 60th Annual Meeting of the Association for Computational Linguistics (ACL), Volume 1: Long Papers},
+  year      = {2022},
+  url       = {https://arxiv.org/abs/2109.07958}
+}
+
+@inproceedings{li2023halueval,
+  title     = {{HaluEval}: A Large-Scale Hallucination Evaluation Benchmark for Large Language Models},
+  author    = {Li, Junyi and Cheng, Xiaoxue and Zhao, Wayne Xin and Nie, Jian-Yun and Wen, Ji-Rong},
+  booktitle = {Proceedings of the 2023 Conference on Empirical Methods in Natural Language Processing (EMNLP)},
+  year      = {2023},
+  url       = {https://arxiv.org/abs/2305.11747}
+}
+
+% ============================================================
+% 2. Data contamination in benchmarks
+% ============================================================
+
+@inproceedings{sainz2023nlp,
+  title     = {{NLP} Evaluation in trouble: On the Need to Measure {LLM} Data Contamination for each Benchmark},
+  author    = {Sainz, Oscar and Campos, Jon and Garc{\'i}a-Ferrero, Iker and Etxaniz, Julen and Lopez de Lacalle, Oier and Agirre, Eneko},
+  booktitle = {Findings of the Association for Computational Linguistics: EMNLP 2023},
+  year      = {2023},
+  pages     = {10776--10787},
+  doi       = {10.18653/v1/2023.findings-emnlp.722},
+  url       = {https://aclanthology.org/2023.findings-emnlp.722/}
+}
+
+@inproceedings{golchin2024time,
+  title     = {Time Travel in {LLMs}: Tracing Data Contamination in Large Language Models},
+  author    = {Golchin, Shahriar and Surdeanu, Mihai},
+  booktitle = {International Conference on Learning Representations (ICLR)},
+  year      = {2024},
+  note      = {Spotlight; arXiv:2308.08493},
+  url       = {https://arxiv.org/abs/2308.08493}
+}
+
+@article{oren2023proving,
+  title   = {Proving Test Set Contamination in Black Box Language Models},
+  author  = {Oren, Yonatan and Meister, Nicole and Chatterji, Niladri and Ladhak, Faisal and Hashimoto, Tatsunori B.},
+  journal = {arXiv preprint arXiv:2310.17623},
+  year    = {2023},
+  url     = {https://arxiv.org/abs/2310.17623}
+}
+
+% ============================================================
+% 3. Answer extraction and output parsing for LLM evaluation
+% ============================================================
+
+@inproceedings{zheng2024selectors,
+  title     = {Large Language Models Are Not Robust Multiple Choice Selectors},
+  author    = {Zheng, Chujie and Zhou, Hao and Meng, Fandong and Zhou, Jie and Huang, Minlie},
+  booktitle = {International Conference on Learning Representations (ICLR)},
+  year      = {2024},
+  note      = {Spotlight; arXiv:2309.03882},
+  url       = {https://arxiv.org/abs/2309.03882}
+}
+
+@article{tam2024format,
+  title   = {Let Me Speak Freely? {A} Study on the Impact of Format Restrictions on Performance of Large Language Models},
+  author  = {Tam, Zhi Rui and Wu, Cheng-Kuang and Tsai, Yi-Lin and Lin, Chieh-Yen and Lee, Hung-yi and Chen, Yun-Nung},
+  journal = {arXiv preprint arXiv:2408.02442},
+  year    = {2024},
+  url     = {https://arxiv.org/abs/2408.02442}
+}
+
+@article{he2024formatting,
+  title   = {Does Prompt Formatting Have Any Impact on {LLM} Performance?},
+  author  = {He, Jia and Rungta, Mukund and Koleczek, David and Sekhon, Arshdeep and Wang, Franklin X. and Hasan, Sadid},
+  journal = {arXiv preprint arXiv:2411.10541},
+  year    = {2024},
+  url     = {https://arxiv.org/abs/2411.10541}
+}
+
+% ============================================================
+% 4. Calibration of neural networks
+% ============================================================
+
+@inproceedings{guo2017calibration,
+  title     = {On Calibration of Modern Neural Networks},
+  author    = {Guo, Chuan and Pleiss, Geoff and Sun, Yu and Weinberger, Kilian Q.},
+  booktitle = {Proceedings of the 34th International Conference on Machine Learning (ICML)},
+  series    = {Proceedings of Machine Learning Research},
+  volume    = {70},
+  pages     = {1321--1330},
+  year      = {2017},
+  url       = {https://arxiv.org/abs/1706.04599}
+}
+
+@inproceedings{naeini2015bayesian,
+  title     = {Obtaining Well Calibrated Probabilities Using {Bayesian} Binning},
+  author    = {Naeini, Mahdi Pakdaman and Cooper, Gregory F. and Hauskrecht, Milos},
+  booktitle = {Proceedings of the Twenty-Ninth AAAI Conference on Artificial Intelligence (AAAI)},
+  pages     = {2901--2907},
+  year      = {2015},
+  doi       = {10.1609/aaai.v29i1.9602}
+}
+
+% ============================================================
+% 5. Uncertainty and statistics
+% ============================================================
+
+@article{wilson1927probable,
+  title   = {Probable Inference, the Law of Succession, and Statistical Inference},
+  author  = {Wilson, Edwin B.},
+  journal = {Journal of the American Statistical Association},
+  volume  = {22},
+  number  = {158},
+  pages   = {209--212},
+  year    = {1927},
+  doi     = {10.1080/01621459.1927.10502953}
+}
+
+@article{efron1979bootstrap,
+  title   = {Bootstrap Methods: Another Look at the Jackknife},
+  author  = {Efron, B.},
+  journal = {The Annals of Statistics},
+  volume  = {7},
+  number  = {1},
+  pages   = {1--26},
+  year    = {1979},
+  doi     = {10.1214/aos/1176344552}
+}
+
+@article{dietterich1998approximate,
+  title   = {Approximate Statistical Tests for Comparing Supervised Classification Learning Algorithms},
+  author  = {Dietterich, Thomas G.},
+  journal = {Neural Computation},
+  volume  = {10},
+  number  = {7},
+  pages   = {1895--1923},
+  year    = {1998},
+  doi     = {10.1162/089976698300017197}
+}
+
+@article{cochran1950comparison,
+  title   = {The Comparison of Percentages in Matched Samples},
+  author  = {Cochran, William G.},
+  journal = {Biometrika},
+  volume  = {37},
+  number  = {3/4},
+  pages   = {256--266},
+  year    = {1950},
+  doi     = {10.1093/biomet/37.3-4.256}
+}
+
+@article{benjamini1995controlling,
+  title   = {Controlling the False Discovery Rate: A Practical and Powerful Approach to Multiple Testing},
+  author  = {Benjamini, Yoav and Hochberg, Yosef},
+  journal = {Journal of the Royal Statistical Society: Series B (Methodological)},
+  volume  = {57},
+  number  = {1},
+  pages   = {289--300},
+  year    = {1995},
+  doi     = {10.1111/j.2517-6161.1995.tb02031.x}
+}
+
+% ============================================================
+% 6. Error taxonomies for math/reasoning errors
+% ============================================================
+
+@article{lightman2023verify,
+  title   = {Let's Verify Step by Step},
+  author  = {Lightman, Hunter and Kosaraju, Vineet and Burda, Yura and Edwards, Harri and Baker, Bowen and Lee, Teddy and Leike, Jan and Schulman, John and Sutskever, Ilya and Cobbe, Karl},
+  journal = {arXiv preprint arXiv:2305.20050},
+  year    = {2023},
+  url     = {https://arxiv.org/abs/2305.20050}
+}
+
+@article{mirzadeh2024gsmsymbolic,
+  title   = {{GSM-Symbolic}: Understanding the Limitations of Mathematical Reasoning in Large Language Models},
+  author  = {Mirzadeh, Iman and Alizadeh, Keivan and Shahrokhi, Hooman and Tuzel, Oncel and Bengio, Samy and Farajtabar, Mehrdad},
+  journal = {arXiv preprint arXiv:2410.05229},
+  year    = {2024},
+  url     = {https://arxiv.org/abs/2410.05229}
+}
+
+@inproceedings{tyen2024llms,
+  title     = {{LLMs} cannot find reasoning errors, but can correct them given the error location},
+  author    = {Tyen, Gladys and Mansoor, Hassan and C{\u{a}}rbune, Victor and Chen, Peter and Mak, Tony},
+  booktitle = {Findings of the Association for Computational Linguistics: ACL 2024},
+  year      = {2024},
+  url       = {https://arxiv.org/abs/2311.08516}
+}
+
+% ============================================================
+% 7. Multilingual evaluation
+% ============================================================
+
+@article{shi2022language,
+  title   = {Language Models are Multilingual Chain-of-Thought Reasoners},
+  author  = {Shi, Freda and Suzgun, Mirac and Freitag, Markus and Wang, Xuezhi and Srivast, Suraj and Vosoughi, Soroush and Chung, Hyung Won and Tay, Yi and Ruder, Sebastian and Zhou, Denny and Das, Dipanjan and Wei, Jason},
+  journal = {arXiv preprint arXiv:2210.03057},
+  year    = {2022},
+  url     = {https://arxiv.org/abs/2210.03057}
+}
+
+@inproceedings{fenogenova2024mera,
+  title     = {{MERA}: A Comprehensive {LLM} Evaluation in {Russian}},
+  author    = {Fenogenova, Alena and Chervyakov, Artem and Martynov, Nikita and Kozlova, Anastasia and Tikhonova, Maria and Akhmetgareeva, Albina and Emelyanov, Anton and Shevelev, Denis and Lebedev, Pavel and Sinev, Leonid and Isaeva, Ulyana and Kolomeytseva, Katerina and Moskovskiy, Daniil and Goncharova, Elizaveta and Savushkin, Nikita and Mikhailova, Polina and Minaeva, Anastasia and Dimitrov, Denis and Panchenko, Alexander and Markov, Sergey},
+  booktitle = {Proceedings of the 62nd Annual Meeting of the Association for Computational Linguistics (ACL), Volume 1: Long Papers},
+  year      = {2024},
+  pages     = {9920--9948},
+  doi       = {10.18653/v1/2024.acl-long.534},
+  url       = {https://aclanthology.org/2024.acl-long.534/}
+}
+
+% ============================================================
+% 8. Agreement statistics
+% ============================================================
+
+@article{cohen1960coefficient,
+  title   = {A Coefficient of Agreement for Nominal Scales},
+  author  = {Cohen, Jacob},
+  journal = {Educational and Psychological Measurement},
+  volume  = {20},
+  number  = {1},
+  pages   = {37--46},
+  year    = {1960},
+  doi     = {10.1177/001316446002000104}
+}
+
+@article{fleiss1971measuring,
+  title   = {Measuring Nominal Scale Agreement Among Many Raters},
+  author  = {Fleiss, Joseph L.},
+  journal = {Psychological Bulletin},
+  volume  = {76},
+  number  = {5},
+  pages   = {378--382},
+  year    = {1971},
+  doi     = {10.1037/h0031619}
+}
+
+@article{hayes2007answering,
+  title   = {Answering the Call for a Standard Reliability Measure for Coding Data},
+  author  = {Hayes, Andrew F. and Krippendorff, Klaus},
+  journal = {Communication Methods and Measures},
+  volume  = {1},
+  number  = {1},
+  pages   = {77--89},
+  year    = {2007},
+  doi     = {10.1080/19312450709336664}
+}
+
+@book{krippendorff2013content,
+  title     = {Content Analysis: An Introduction to Its Methodology},
+  author    = {Krippendorff, Klaus},
+  edition   = {3rd},
+  publisher = {Sage},
+  address   = {Thousand Oaks, CA},
+  year      = {2013}
+}
+
+% ============================================================
+% 9. AI safety implications of benchmark evaluation
+% ============================================================
+
+@inproceedings{hendrycks2021aligning,
+  title     = {Aligning {AI} With Shared Human Values},
+  author    = {Hendrycks, Dan and Burns, Collin and Basart, Steven and Critch, Andrew and Li, Jerry and Song, Dawn and Steinhardt, Jacob},
+  booktitle = {International Conference on Learning Representations (ICLR)},
+  year      = {2021},
+  url       = {https://arxiv.org/abs/2008.02275}
+}
+
+@article{shevlane2023model,
+  title   = {Model evaluation for extreme risks},
+  author  = {Shevlane, Toby and Farquhar, Sebastian and Garfinkel, Ben and Phuong, Mary and Whittlestone, Jess and Leung, Jade and Kokotajlo, Daniel and Marchal, Nahema and Anderljung, Markus and Kolt, Noam and Ho, Lewis and Siddarth, Divya and Avin, Shahar and Hawkins, Will and Kim, Been and Gabriel, Iason and Bolina, Vijay and Clark, Jack and Bengio, Yoshua and Christiano, Paul and Dafoe, Allan},
+  journal = {arXiv preprint arXiv:2305.15324},
+  year    = {2023},
+  url     = {https://arxiv.org/abs/2305.15324}
+}
+
+% ============================================================
+% 10. Benchmark cards and dataset documentation practice
+% ============================================================
+
+@inproceedings{mitchell2019model,
+  title     = {Model Cards for Model Reporting},
+  author    = {Mitchell, Margaret and Wu, Simone and Zaldivar, Andrew and Barnes, Parker and Vasserman, Lucy and Hutchinson, Ben and Spitzer, Elena and Raji, Inioluwa Deborah and Gebru, Timnit},
+  booktitle = {Proceedings of the Conference on Fairness, Accountability, and Transparency (FAT*)},
+  year      = {2019},
+  doi       = {10.1145/3287560.3287596},
+  url       = {https://arxiv.org/abs/1810.03993}
+}
+
+@article{gebru2021datasheets,
+  title   = {Datasheets for Datasets},
+  author  = {Gebru, Timnit and Morgenstern, Jamie and Vecchione, Briana and Vaughan, Jennifer Wortman and Wallach, Hanna and Daum{\'e} III, Hal and Crawford, Kate},
+  journal = {Communications of the ACM},
+  volume  = {64},
+  number  = {12},
+  pages   = {86--92},
+  year    = {2021},
+  doi     = {10.1145/3458723},
+  url     = {https://arxiv.org/abs/1803.09010}
+}

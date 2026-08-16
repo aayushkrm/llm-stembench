@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: ["3.10", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+          cache: pip
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      - name: Lint (ruff)
+        run: ruff check src tests
+      - name: Tests with coverage
+        run: pytest tests/ -q --cov=stembench --cov-report=term-missing
+        env:
+          STEMBENCH_BUDGET_DIR: /tmp/stembudget
+          MPLBACKEND: Agg
+      - name: Offline end-to-end smoke (fake provider)
+        run: |
+          python -m stembench.cli run --config configs/stage1_pilot.yaml --dry-run
+        env:
+          STEMBENCH_BUDGET_DIR: /tmp/stembudget
+      - name: Benchmark build determinism check
+        run: |
+          python -m stembench.benchmark_gen.build --out /tmp/bench_a --seed 20260817
+          python -m stembench.benchmark_gen.build --out /tmp/bench_b --seed 20260817
+          cmp /tmp/bench_a/items.jsonl /tmp/bench_b/items.jsonl
+          sha256sum /tmp/bench_a/items.jsonl /tmp/bench_b/items.jsonl
+
+  secret-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Reject API-key-shaped strings
+        run: |
+          ! git grep -nE "sk-(or-v1-)?[A-Za-z0-9_-]{20,}" -- . ':!*.md' ':!docs/literature/*'

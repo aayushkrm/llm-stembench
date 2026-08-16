@@ -1,0 +1,16 @@
+.env
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+data/cache/
+data/external/
+data/validation_sample.jsonl
+dist/
+build/
+.DS_Store
+# synthetic fake-provider artifacts must never be committed as evidence
+fake__*.jsonl
+results/**/fake__*.jsonl
