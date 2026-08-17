@@ -1,2 +1,0 @@
-[console_scripts]
-stembench = stembench.cli:main

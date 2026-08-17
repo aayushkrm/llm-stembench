@@ -14,3 +14,4 @@ build/
 # synthetic fake-provider artifacts must never be committed as evidence
 fake__*.jsonl
 results/**/fake__*.jsonl
+src/stembench.egg-info/
