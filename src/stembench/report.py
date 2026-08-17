@@ -80,12 +80,28 @@ def model_metrics(records: list[dict]) -> dict[str, Any]:
     if len(conf):
         out["calibration_self_report"] = {
             "n": int(len(conf)),
+            "population": "parsed answers only (parse failures excluded)",
             "ECE": expected_calibration_error(conf, cor),
             "MCE": maximum_calibration_error(conf, cor),
             "brier": brier_score(conf, cor),
             "mean_confidence": float(conf.mean()),
             "reliability_bins": reliability_bins(conf, cor),
         }
+        # H2 (hypotheses.md): overconfidence gap, lenient correctness (parse
+        # failures with elicited confidence count as incorrect)
+        all_conf = np.array([
+            r["self_reported_confidence"] for r in records
+            if r.get("self_reported_confidence") is not None
+        ])
+        all_cor = np.array([
+            float(r["correctness"] is True) for r in records
+            if r.get("self_reported_confidence") is not None
+        ])
+        if len(all_conf):
+            from stembench.metrics.intervals import bootstrap_difference_ci
+
+            gap = bootstrap_difference_ci(all_conf, all_cor, n_boot=10000, seed=42)
+            out["h2_overconfidence_gap_lenient"] = gap
     # letter-probability calibration when provider logprobs exist (channel: token_prob)
     lp_conf, lp_cor = [], []
     for r in parsed:
@@ -98,6 +114,10 @@ def model_metrics(records: list[dict]) -> dict[str, Any]:
         y = np.array(lp_cor)
         out["calibration_token_prob"] = {
             "n": int(len(c)),
+            "population": "first letter-dominated generated position (post-commit "
+            "context: P(letter) is typically ~1.0 and uninformative about belief at "
+            "decision time — see report limitations)",
+            "degenerate": bool(c.mean() > 0.995 and len(c) < 60),
             "ECE": expected_calibration_error(c, y),
             "MCE": maximum_calibration_error(c, y),
             "brier": brier_score(c, y),
@@ -149,12 +169,15 @@ def letter_prob_from_logprobs(record: dict) -> float | None:
 
 
 def paired_models_analysis(runs: dict[str, list[dict]]) -> dict[str, Any]:
-    """McNemar pairwise + Cochran's Q on the intersection of items, with BH adjustment."""
+    """McNemar pairwise + Cochran's Q on the intersection of items, with BH adjustment.
+
+    Outcomes are LENIENT (parse failure counts as incorrect): conditioning on parsed
+    answers would bias accuracy upward and starve the paired tests.
+    """
     by_item: dict[str, dict[str, bool]] = defaultdict(dict)
     for key, recs in runs.items():
         for r in recs:
-            if r["correctness"] is not None:
-                by_item[r["item_id"]][key] = bool(r["correctness"])
+            by_item[r["item_id"]][key] = r["correctness"] is True
     keys = sorted(runs)
     pairs = []
     for i in range(len(keys)):

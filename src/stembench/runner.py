@@ -67,23 +67,26 @@ def _load_items_for_run(config: RunConfig) -> tuple[list[Any], dict[str, Any]]:
     if config.dataset == "stembench_v1":
         from stembench.datasets.stembench_ds import load_stembench, to_eval_items
 
-        lang = None if len(config.languages) != 1 else config.languages[0].value
-        bench_items, stats = load_stembench(split=config.sample.split, language=lang)
+        bench_items, stats = load_stembench(split=config.sample.split)
         eval_items = to_eval_items(bench_items)
-        if config.sample.n < len(eval_items):
-            import random as _r
+        # sample at the PAIR level so RU/EN variants stay together (paired design)
+        import random as _r
 
-            rng = _r.Random(config.sample.seed)
-            # stratified by subject when possible
-            by_subj: dict[str, list[Any]] = {}
-            for it in eval_items:
-                by_subj.setdefault(str(it.subject), []).append(it)
-            per = max(1, config.sample.n // len(by_subj))
-            picked = []
-            for s, lst in sorted(by_subj.items()):
-                picked.extend(rng.sample(lst, min(per, len(lst))))
-            picked.sort(key=lambda it: it.item_id)
-            eval_items = picked
+        rng = _r.Random(config.sample.seed)
+        by_pair: dict[str, list[Any]] = {}
+        by_subject: dict[str, list[str]] = {}
+        for it in eval_items:
+            pid = it.item_id.rsplit("-", 1)[0]
+            by_pair.setdefault(pid, []).append(it)
+            by_subject.setdefault(str(it.subject), []).append(pid)
+        target_pairs = config.sample.n  # n = number of PAIRS for this dataset
+        per = max(1, target_pairs // max(1, len(by_subject)))
+        picked_pids: list[str] = []
+        for s, pids in sorted(by_subject.items()):
+            picked_pids.extend(rng.sample(sorted(set(pids)), min(per, len(set(pids)))))
+        eval_items = [it for pid in picked_pids for it in by_pair[pid]]
+        eval_items.sort(key=lambda it: it.item_id)
+        stats["n_pairs_sampled"] = len(picked_pids)
         return eval_items, stats
     raise ValueError(f"unknown dataset {config.dataset}")
 
@@ -175,7 +178,8 @@ def _run_one_model(
                 model=model_spec.model,
                 decoding=model_spec.decoding.model_dump(),
                 prompt_hash=prompts.template_hash(
-                    config.prompt_template,
+                    config.prompt_template if isinstance(item, MCItem)
+                    else "free_answer_confidence_v1",
                     item.language.value if hasattr(item.language, "value") else "en",
                 ),
                 prompt_text=prompt_text,

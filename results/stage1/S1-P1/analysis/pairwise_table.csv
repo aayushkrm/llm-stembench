@@ -1,0 +1,11 @@
+model_a,model_b,n_common,acc_a,acc_b,diff,b,c,p_exact,p_bh,significant_0.05
+openrouter::openai/gpt-oss-20b:free,openrouter::z-ai/glm-5.2:free,17,0.7647,0.8824,-0.1176,1,3,1,1,False
+openrouter::openai/gpt-oss-20b:free,zen::hy3-free,22,0.8182,0.8636,-0.0455,2,3,1,1,False
+openrouter::openai/gpt-oss-20b:free,zen::laguna-s-2.1-free,22,0.8182,0.9091,-0.0909,1,3,1,1,False
+openrouter::openai/gpt-oss-20b:free,zen::nemotron-3.5-lightning-free,22,0.8182,0.9545,-0.1364,0,3,0.5,1,False
+openrouter::z-ai/glm-5.2:free,zen::hy3-free,17,0.8824,0.8235,0.0588,1,0,1,1,False
+openrouter::z-ai/glm-5.2:free,zen::laguna-s-2.1-free,17,0.8824,0.8824,0.0000,1,1,1,1,False
+openrouter::z-ai/glm-5.2:free,zen::nemotron-3.5-lightning-free,17,0.8824,0.9412,-0.0588,0,1,1,1,False
+zen::hy3-free,zen::laguna-s-2.1-free,56,0.8036,0.8036,0.0000,2,2,1,1,False
+zen::hy3-free,zen::nemotron-3.5-lightning-free,60,0.8167,0.9167,-0.1000,0,6,0.0625,0.3125,False
+zen::laguna-s-2.1-free,zen::nemotron-3.5-lightning-free,56,0.8036,0.9107,-0.1071,0,6,0.0625,0.3125,False

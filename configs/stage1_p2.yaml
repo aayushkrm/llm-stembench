@@ -1,0 +1,31 @@
+run_id: S1-P2
+stage: 1
+dataset: mmlu_stem
+sample:
+  n: 120
+  seed: 43
+  stratify_by: subject
+  split: test
+models:
+  - provider: zen
+    model: nemotron-3.5-lightning-free
+    display_name: Nemotron-3.5-Lightning (NVIDIA)
+    n_items: 120
+  - provider: zen
+    model: laguna-s-2.1-free
+    display_name: Laguna-S-2.1 (Poolside)
+    n_items: 120
+  - provider: zen
+    model: hy3-free
+    display_name: HY3 (Tencent Hunyuan)
+    n_items: 120
+languages: [en]
+prompt_template: mc_answer_confidence_v1
+output_dir: results
+request_timeout_s: 300
+max_retries: 3
+notes: >-
+  Stage 1 extension: larger stratified MMLU-STEM sample (seed 43, n=120) on the three
+  Zen free models to enlarge the honest error pool for taxonomy annotation (S1-P1
+  yielded only 9 incorrect responses across 215 evaluations). Complements S1-P1;
+  analyzed separately; same prompts and decoding.

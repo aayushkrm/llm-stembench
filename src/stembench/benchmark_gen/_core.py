@@ -50,8 +50,8 @@ DEFAULT_SEED = 20260817
 VERSION = "0.1.0-candidate"
 
 # Generation-time anti-duplicate guard: a new question must stay below this
-# character-3gram Jaccard similarity against every previously emitted question
-# of the SAME topic key and subject (in either language).
+# word-3gram Jaccard similarity against every previously emitted question of
+# the SAME topic key and subject (in either language).
 GEN_SIMILARITY_CAP = 0.72
 # Hard QC gate for near-duplicates across the whole subject+language group.
 QC_SIMILARITY_CAP = 0.80
@@ -191,12 +191,21 @@ def normalize_text(s: str) -> str:
     return " ".join(unicodedata.normalize("NFKC", s).lower().split())
 
 
-def char_trigrams(s: str) -> set[str]:
-    n = normalize_text(s)
-    return {n[i : i + 3] for i in range(len(n) - 2)} if len(n) >= 3 else {n}
+def word_trigrams(s: str) -> set[tuple[str, ...]]:
+    """Word 3-grams of the normalized text (tuples; empty guard for tiny inputs).
+
+    Word-level n-grams are used rather than character n-grams because they are
+    far more sensitive to changed numerals: two same-template questions with
+    different numbers share most character trigrams (long Russian words
+    dominate) but few word trigrams.
+    """
+    toks = normalize_text(s).split()
+    if len(toks) < 3:
+        return {tuple(toks)} if toks else set()
+    return {tuple(toks[i : i + 3]) for i in range(len(toks) - 2)}
 
 
-def jaccard(a: set[str], b: set[str]) -> float:
+def jaccard(a: set[tuple[str, ...]], b: set[tuple[str, ...]]) -> float:
     union = a | b
     if not union:
         return 0.0
@@ -297,6 +306,13 @@ def apply_mc(draft: PairDraft, rng: np.random.Generator) -> None:
         (draft.params["choice_values"][i] if isinstance(draft.params.get("choice_values"), list) else None)
         for i in order
     ]
+    # Append the option letter to the worked solutions so the final line carries
+    # the canonical answer ("Answer: 12.5 m/s (option B).").
+    for attr, word in (("solution_en", "option"), ("solution_ru", "вариант")):
+        s = getattr(draft, attr)
+        if s.endswith("."):
+            s = s[:-1]
+        setattr(draft, attr, f"{s} ({word} {letter}).")
 
 
 def final_en(answer: str, units: str) -> str:
@@ -421,11 +437,11 @@ class GenContext:
     def too_similar(self, subject: str, topic_key: str, lang: str, question: str) -> bool:
         """True if the question is too close to a same-topic predecessor."""
         bucket = self._seen.get((subject, topic_key, lang), ())
-        tri = char_trigrams(question)
+        tri = word_trigrams(question)
         return any(jaccard(tri, prev) >= GEN_SIMILARITY_CAP for prev in bucket)
 
     def record(self, subject: str, topic_key: str, lang: str, question: str) -> None:
-        self._seen.setdefault((subject, topic_key, lang), []).append(char_trigrams(question))
+        self._seen.setdefault((subject, topic_key, lang), []).append(word_trigrams(question))
 
 
 GeneratorFn = Callable[[np.random.Generator, int, AnswerType], PairDraft]
