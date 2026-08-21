@@ -115,3 +115,16 @@ groups and most physics dev templates also appeared in test.
 not described as conceptual independence. Dev is restricted to format validation, and
 all inferential claims receive a template-cluster sensitivity check; a future expert-
 validated release may adopt a fully template-held-out split.
+
+## D11 — Add stealth/ox-alpha (user-requested) at maximum reasoning
+**Decision.** Include OpenRouter `stealth/ox-alpha` as the 8th Stage 2 model with
+`reasoning.effort="max"` (user request), max_tokens 8192.
+**Evidence.** Live-verified pricing $0/$0 per 1M tokens (free tier, no `:free` suffix —
+the allowlist test now encodes "suffix or verified-zero-price"); 1M context; provider
+page documents reasoning-model behavior but no effort parameter, so the effort request
+is sent per OpenRouter's unified reasoning API and, if the provider rejects it, retried
+once at default reasoning with `_reasoning_fallback` stamped in the raw record (never
+silent).
+**Consequences.** OpenRouter's 50/day cap is shared with the other three OR models;
+ox-alpha coverage accrues via the standard resume command as the daily budget resets.
+Per-model n reported as always.

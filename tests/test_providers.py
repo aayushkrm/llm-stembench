@@ -184,8 +184,11 @@ def test_registry_unknown_provider_raises_keyerror():
 def test_registry_free_model_allowlists():
     assert "openai/gpt-oss-20b:free" in OPENROUTER_FREE
     assert "nemotron-3.5-lightning-free" in ZEN_FREE
-    # every OpenRouter free model is suffixed ":free" (zero-spend tier)
-    assert all(m.endswith(":free") for m in OPENROUTER_FREE)
+    assert "stealth/ox-alpha" in OPENROUTER_FREE  # verified $0/$0 without :free suffix
+    # zero-spend tier: every OpenRouter allowlist entry is ":free"-suffixed or an
+    # explicitly verified zero-priced exception (live-checked pricing 0/0)
+    verified_unsuffixed = {"stealth/ox-alpha"}
+    assert all(m.endswith(":free") or m in verified_unsuffixed for m in OPENROUTER_FREE)
 
 
 # --------------------------------------------------------------------------

@@ -203,6 +203,7 @@ def _run_one_model(
                     max_tokens=model_spec.decoding.max_tokens,
                     temperature=model_spec.decoding.temperature,
                     top_p=model_spec.decoding.top_p,
+                    reasoning_effort=model_spec.decoding.reasoning_effort,
                 )
             except DailyBudgetExceeded:
                 rec.error_status = "daily_budget_exceeded"
@@ -331,9 +332,10 @@ def run(config: RunConfig, repo_root: Path | None = None) -> dict[str, Any]:
         manifest.model_dump_json(indent=2), encoding="utf-8"
     )
 
-    # models in parallel across providers (each model sequential -> per-provider spacing)
+    # one worker per model: each model is sequential; per-provider pacing and daily
+    # budgets are shared+thread-safe, so provider limits hold across model workers
     model_results: list[dict[str, Any]] = [None] * len(config.models)  # type: ignore
-    with ThreadPoolExecutor(max_workers=min(4, len(config.models) or 1)) as ex:
+    with ThreadPoolExecutor(max_workers=max(1, len(config.models))) as ex:
         futs = {
             ex.submit(_run_one_model, config, ms, items, out_dir, commit): i
             for i, ms in enumerate(config.models)

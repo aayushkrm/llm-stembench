@@ -28,6 +28,7 @@ OPENROUTER_FREE = [
     "openai/gpt-oss-20b:free",
     "poolside/laguna-s-2.1:free",
     "poolside/laguna-xs-2.1:free",
+    "stealth/ox-alpha",
     "z-ai/glm-5.2:free",
 ]
 

@@ -101,3 +101,7 @@ offline fake-provider smoke, deterministic benchmark builds, and a key-pattern s
   artifacts. Verify ignore rules and run a secret scan before commit/push.
 - Human expert validation, Hugging Face upload credentials, and venue submission are
   external gates; code readiness does not clear them.
+
+# Remember to use skills and plugin for your work and tasks whenever any task needed or if using skills or plugin would help with current task like doing it better or improving it or when fixing any problem etc which is available to use in your coding agent (zcode) from -
+/Users/akm/.zcode/skills
+/Users/akm/.zcode/cli/plugins

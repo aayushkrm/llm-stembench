@@ -155,6 +155,7 @@ class OpenAICompatProvider(Provider):
         top_p: float | None = None,
         seed: int | None = None,
         request_logprobs: bool = True,
+        reasoning_effort: str | None = None,
     ) -> Completion:
         self._assert_free(model)
         payload: dict[str, Any] = {
@@ -163,6 +164,10 @@ class OpenAICompatProvider(Provider):
             "max_tokens": max_tokens,
             "temperature": temperature,
         }
+        if reasoning_effort:
+            # OpenRouter unified reasoning control (e.g. effort "high"/"max").
+            # Providers that reject the parameter surface a fatal 4xx for triage.
+            payload["reasoning"] = {"effort": reasoning_effort}
         if top_p is not None:
             payload["top_p"] = top_p
         if seed is not None:
@@ -173,6 +178,7 @@ class OpenAICompatProvider(Provider):
             payload["top_logprobs"] = 5
 
         last_err: Exception | None = None
+        reasoning_fell_back = False
         for attempt in range(3):
             # Provider quotas count HTTP attempts, not logical benchmark items.
             # Reserve each retry separately so the hard daily cap cannot be exceeded.
@@ -199,9 +205,23 @@ class OpenAICompatProvider(Provider):
                         retry_after=retry_after,
                     )
                 if resp.status_code >= 400:
+                    # A provider that rejects the reasoning parameter for a model
+                    # gets one clean retry at default reasoning, flagged in the
+                    # record (never silently: raw carries _reasoning_fallback).
+                    if reasoning_effort and "reasoning" in resp.text.lower():
+                        payload.pop("reasoning", None)
+                        reasoning_effort = None
+                        reasoning_fell_back = True
+                        raise _RetryableHttpError(
+                            f"{resp.status_code} reasoning param rejected, "
+                            "retrying at default reasoning",
+                            retry_after=None,
+                        )
                     # client errors other than auth: record and give up fast
                     raise _FatalClientError(f"{resp.status_code}: {resp.text[:300]}")
                 data = resp.json()
+                if reasoning_fell_back:
+                    data["_reasoning_fallback"] = True
                 break
             except _FatalClientError as e:  # bad request, wrong model id, auth
                 raise ProviderError(str(e)) from e

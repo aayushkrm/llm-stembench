@@ -32,6 +32,7 @@ class OllamaProvider(Provider):
         top_p: float | None = None,
         seed: int | None = None,
         request_logprobs: bool = True,
+        reasoning_effort: str | None = None,
     ) -> Completion:
         payload: dict = {
             "model": model,

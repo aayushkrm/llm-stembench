@@ -35,6 +35,14 @@ models:
     model: z-ai/glm-5.2:free
     display_name: GLM-5.2 (Z.ai)
     n_items: 100
+  - provider: openrouter
+    model: stealth/ox-alpha
+    display_name: Ox-Alpha (Stealth, max reasoning)
+    n_items: 100
+    decoding:
+      max_tokens: 8192
+      reasoning_effort: max
+      notes: user-requested model at maximum reasoning; free tier verified ($0)
 languages: [en, ru]
 prompt_template: mc_answer_confidence_v1
 output_dir: results
@@ -42,6 +50,6 @@ request_timeout_s: 300
 max_retries: 3
 notes: >-
   Stage 2 evaluation on the original bilingual benchmark (STEMBench v0.1.0-candidate),
-  50 pairs stratified by subject, seed 2026. Seven models across two free-tier
+  50 pairs stratified by subject, seed 2026. Eight models across two free-tier
   providers. OpenRouter models extend via daily-budget resume (50 req/day free tier);
   Zen models have no documented account cap. Zero paid spend enforced.

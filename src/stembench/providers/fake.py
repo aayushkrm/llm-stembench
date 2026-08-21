@@ -34,6 +34,7 @@ class FakeProvider(Provider):
         top_p: float | None = None,
         seed: int | None = None,
         request_logprobs: bool = True,
+        reasoning_effort: str | None = None,
     ) -> Completion:
         self.calls.append((model, messages[-1]["content"]))
         prompt = messages[-1]["content"]

@@ -137,6 +137,7 @@ class DecodingSettings(BaseModel):
     max_tokens: int = 2048
     top_p: float | None = None
     seed: int | None = None
+    reasoning_effort: str | None = None  # OpenRouter reasoning.effort, e.g. "max"
     notes: str = ""
 
 
