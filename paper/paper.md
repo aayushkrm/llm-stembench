@@ -22,10 +22,15 @@ original bilingual Russian–English benchmark of procedurally generated mathema
 physics, and chemistry problems (counts and composition in §5.1 and the build's
 verification report; every figure in this paper regenerates from committed artifacts)
 whose answers are computed and independently re-verified in code, spanning school,
-university, and olympiad difficulty and three answer formats. Evaluating the
-free-tier model set on stratified samples with pair-clustered bootstrap, we quantify
-Russian–English performance gaps per model, subject, difficulty, and answer format.
-The benchmark ships as a deterministic, hash-pinned, CC-BY-4.0 build with a complete
+university, and olympiad difficulty and three answer formats. Evaluating eight
+free-tier models on stratified paired samples with pair-clustered bootstrap, we find
+**no Russian–English performance gap** (pooled difference +0.005, 95% CI
+[−0.041, +0.050]; no per-model gap after Benjamini–Hochberg); measured variance
+instead concentrates in olympiad-tier items (50–75%), free-form answer formats, and
+a decoding-budget reliability failure (13–16% of items lost to empty length-exhausted
+responses at a 2048-token budget, language-balanced) that our taxonomy traces and
+our protocol flags. The benchmark ships as a deterministic, hash-pinned, CC-BY-4.0
+build with a complete
 expert-validation package; human expert verification remains an explicit release gate,
 reflected in the candidate version label.
 
@@ -221,9 +226,26 @@ independently verified items.
 
 ### 6.4 STEMBench evaluation (Stage 2)
 
-*(populated after run S2-E1 completes: per-model accuracy by language with
-pair-clustered bootstrap gaps (H4/H5), subject/difficulty/format breakdowns,
-calibration by language, failure patterns; figures `results/stage2/S2-E1/analysis/`.)*
+Run S2-E1 (50 subject-stratified pairs, seed 2026; both language variants; eight
+free-tier models, five complete at n=100, 520 evaluations total) tests the bilingual
+questions H4/H5 on our benchmark. **No language gap exists for these models**: the
+pooled EN−RU difference is +0.005 with pair-clustered 95% CI [−0.041, +0.050]
+(p=0.82; template-clustered [−0.040, +0.048]), and no individual model's gap is
+significant (all BH-adjusted p=1.0; CIs within ±0.14). Lenient accuracies span
+72–85% with overlapping CIs (nemotron-3.5-lightning 85%, hy3 82%, ox-alpha 80%
+(run at `reasoning_effort: max`, 8192 tokens), nemotron-3-ultra 77%, laguna 72%).
+The benchmark discriminates through the olympiad tier (50–75% among models with
+full parses) and free-form formats (numeric 69–97%, exact-string 50–92%); every
+multiple-choice item any model answered was answered correctly, identifying
+distractor weakness as the main v0.2 redesign target. Reliability separates the
+models more than accuracy: four Zen models at a 2048-token budget lose 13–16% of
+items to length exhaustion (empty body, `finish_reason: length`, language-balanced
+21 EN/23 RU) — the mechanistic diagnosis of Stage 1's largest error class — while
+ox-alpha at 8192 tokens never fails to answer yet ranks mid-pack and most
+overconfident (ECE 0.18/0.22 by language). Self-reported confidence is ceiling-
+compressed (mean 0.997–1.0) across all models, replicating the H2 pattern on an
+original benchmark. Full tables, breakdowns, and the forest figure:
+`results/stage2/S2-E1/analysis/` and `reports/stage2_report.md`.
 
 ## 7. Limitations
 

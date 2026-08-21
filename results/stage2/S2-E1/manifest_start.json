@@ -24,9 +24,9 @@
   "budget_usage": {},
   "counts": {},
   "status": "running",
-  "started_at": "2026-08-21T18:45:03+00:00",
+  "started_at": "2026-08-21T19:23:59+00:00",
   "finished_at": "",
-  "git_commit": "17ac8e707c69315d6980a80f1078d8a79f4289f5",
+  "git_commit": "fee503cd8f37cff5572461e8c3430c39f9a6564f",
   "code_dirty": true,
-  "notes": "Stage 2 evaluation on the original bilingual benchmark (STEMBench v0.1.0-candidate), 50 pairs stratified by subject, seed 2026. Seven models across two free-tier providers. OpenRouter models extend via daily-budget resume (50 req/day free tier); Zen models have no documented account cap. Zero paid spend enforced."
+  "notes": "Stage 2 evaluation on the original bilingual benchmark (STEMBench v0.1.0-candidate), 50 pairs stratified by subject, seed 2026. Eight models across two free-tier providers. OpenRouter models extend via daily-budget resume (50 req/day free tier); Zen models have no documented account cap. Zero paid spend enforced."
 }

@@ -149,6 +149,27 @@ independent verifier, determinism, and artifact-freshness gate passes.
   kept); relaunched and running. OR daily budget reset since Aug 17.
 - goal.md statuses updated against evidence.
 
+## 2026-08-22 (session 3 continued: S2-E1 complete, final analysis + reports)
+
+- S2-E1 finished: 520 evaluations; complete at n=100 — nemotron-3.5-lightning (85
+  correct), hy3 (82), ox-alpha (80, `reasoning_effort: max`, 0 parse failures),
+  nemotron-3-ultra (77), laguna (72); OpenRouter trio budget-capped at gemma 1 /
+  gpt-oss 17 / glm 2 (shared 50/day exhausted 50/50; resume documented).
+- Found and fixed a manifest accuracy bug (D12): `n_total_evaluated` counted
+  retryable error records (429s) as evaluated — gemma was listed as 5 evaluated with
+  only 1 response. Runner fixed; all three manifests recomputed from raw JSONL;
+  no analysis number changed.
+- Final Stage 2 analysis written to `results/stage2/S2-E1/analysis/`
+  (`stage2_analysis.json`, forest figure). Headline: **H4/H5 null** — pooled EN−RU
+  +0.005 [−0.041, +0.050] p=0.82; template-clustered [−0.040, +0.048]; no per-model
+  gap (all BH p=1.0). MC answered-correctly rate 100% for every model (distractors
+  too weak — v0.2 priority); olympiad tier spreads models 50–75%; ox-alpha most
+  overconfident (ECE 0.18/0.22); Zen length-exhaustion failures (13–16%, empty body,
+  `finish_reason: length`, 21 EN/23 RU) mechanistically explain Stage 1's E10 class.
+- Stage 2 report §4/§5/§9 filled (§3 updated to 8 models + ox-alpha decoding note);
+  paper §6.4 written; EN + RU abstracts updated with the null-gap result.
+
 ### Next milestone
-Finish S2-E1; run pair-clustered bilingual analysis + template-cluster sensitivity;
-write Stage 2 report + paper §6.4; final audit, placeholder sweep, commits, push.
+Final audit numbers, placeholder/secret sweep, full tests + ruff, commit, push to
+origin main. Remaining external gates: expert validation (v0.1.0-candidate), HF
+token, OR budget-capped models resume, venue decision.

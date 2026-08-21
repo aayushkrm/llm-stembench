@@ -27,12 +27,12 @@ Statuses: `not started` | `in progress` | `complete` | `partial` | `blocked`.
 | R6.3 | Bilingual pairing | pair_id links; identical answers | QC pair-completeness gate; byte-identical rebuild (CI-enforced) | complete |
 | R7.1 | 2–3 experts, κ ≥ 0.75 (Ph.7) | Human labels + agreement | `docs/annotation/` package ready | **blocked** (no human experts; release gate; candidate label) |
 | R7.2 | HF dataset v1 (Ph.7) | Published or ready bundle | `scripts/publish_hf.py` + card + hash; blocked on HF token | partial (ready, not published) |
-| R8.1 | Full-scale run 6–8 models (Ph.8) | 6–8 real model runs | `results/stage2/S2-E1/` in progress (7 models; see audit for final n per model) | in progress |
-| R8.2 | Metrics by subject/language/difficulty | Breakdowns with CIs | `analysis_stage2.py` outputs (pending run completion) | in progress |
-| R9.1 | Hypothesis testing incl. RU–EN gap (Ph.9) | Paired cluster stats per registry | `docs/hypotheses.md` H4/H5 + `analysis_stage2.py` (pending data) | in progress |
-| R9.2 | Heatmaps, CI plots, visualizations (Ph.9) | Script-generated figures | `viz/figures.py`; stage2 figures pending | in progress |
+| R8.1 | Full-scale run 6–8 models (Ph.8) | 6–8 real model runs | `results/stage2/S2-E1/`: 8 models, 5 complete at n=100 (520 evals, cost 0); gemma/gpt-oss/glm budget-capped at n=1/17/2 (OR 50/day shared; resume command in manifest notes) | partial (5/8 at full n; resume documented) |
+| R8.2 | Metrics by subject/language/difficulty | Breakdowns with CIs | `results/stage2/S2-E1/analysis/stage2_analysis.json` (`categories`, `per_model_language`, small cells flagged) | complete |
+| R9.1 | Hypothesis testing incl. RU–EN gap (Ph.9) | Paired cluster stats per registry | H4/H5 pair-clustered bootstrap + BH + template-cluster sensitivity: pooled +0.005 [−0.041, +0.050] p=0.82 (null, robust to template clustering) | complete |
+| R9.2 | Heatmaps, CI plots, visualizations (Ph.9) | Script-generated figures | `results/stage2/S2-E1/analysis/figures/`: subject/difficulty/answer-type heatmaps, accuracy CI plot, language-gap forest | complete |
 | R10.1 | Publish code to GitHub (Ph.10) | Non-destructive push to origin main | 3 local commits (more pending); push authorized, not yet done | in progress |
-| R10.2 | Paper draft (Ph.10) | Full EN draft + RU abstract | `paper/paper.md` (all sections; §6.4 pending S2 data), `paper/abstract_ru.md` | in progress |
+| R10.2 | Paper draft (Ph.10) | Full EN draft + RU abstract | `paper/paper.md` (all sections incl. §6.4 with S2-E1 results), `paper/abstract_ru.md` (synchronized, null-gap result) | complete (draft; not submitted) |
 | E1 | Provider-agnostic adapters (§7.2) | ≥2 real + fake | `providers/` (openrouter, zen, ollama, fake) | complete |
 | E2 | Determinism/seeds/stratification recorded | Config+manifests store seeds | manifests; deterministic sampling tested | complete |
 | E3 | Prompt templates hashed with runs | hash in every record | `prompt_hash` in all records; manifest stores text+hash | complete |
@@ -46,7 +46,7 @@ Statuses: `not started` | `in progress` | `complete` | `partial` | `blocked`.
 | Q1 | README/architecture/troubleshooting | Docs complete | `README.md`, `docs/architecture.md`, `docs/reproducibility.md` | complete |
 | Q2 | LICENSE/CITATION/changelog/dataset card/checklist | Present, consistent | repo root + `docs/dataset_card.md`, `docs/release_checklist.md` | complete |
 | A1 | Zero paid spend | Free endpoints only; cost 0 | allowlists + zero-spend guard (tested); all manifests cost 0 | complete |
-| A2 | Honest final audit | audit.md reconciles with matrix | `audit.md` (final pass pending) | in progress |
+| A2 | Honest final audit | audit.md reconciles with matrix | `audit.md` (2026-08-22 final pass: 12 questions answered, D12 found+fixed at audit, sweep clean) | complete |
 | A3 | Reproducibility from fresh checkout | Documented commands | `docs/reproducibility.md`; CI fresh-install job | complete |
 
 ## Maintenance note

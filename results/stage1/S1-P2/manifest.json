@@ -96,7 +96,7 @@
       "error_kinds": {
         "provider_error": 1
       },
-      "n_total_evaluated": 120,
+      "n_total_evaluated": 119,
       "n_total_correct": 103,
       "n_total_parse_failures": 12
     },
@@ -124,7 +124,7 @@
   "counts": {
     "n_items": 120,
     "n_models": 3,
-    "total_evaluated": 360
+    "total_evaluated": 359
   },
   "status": "complete",
   "started_at": "2026-08-17T00:16:34+00:00",

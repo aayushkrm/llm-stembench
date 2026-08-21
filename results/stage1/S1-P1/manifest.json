@@ -80,7 +80,7 @@
       "error_kinds": {
         "rate_limited": 3
       },
-      "n_total_evaluated": 5,
+      "n_total_evaluated": 0,
       "n_total_correct": 0,
       "n_total_parse_failures": 0
     },
@@ -146,7 +146,7 @@
       "error_kinds": {
         "provider_error": 4
       },
-      "n_total_evaluated": 60,
+      "n_total_evaluated": 56,
       "n_total_correct": 45,
       "n_total_parse_failures": 8
     },
@@ -174,7 +174,7 @@
   "counts": {
     "n_items": 60,
     "n_models": 6,
-    "total_evaluated": 224
+    "total_evaluated": 215
   },
   "status": "partial",
   "started_at": "2026-08-16T23:47:35+00:00",

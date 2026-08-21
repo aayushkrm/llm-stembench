@@ -128,3 +128,24 @@ silent).
 **Consequences.** OpenRouter's 50/day cap is shared with the other three OR models;
 ox-alpha coverage accrues via the standard resume command as the daily budget resets.
 Per-model n reported as always.
+**Update (2026-08-22).** The user stated ox-alpha is usable without limit; live checks
+agreed (it kept answering with the shared OpenRouter budget exhausted 50/50), so the
+provider is constructed with `uncapped_models={"stealth/ox-alpha"}` — it bypasses the
+local daily counter while the zero-cost assertion still applies to every response.
+`effort: "max"` was accepted (no `_reasoning_fallback` in any of its 100 records; the
+API reports `reasoning_tokens: 0`, i.e. it reasons without exposing token accounting).
+It completed 100/100 in a single pass (80 correct, 0 parse failures).
+
+## D12 — Manifest "evaluated" must exclude transient-error records
+**Decision.** `n_total_evaluated` (and `counts.total_evaluated`) in run manifests
+count only records with a real evaluation outcome (`error_status` "" or
+`parse_failure`); transient errors (`daily_budget_exceeded`, `rate_limited`,
+`timeout`, `provider_error`) are excluded, matching the analysis loaders.
+**Evidence.** The S2-E1 manifest reported gemma 5 / gpt-oss 18 / glm 5 "evaluated"
+when only 1 / 17 / 2 had responses — the gap was retryable error records (429s) left
+in the JSONL after resume. Fixed in `runner.py` and all three existing manifests
+(S1-P1, S1-P2, S2-E1) recomputed from raw records; correct/parse-failure counts were
+already right and did not change. S1-P1 gemma is now honestly 0 evaluated.
+**Consequences.** Coverage reporting can no longer overstate what providers actually
+answered; no empirical analysis number changed (loaders always excluded these
+records).

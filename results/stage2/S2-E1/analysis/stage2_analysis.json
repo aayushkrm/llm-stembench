@@ -1,0 +1,1220 @@
+{
+  "run_dir": "results/stage2/S2-E1",
+  "per_model_language": {
+    "openrouter::google/gemma-4-31b-it:free": {
+      "model": "openrouter::google/gemma-4-31b-it:free",
+      "n": 1,
+      "en": {
+        "n": 0,
+        "n_parsed": 0,
+        "correct": 0,
+        "acc": NaN,
+        "ci_lo": 0.0,
+        "ci_hi": 0.7934506856227626,
+        "parse_failures": 0
+      },
+      "ru": {
+        "n": 1,
+        "n_parsed": 1,
+        "correct": 1,
+        "acc": 1.0,
+        "ci_lo": 0.20654931437723745,
+        "ci_hi": 1.0,
+        "parse_failures": 0
+      },
+      "ru_calibration": {
+        "n": 1,
+        "ECE": 0.0,
+        "brier": 0.0,
+        "mean_conf": 1.0,
+        "acc": 1.0
+      }
+    },
+    "openrouter::openai/gpt-oss-20b:free": {
+      "model": "openrouter::openai/gpt-oss-20b:free",
+      "n": 17,
+      "en": {
+        "n": 9,
+        "n_parsed": 9,
+        "correct": 7,
+        "acc": 0.7777777777777778,
+        "ci_lo": 0.4525889691069889,
+        "ci_hi": 0.9367748928821533,
+        "parse_failures": 0
+      },
+      "ru": {
+        "n": 8,
+        "n_parsed": 8,
+        "correct": 6,
+        "acc": 0.75,
+        "ci_lo": 0.40927543031016883,
+        "ci_hi": 0.9285207872478909,
+        "parse_failures": 0
+      },
+      "en_calibration": {
+        "n": 9,
+        "ECE": 0.22111111111111115,
+        "brier": 0.2222333333333333,
+        "mean_conf": 0.9988888888888889,
+        "acc": 0.7777777777777778
+      },
+      "ru_calibration": {
+        "n": 8,
+        "ECE": 0.25,
+        "brier": 0.25,
+        "mean_conf": 1.0,
+        "acc": 0.75
+      }
+    },
+    "openrouter::stealth/ox-alpha": {
+      "model": "openrouter::stealth/ox-alpha",
+      "n": 100,
+      "en": {
+        "n": 50,
+        "n_parsed": 50,
+        "correct": 41,
+        "acc": 0.82,
+        "ci_lo": 0.6920394632569922,
+        "ci_hi": 0.9022980732976582,
+        "parse_failures": 0
+      },
+      "ru": {
+        "n": 50,
+        "n_parsed": 50,
+        "correct": 39,
+        "acc": 0.78,
+        "ci_lo": 0.6475845041874634,
+        "ci_hi": 0.8724608402978559,
+        "parse_failures": 0
+      },
+      "en_calibration": {
+        "n": 50,
+        "ECE": 0.17700000000000027,
+        "brier": 0.178114,
+        "mean_conf": 0.9970000000000002,
+        "acc": 0.82
+      },
+      "ru_calibration": {
+        "n": 50,
+        "ECE": 0.21819999999999995,
+        "brier": 0.21884200000000004,
+        "mean_conf": 0.9982,
+        "acc": 0.78
+      }
+    },
+    "openrouter::z-ai/glm-5.2:free": {
+      "model": "openrouter::z-ai/glm-5.2:free",
+      "n": 2,
+      "en": {
+        "n": 1,
+        "n_parsed": 1,
+        "correct": 1,
+        "acc": 1.0,
+        "ci_lo": 0.20654931437723745,
+        "ci_hi": 1.0,
+        "parse_failures": 0
+      },
+      "ru": {
+        "n": 1,
+        "n_parsed": 1,
+        "correct": 1,
+        "acc": 1.0,
+        "ci_lo": 0.20654931437723745,
+        "ci_hi": 1.0,
+        "parse_failures": 0
+      },
+      "en_calibration": {
+        "n": 1,
+        "ECE": 0.0,
+        "brier": 0.0,
+        "mean_conf": 1.0,
+        "acc": 1.0
+      },
+      "ru_calibration": {
+        "n": 1,
+        "ECE": 0.0,
+        "brier": 0.0,
+        "mean_conf": 1.0,
+        "acc": 1.0
+      }
+    },
+    "zen::hy3-free": {
+      "model": "zen::hy3-free",
+      "n": 100,
+      "en": {
+        "n": 50,
+        "n_parsed": 43,
+        "correct": 41,
+        "acc": 0.9534883720930233,
+        "ci_lo": 0.8454450199593603,
+        "ci_hi": 0.9871507399056197,
+        "parse_failures": 7
+      },
+      "ru": {
+        "n": 50,
+        "n_parsed": 44,
+        "correct": 41,
+        "acc": 0.9318181818181818,
+        "ci_lo": 0.8177495562977846,
+        "ci_hi": 0.9765406040926183,
+        "parse_failures": 6
+      },
+      "en_calibration": {
+        "n": 43,
+        "ECE": 0.046511627906976716,
+        "brier": 0.046511627906976744,
+        "mean_conf": 1.0,
+        "acc": 0.9534883720930233
+      },
+      "ru_calibration": {
+        "n": 44,
+        "ECE": 0.06818181818181823,
+        "brier": 0.06818181818181818,
+        "mean_conf": 1.0,
+        "acc": 0.9318181818181818
+      }
+    },
+    "zen::laguna-s-2.1-free": {
+      "model": "zen::laguna-s-2.1-free",
+      "n": 100,
+      "en": {
+        "n": 50,
+        "n_parsed": 43,
+        "correct": 37,
+        "acc": 0.8604651162790697,
+        "ci_lo": 0.7273641203261714,
+        "ci_hi": 0.9344427657203511,
+        "parse_failures": 7
+      },
+      "ru": {
+        "n": 50,
+        "n_parsed": 41,
+        "correct": 35,
+        "acc": 0.8536585365853658,
+        "ci_lo": 0.7155654195751904,
+        "ci_hi": 0.9311575185870407,
+        "parse_failures": 9
+      },
+      "en_calibration": {
+        "n": 41,
+        "ECE": 0.09487804878048778,
+        "brier": 0.09768536585365856,
+        "mean_conf": 0.9973170731707317,
+        "acc": 0.9024390243902439
+      },
+      "ru_calibration": {
+        "n": 39,
+        "ECE": 0.10000000000000009,
+        "brier": 0.10012820512820512,
+        "mean_conf": 0.9974358974358976,
+        "acc": 0.8974358974358975
+      }
+    },
+    "zen::nemotron-3-ultra-free": {
+      "model": "zen::nemotron-3-ultra-free",
+      "n": 100,
+      "en": {
+        "n": 50,
+        "n_parsed": 46,
+        "correct": 40,
+        "acc": 0.8695652173913043,
+        "ci_lo": 0.74334142220927,
+        "ci_hi": 0.9388215963796489,
+        "parse_failures": 4
+      },
+      "ru": {
+        "n": 50,
+        "n_parsed": 40,
+        "correct": 37,
+        "acc": 0.925,
+        "ci_lo": 0.8013576647568946,
+        "ci_hi": 0.9741639742254119,
+        "parse_failures": 10
+      },
+      "en_calibration": {
+        "n": 42,
+        "ECE": 0.0464285714285716,
+        "brier": 0.047678571428571424,
+        "mean_conf": 0.9988095238095239,
+        "acc": 0.9523809523809523
+      },
+      "ru_calibration": {
+        "n": 37,
+        "ECE": 0.0,
+        "brier": 0.0,
+        "mean_conf": 1.0,
+        "acc": 1.0
+      }
+    },
+    "zen::nemotron-3.5-lightning-free": {
+      "model": "zen::nemotron-3.5-lightning-free",
+      "n": 100,
+      "en": {
+        "n": 50,
+        "n_parsed": 50,
+        "correct": 43,
+        "acc": 0.86,
+        "ci_lo": 0.7381380628941446,
+        "ci_hi": 0.9304916657298371,
+        "parse_failures": 0
+      },
+      "ru": {
+        "n": 50,
+        "n_parsed": 49,
+        "correct": 42,
+        "acc": 0.8571428571428571,
+        "ci_lo": 0.7333229377608557,
+        "ci_hi": 0.9290357627959323,
+        "parse_failures": 1
+      },
+      "en_calibration": {
+        "n": 46,
+        "ECE": 0.06521739130434778,
+        "brier": 0.06521739130434782,
+        "mean_conf": 1.0,
+        "acc": 0.9347826086956522
+      },
+      "ru_calibration": {
+        "n": 45,
+        "ECE": 0.06666666666666665,
+        "brier": 0.06666666666666667,
+        "mean_conf": 1.0,
+        "acc": 0.9333333333333333
+      }
+    }
+  },
+  "language_gaps": {
+    "H4_per_model": {
+      "openrouter::google/gemma-4-31b-it:free": {
+        "n_pairs": 0,
+        "note": "too few complete pairs"
+      },
+      "openrouter::openai/gpt-oss-20b:free": {
+        "n_pairs": 8,
+        "note": "too few complete pairs"
+      },
+      "openrouter::stealth/ox-alpha": {
+        "diff": 0.039999999999999925,
+        "ci_lo": -0.05999999999999994,
+        "ci_hi": 0.14,
+        "p_bootstrap": 0.5436,
+        "acc_en": 0.82,
+        "acc_ru": 0.78,
+        "n_pairs": 50,
+        "template_cluster_sensitivity": {
+          "diff": 0.039999999999999925,
+          "ci_lo": -0.05769230769230771,
+          "ci_hi": 0.13725490196078427,
+          "p_bootstrap": 0.5204,
+          "n_templates": 39
+        },
+        "p_bh": 1.0,
+        "significant_0.05": false
+      },
+      "openrouter::z-ai/glm-5.2:free": {
+        "n_pairs": 1,
+        "note": "too few complete pairs"
+      },
+      "zen::hy3-free": {
+        "diff": 0.0,
+        "ci_lo": -0.06976744186046513,
+        "ci_hi": 0.06976744186046513,
+        "p_bootstrap": 1.0,
+        "acc_en": 0.9534883720930233,
+        "acc_ru": 0.9534883720930233,
+        "n_pairs": 43,
+        "template_cluster_sensitivity": {
+          "diff": 0.0,
+          "ci_lo": 0.0,
+          "ci_hi": 0.0,
+          "p_bootstrap": 1.0,
+          "n_templates": 33
+        },
+        "p_bh": 1.0,
+        "significant_0.05": false
+      },
+      "zen::laguna-s-2.1-free": {
+        "diff": -0.02631578947368418,
+        "ci_lo": -0.13157894736842102,
+        "ci_hi": 0.052631578947368474,
+        "p_bootstrap": 0.7906,
+        "acc_en": 0.868421052631579,
+        "acc_ru": 0.8947368421052632,
+        "n_pairs": 38,
+        "template_cluster_sensitivity": {
+          "diff": -0.02631578947368418,
+          "ci_lo": -0.11764705882352944,
+          "ci_hi": 0.05714285714285716,
+          "p_bootstrap": 0.8096,
+          "n_templates": 29
+        },
+        "p_bh": 1.0,
+        "significant_0.05": false
+      },
+      "zen::nemotron-3-ultra-free": {
+        "diff": -0.02777777777777779,
+        "ci_lo": -0.08333333333333337,
+        "ci_hi": 0.0,
+        "p_bootstrap": 0.732,
+        "acc_en": 0.8888888888888888,
+        "acc_ru": 0.9166666666666666,
+        "n_pairs": 36,
+        "template_cluster_sensitivity": {
+          "diff": -0.02777777777777779,
+          "ci_lo": -0.09090909090909094,
+          "ci_hi": 0.0,
+          "p_bootstrap": 0.7374,
+          "n_templates": 30
+        },
+        "p_bh": 1.0,
+        "significant_0.05": false
+      },
+      "zen::nemotron-3.5-lightning-free": {
+        "diff": 0.0,
+        "ci_lo": -0.08163265306122447,
+        "ci_hi": 0.08163265306122447,
+        "p_bootstrap": 1.0,
+        "acc_en": 0.8571428571428571,
+        "acc_ru": 0.8571428571428571,
+        "n_pairs": 49,
+        "template_cluster_sensitivity": {
+          "diff": 0.0,
+          "ci_lo": -0.08163265306122447,
+          "ci_hi": 0.08163265306122447,
+          "p_bootstrap": 1.0,
+          "n_templates": 39
+        },
+        "p_bh": 1.0,
+        "significant_0.05": false
+      }
+    },
+    "H5_pooled": {
+      "n_pairs": 50,
+      "diff": 0.005,
+      "ci_lo": -0.04066666666666666,
+      "ci_hi": 0.049666666666666665,
+      "p_bootstrap": 0.822,
+      "template_cluster_sensitivity": {
+        "diff": 0.005,
+        "ci_lo": -0.03966666666666666,
+        "ci_hi": 0.04811320754716981,
+        "p_bootstrap": 0.8296,
+        "n_templates": 39
+      }
+    }
+  },
+  "categories": {
+    "openrouter::google/gemma-4-31b-it:free": {
+      "by_subject": {
+        "chemistry": {
+          "n": 1,
+          "n_parsed": 1,
+          "acc": 1.0,
+          "ci_lo": 0.20654931437723745,
+          "ci_hi": 1.0,
+          "small_cell": true
+        }
+      },
+      "by_difficulty": {
+        "school": {
+          "n": 1,
+          "n_parsed": 1,
+          "acc": 1.0,
+          "ci_lo": 0.20654931437723745,
+          "ci_hi": 1.0,
+          "small_cell": true
+        }
+      },
+      "by_answer_type": {
+        "numeric": {
+          "n": 1,
+          "n_parsed": 1,
+          "acc": 1.0,
+          "ci_lo": 0.20654931437723745,
+          "ci_hi": 1.0,
+          "small_cell": true
+        }
+      },
+      "by_language": {
+        "ru": {
+          "n": 1,
+          "n_parsed": 1,
+          "acc": 1.0,
+          "ci_lo": 0.20654931437723745,
+          "ci_hi": 1.0,
+          "small_cell": true
+        }
+      }
+    },
+    "openrouter::openai/gpt-oss-20b:free": {
+      "by_subject": {
+        "chemistry": {
+          "n": 17,
+          "n_parsed": 17,
+          "acc": 0.7647058823529411,
+          "ci_lo": 0.5273820188043501,
+          "ci_hi": 0.9044495567791988,
+          "small_cell": false
+        }
+      },
+      "by_difficulty": {
+        "school": {
+          "n": 7,
+          "n_parsed": 7,
+          "acc": 0.7142857142857143,
+          "ci_lo": 0.35893445183261935,
+          "ci_hi": 0.9177810759959433,
+          "small_cell": true
+        },
+        "university": {
+          "n": 10,
+          "n_parsed": 10,
+          "acc": 0.8,
+          "ci_lo": 0.4901624715366418,
+          "ci_hi": 0.9433178485456248,
+          "small_cell": false
+        }
+      },
+      "by_answer_type": {
+        "exact": {
+          "n": 4,
+          "n_parsed": 4,
+          "acc": 0.0,
+          "ci_lo": 0.0,
+          "ci_hi": 0.4898908364545973,
+          "small_cell": true
+        },
+        "mc": {
+          "n": 8,
+          "n_parsed": 8,
+          "acc": 1.0,
+          "ci_lo": 0.6755924351161198,
+          "ci_hi": 1.0,
+          "small_cell": true
+        },
+        "numeric": {
+          "n": 5,
+          "n_parsed": 5,
+          "acc": 1.0,
+          "ci_lo": 0.5655175352168251,
+          "ci_hi": 1.0,
+          "small_cell": true
+        }
+      },
+      "by_language": {
+        "en": {
+          "n": 9,
+          "n_parsed": 9,
+          "acc": 0.7777777777777778,
+          "ci_lo": 0.4525889691069889,
+          "ci_hi": 0.9367748928821533,
+          "small_cell": true
+        },
+        "ru": {
+          "n": 8,
+          "n_parsed": 8,
+          "acc": 0.75,
+          "ci_lo": 0.40927543031016883,
+          "ci_hi": 0.9285207872478909,
+          "small_cell": true
+        }
+      }
+    },
+    "openrouter::stealth/ox-alpha": {
+      "by_subject": {
+        "chemistry": {
+          "n": 34,
+          "n_parsed": 34,
+          "acc": 0.7647058823529411,
+          "ci_lo": 0.6000386207746361,
+          "ci_hi": 0.8756301446736042,
+          "small_cell": false
+        },
+        "math": {
+          "n": 34,
+          "n_parsed": 34,
+          "acc": 0.9705882352941176,
+          "ci_lo": 0.8508442670731406,
+          "ci_hi": 0.9947890937237309,
+          "small_cell": false
+        },
+        "physics": {
+          "n": 32,
+          "n_parsed": 32,
+          "acc": 0.65625,
+          "ci_lo": 0.4831108797896222,
+          "ci_hi": 0.7958956207556682,
+          "small_cell": false
+        }
+      },
+      "by_difficulty": {
+        "olympiad": {
+          "n": 12,
+          "n_parsed": 12,
+          "acc": 0.75,
+          "ci_lo": 0.4676946650664343,
+          "ci_hi": 0.9110583316059452,
+          "small_cell": false
+        },
+        "school": {
+          "n": 28,
+          "n_parsed": 28,
+          "acc": 0.7857142857142857,
+          "ci_lo": 0.6046141434627812,
+          "ci_hi": 0.8978753966710211,
+          "small_cell": false
+        },
+        "university": {
+          "n": 60,
+          "n_parsed": 60,
+          "acc": 0.8166666666666667,
+          "ci_lo": 0.7008024625353194,
+          "ci_hi": 0.8944220311080237,
+          "small_cell": false
+        }
+      },
+      "by_answer_type": {
+        "exact": {
+          "n": 14,
+          "n_parsed": 14,
+          "acc": 0.5,
+          "ci_lo": 0.26799202452413634,
+          "ci_hi": 0.7320079754758637,
+          "small_cell": false
+        },
+        "mc": {
+          "n": 44,
+          "n_parsed": 44,
+          "acc": 1.0,
+          "ci_lo": 0.9197043962415192,
+          "ci_hi": 1.0,
+          "small_cell": false
+        },
+        "numeric": {
+          "n": 42,
+          "n_parsed": 42,
+          "acc": 0.6904761904761905,
+          "ci_lo": 0.5397400606391092,
+          "ci_hi": 0.8092889714120513,
+          "small_cell": false
+        }
+      },
+      "by_language": {
+        "en": {
+          "n": 50,
+          "n_parsed": 50,
+          "acc": 0.82,
+          "ci_lo": 0.6920394632569922,
+          "ci_hi": 0.9022980732976582,
+          "small_cell": false
+        },
+        "ru": {
+          "n": 50,
+          "n_parsed": 50,
+          "acc": 0.78,
+          "ci_lo": 0.6475845041874634,
+          "ci_hi": 0.8724608402978559,
+          "small_cell": false
+        }
+      }
+    },
+    "openrouter::z-ai/glm-5.2:free": {
+      "by_subject": {
+        "chemistry": {
+          "n": 2,
+          "n_parsed": 2,
+          "acc": 1.0,
+          "ci_lo": 0.34238022750665303,
+          "ci_hi": 1.0,
+          "small_cell": true
+        }
+      },
+      "by_difficulty": {
+        "school": {
+          "n": 2,
+          "n_parsed": 2,
+          "acc": 1.0,
+          "ci_lo": 0.34238022750665303,
+          "ci_hi": 1.0,
+          "small_cell": true
+        }
+      },
+      "by_answer_type": {
+        "numeric": {
+          "n": 2,
+          "n_parsed": 2,
+          "acc": 1.0,
+          "ci_lo": 0.34238022750665303,
+          "ci_hi": 1.0,
+          "small_cell": true
+        }
+      },
+      "by_language": {
+        "en": {
+          "n": 1,
+          "n_parsed": 1,
+          "acc": 1.0,
+          "ci_lo": 0.20654931437723745,
+          "ci_hi": 1.0,
+          "small_cell": true
+        },
+        "ru": {
+          "n": 1,
+          "n_parsed": 1,
+          "acc": 1.0,
+          "ci_lo": 0.20654931437723745,
+          "ci_hi": 1.0,
+          "small_cell": true
+        }
+      }
+    },
+    "zen::hy3-free": {
+      "by_subject": {
+        "chemistry": {
+          "n": 34,
+          "n_parsed": 28,
+          "acc": 0.8571428571428571,
+          "ci_lo": 0.685101978364747,
+          "ci_hi": 0.9430099468025059,
+          "small_cell": false
+        },
+        "math": {
+          "n": 34,
+          "n_parsed": 34,
+          "acc": 1.0,
+          "ci_lo": 0.8984854458466761,
+          "ci_hi": 0.9999999999999999,
+          "small_cell": false
+        },
+        "physics": {
+          "n": 32,
+          "n_parsed": 25,
+          "acc": 0.96,
+          "ci_lo": 0.8045593626380625,
+          "ci_hi": 0.9929037664980127,
+          "small_cell": false
+        }
+      },
+      "by_difficulty": {
+        "olympiad": {
+          "n": 12,
+          "n_parsed": 4,
+          "acc": 1.0,
+          "ci_lo": 0.5101091635454027,
+          "ci_hi": 1.0,
+          "small_cell": true
+        },
+        "school": {
+          "n": 28,
+          "n_parsed": 28,
+          "acc": 0.9285714285714286,
+          "ci_lo": 0.7735463743160095,
+          "ci_hi": 0.9801879358846942,
+          "small_cell": false
+        },
+        "university": {
+          "n": 60,
+          "n_parsed": 55,
+          "acc": 0.9454545454545454,
+          "ci_lo": 0.8514693945594621,
+          "ci_hi": 0.9812767844453155,
+          "small_cell": false
+        }
+      },
+      "by_answer_type": {
+        "exact": {
+          "n": 14,
+          "n_parsed": 14,
+          "acc": 0.7142857142857143,
+          "ci_lo": 0.4535091567010681,
+          "ci_hi": 0.8827862135542308,
+          "small_cell": false
+        },
+        "mc": {
+          "n": 44,
+          "n_parsed": 40,
+          "acc": 1.0,
+          "ci_lo": 0.9123783988027135,
+          "ci_hi": 1.0,
+          "small_cell": false
+        },
+        "numeric": {
+          "n": 42,
+          "n_parsed": 33,
+          "acc": 0.9696969696969697,
+          "ci_lo": 0.846812746178811,
+          "ci_hi": 0.9946305894631283,
+          "small_cell": false
+        }
+      },
+      "by_language": {
+        "en": {
+          "n": 50,
+          "n_parsed": 43,
+          "acc": 0.9534883720930233,
+          "ci_lo": 0.8454450199593603,
+          "ci_hi": 0.9871507399056197,
+          "small_cell": false
+        },
+        "ru": {
+          "n": 50,
+          "n_parsed": 44,
+          "acc": 0.9318181818181818,
+          "ci_lo": 0.8177495562977846,
+          "ci_hi": 0.9765406040926183,
+          "small_cell": false
+        }
+      }
+    },
+    "zen::laguna-s-2.1-free": {
+      "by_subject": {
+        "chemistry": {
+          "n": 34,
+          "n_parsed": 26,
+          "acc": 0.8846153846153846,
+          "ci_lo": 0.7102409678828635,
+          "ci_hi": 0.9599675537638938,
+          "small_cell": false
+        },
+        "math": {
+          "n": 34,
+          "n_parsed": 31,
+          "acc": 0.967741935483871,
+          "ci_lo": 0.838058948352751,
+          "ci_hi": 0.9942827784745831,
+          "small_cell": false
+        },
+        "physics": {
+          "n": 32,
+          "n_parsed": 27,
+          "acc": 0.7037037037037037,
+          "ci_lo": 0.5151931703585185,
+          "ci_hi": 0.8414695953022023,
+          "small_cell": false
+        }
+      },
+      "by_difficulty": {
+        "olympiad": {
+          "n": 12,
+          "n_parsed": 8,
+          "acc": 0.75,
+          "ci_lo": 0.40927543031016883,
+          "ci_hi": 0.9285207872478909,
+          "small_cell": true
+        },
+        "school": {
+          "n": 28,
+          "n_parsed": 27,
+          "acc": 0.8888888888888888,
+          "ci_lo": 0.7194219918172018,
+          "ci_hi": 0.9614796517169015,
+          "small_cell": false
+        },
+        "university": {
+          "n": 60,
+          "n_parsed": 49,
+          "acc": 0.8571428571428571,
+          "ci_lo": 0.7333229377608557,
+          "ci_hi": 0.9290357627959323,
+          "small_cell": false
+        }
+      },
+      "by_answer_type": {
+        "exact": {
+          "n": 14,
+          "n_parsed": 13,
+          "acc": 0.7692307692307693,
+          "ci_lo": 0.49743624053272495,
+          "ci_hi": 0.9182047128150143,
+          "small_cell": false
+        },
+        "mc": {
+          "n": 44,
+          "n_parsed": 39,
+          "acc": 1.0,
+          "ci_lo": 0.9103331462924287,
+          "ci_hi": 1.0,
+          "small_cell": false
+        },
+        "numeric": {
+          "n": 42,
+          "n_parsed": 32,
+          "acc": 0.71875,
+          "ci_lo": 0.5462549057408342,
+          "ci_hi": 0.8443541950225723,
+          "small_cell": false
+        }
+      },
+      "by_language": {
+        "en": {
+          "n": 50,
+          "n_parsed": 43,
+          "acc": 0.8604651162790697,
+          "ci_lo": 0.7273641203261714,
+          "ci_hi": 0.9344427657203511,
+          "small_cell": false
+        },
+        "ru": {
+          "n": 50,
+          "n_parsed": 41,
+          "acc": 0.8536585365853658,
+          "ci_lo": 0.7155654195751904,
+          "ci_hi": 0.9311575185870407,
+          "small_cell": false
+        }
+      }
+    },
+    "zen::nemotron-3-ultra-free": {
+      "by_subject": {
+        "chemistry": {
+          "n": 34,
+          "n_parsed": 29,
+          "acc": 0.7586206896551724,
+          "ci_lo": 0.5789239838218867,
+          "ci_hi": 0.8778157755747991,
+          "small_cell": false
+        },
+        "math": {
+          "n": 34,
+          "n_parsed": 31,
+          "acc": 1.0,
+          "ci_lo": 0.889744604539564,
+          "ci_hi": 1.0,
+          "small_cell": false
+        },
+        "physics": {
+          "n": 32,
+          "n_parsed": 26,
+          "acc": 0.9230769230769231,
+          "ci_lo": 0.7585844622837095,
+          "ci_hi": 0.9786449115277238,
+          "small_cell": false
+        }
+      },
+      "by_difficulty": {
+        "olympiad": {
+          "n": 12,
+          "n_parsed": 11,
+          "acc": 0.5454545454545454,
+          "ci_lo": 0.280091537409322,
+          "ci_hi": 0.7872872837754024,
+          "small_cell": false
+        },
+        "school": {
+          "n": 28,
+          "n_parsed": 24,
+          "acc": 0.9583333333333334,
+          "ci_lo": 0.7975819352134406,
+          "ci_hi": 0.9926065438344942,
+          "small_cell": false
+        },
+        "university": {
+          "n": 60,
+          "n_parsed": 51,
+          "acc": 0.9411764705882353,
+          "ci_lo": 0.8407537395119957,
+          "ci_hi": 0.9797933605775353,
+          "small_cell": false
+        }
+      },
+      "by_answer_type": {
+        "exact": {
+          "n": 14,
+          "n_parsed": 12,
+          "acc": 0.9166666666666666,
+          "ci_lo": 0.646120088858883,
+          "ci_hi": 0.9851349055950829,
+          "small_cell": false
+        },
+        "mc": {
+          "n": 44,
+          "n_parsed": 37,
+          "acc": 1.0,
+          "ci_lo": 0.9059421741627975,
+          "ci_hi": 1.0,
+          "small_cell": false
+        },
+        "numeric": {
+          "n": 42,
+          "n_parsed": 37,
+          "acc": 0.7837837837837838,
+          "ci_lo": 0.6280485160803084,
+          "ci_hi": 0.8861348800661442,
+          "small_cell": false
+        }
+      },
+      "by_language": {
+        "en": {
+          "n": 50,
+          "n_parsed": 46,
+          "acc": 0.8695652173913043,
+          "ci_lo": 0.74334142220927,
+          "ci_hi": 0.9388215963796489,
+          "small_cell": false
+        },
+        "ru": {
+          "n": 50,
+          "n_parsed": 40,
+          "acc": 0.925,
+          "ci_lo": 0.8013576647568946,
+          "ci_hi": 0.9741639742254119,
+          "small_cell": false
+        }
+      }
+    },
+    "zen::nemotron-3.5-lightning-free": {
+      "by_subject": {
+        "chemistry": {
+          "n": 34,
+          "n_parsed": 34,
+          "acc": 0.7352941176470589,
+          "ci_lo": 0.5688285871705534,
+          "ci_hi": 0.8539880932278825,
+          "small_cell": false
+        },
+        "math": {
+          "n": 34,
+          "n_parsed": 33,
+          "acc": 1.0,
+          "ci_lo": 0.895730002457548,
+          "ci_hi": 1.0,
+          "small_cell": false
+        },
+        "physics": {
+          "n": 32,
+          "n_parsed": 32,
+          "acc": 0.84375,
+          "ci_lo": 0.682458504024696,
+          "ci_hi": 0.9313557971749429,
+          "small_cell": false
+        }
+      },
+      "by_difficulty": {
+        "olympiad": {
+          "n": 12,
+          "n_parsed": 12,
+          "acc": 0.5,
+          "ci_lo": 0.2537815976337061,
+          "ci_hi": 0.7462184023662939,
+          "small_cell": false
+        },
+        "school": {
+          "n": 28,
+          "n_parsed": 27,
+          "acc": 0.9259259259259259,
+          "ci_lo": 0.7663040731697686,
+          "ci_hi": 0.9794453459390113,
+          "small_cell": false
+        },
+        "university": {
+          "n": 60,
+          "n_parsed": 60,
+          "acc": 0.9,
+          "ci_lo": 0.7985053527602123,
+          "ci_hi": 0.9533571655261158,
+          "small_cell": false
+        }
+      },
+      "by_answer_type": {
+        "exact": {
+          "n": 14,
+          "n_parsed": 14,
+          "acc": 0.7142857142857143,
+          "ci_lo": 0.4535091567010681,
+          "ci_hi": 0.8827862135542308,
+          "small_cell": false
+        },
+        "mc": {
+          "n": 44,
+          "n_parsed": 44,
+          "acc": 1.0,
+          "ci_lo": 0.9197043962415192,
+          "ci_hi": 1.0,
+          "small_cell": false
+        },
+        "numeric": {
+          "n": 42,
+          "n_parsed": 41,
+          "acc": 0.7560975609756098,
+          "ci_lo": 0.6065666377742431,
+          "ci_hi": 0.8617499726190967,
+          "small_cell": false
+        }
+      },
+      "by_language": {
+        "en": {
+          "n": 50,
+          "n_parsed": 50,
+          "acc": 0.86,
+          "ci_lo": 0.7381380628941446,
+          "ci_hi": 0.9304916657298371,
+          "small_cell": false
+        },
+        "ru": {
+          "n": 50,
+          "n_parsed": 49,
+          "acc": 0.8571428571428571,
+          "ci_lo": 0.7333229377608557,
+          "ci_hi": 0.9290357627959323,
+          "small_cell": false
+        }
+      }
+    },
+    "difficulty_trend": {
+      "openrouter::stealth/ox-alpha": {
+        "school": 0.7857142857142857,
+        "university": 0.8166666666666667,
+        "olympiad": 0.75,
+        "monotone_decreasing": false
+      },
+      "zen::hy3-free": {
+        "school": 0.9285714285714286,
+        "university": 0.9454545454545454,
+        "olympiad": 1.0,
+        "monotone_decreasing": false
+      },
+      "zen::laguna-s-2.1-free": {
+        "school": 0.8888888888888888,
+        "university": 0.8571428571428571,
+        "olympiad": 0.75,
+        "monotone_decreasing": true
+      },
+      "zen::nemotron-3-ultra-free": {
+        "school": 0.9583333333333334,
+        "university": 0.9411764705882353,
+        "olympiad": 0.5454545454545454,
+        "monotone_decreasing": true
+      },
+      "zen::nemotron-3.5-lightning-free": {
+        "school": 0.9259259259259259,
+        "university": 0.9,
+        "olympiad": 0.5,
+        "monotone_decreasing": true
+      }
+    }
+  },
+  "interaction_model_x_language_exploratory": {
+    "openrouter::google/gemma-4-31b-it:free": {
+      "en": {
+        "acc": NaN,
+        "n": 0
+      },
+      "ru": {
+        "acc": 1.0,
+        "n": 1
+      }
+    },
+    "openrouter::openai/gpt-oss-20b:free": {
+      "en": {
+        "acc": 0.7777777777777778,
+        "n": 9
+      },
+      "ru": {
+        "acc": 0.75,
+        "n": 8
+      }
+    },
+    "openrouter::stealth/ox-alpha": {
+      "en": {
+        "acc": 0.82,
+        "n": 50
+      },
+      "ru": {
+        "acc": 0.78,
+        "n": 50
+      }
+    },
+    "openrouter::z-ai/glm-5.2:free": {
+      "en": {
+        "acc": 1.0,
+        "n": 1
+      },
+      "ru": {
+        "acc": 1.0,
+        "n": 1
+      }
+    },
+    "zen::hy3-free": {
+      "en": {
+        "acc": 0.9534883720930233,
+        "n": 43
+      },
+      "ru": {
+        "acc": 0.9318181818181818,
+        "n": 44
+      }
+    },
+    "zen::laguna-s-2.1-free": {
+      "en": {
+        "acc": 0.8604651162790697,
+        "n": 43
+      },
+      "ru": {
+        "acc": 0.8536585365853658,
+        "n": 41
+      }
+    },
+    "zen::nemotron-3-ultra-free": {
+      "en": {
+        "acc": 0.8695652173913043,
+        "n": 46
+      },
+      "ru": {
+        "acc": 0.925,
+        "n": 40
+      }
+    },
+    "zen::nemotron-3.5-lightning-free": {
+      "en": {
+        "acc": 0.86,
+        "n": 50
+      },
+      "ru": {
+        "acc": 0.8571428571428571,
+        "n": 49
+      }
+    }
+  },
+  "failure_patterns": {
+    "openrouter::google/gemma-4-31b-it:free": {
+      "n": 1,
+      "parse_failure_rate": 0.0,
+      "empty_response_rate": 0.0
+    },
+    "openrouter::openai/gpt-oss-20b:free": {
+      "n": 17,
+      "parse_failure_rate": 0.0,
+      "empty_response_rate": 0.0
+    },
+    "openrouter::stealth/ox-alpha": {
+      "n": 100,
+      "parse_failure_rate": 0.0,
+      "empty_response_rate": 0.0
+    },
+    "openrouter::z-ai/glm-5.2:free": {
+      "n": 2,
+      "parse_failure_rate": 0.0,
+      "empty_response_rate": 0.0
+    },
+    "zen::hy3-free": {
+      "n": 100,
+      "parse_failure_rate": 0.13,
+      "empty_response_rate": 0.13
+    },
+    "zen::laguna-s-2.1-free": {
+      "n": 100,
+      "parse_failure_rate": 0.16,
+      "empty_response_rate": 0.16
+    },
+    "zen::nemotron-3-ultra-free": {
+      "n": 100,
+      "parse_failure_rate": 0.14,
+      "empty_response_rate": 0.13
+    },
+    "zen::nemotron-3.5-lightning-free": {
+      "n": 100,
+      "parse_failure_rate": 0.01,
+      "empty_response_rate": 0.01
+    }
+  }
+}

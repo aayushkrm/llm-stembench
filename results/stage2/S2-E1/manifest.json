@@ -1,0 +1,174 @@
+{
+  "run_id": "S2-E1",
+  "stage": 2,
+  "dataset": "stembench_v1",
+  "dataset_revision": "",
+  "dataset_snapshot": {
+    "path": "data/stembench_v1/items.jsonl",
+    "n_total": 1248,
+    "n_selected": 1212,
+    "split": "test",
+    "language": null,
+    "n_pairs_sampled": 50
+  },
+  "sample": {
+    "n": 50,
+    "seed": 2026,
+    "stratify_by": "subject",
+    "split": "test"
+  },
+  "prompt_template": "mc_answer_confidence_v1",
+  "prompt_template_text": "Solve the following multiple-choice problem. Reason briefly if needed, then give your final answer in exactly this format:\n\nAnswer: <letter>\nConfidence: <integer 0-100>\n\nProblem:\n{question}\n{choices}",
+  "prompt_template_hash": "cc4611f2e42678f6c7441add3e2f87290f76062118b4dc1fe9a9d086e616d12e",
+  "models": [
+    {
+      "model": "nemotron-3.5-lightning-free",
+      "provider": "zen",
+      "n_items_configured": 100,
+      "n_already_done": 100,
+      "n_new_attempted": 0,
+      "n_new_completed": 0,
+      "n_correct": 0,
+      "n_parse_failures": 0,
+      "n_errors": 0,
+      "status": "complete",
+      "error_kinds": {},
+      "n_total_evaluated": 100,
+      "n_total_correct": 85,
+      "n_total_parse_failures": 1
+    },
+    {
+      "model": "laguna-s-2.1-free",
+      "provider": "zen",
+      "n_items_configured": 100,
+      "n_already_done": 100,
+      "n_new_attempted": 0,
+      "n_new_completed": 0,
+      "n_correct": 0,
+      "n_parse_failures": 0,
+      "n_errors": 0,
+      "status": "complete",
+      "error_kinds": {},
+      "n_total_evaluated": 100,
+      "n_total_correct": 72,
+      "n_total_parse_failures": 16
+    },
+    {
+      "model": "hy3-free",
+      "provider": "zen",
+      "n_items_configured": 100,
+      "n_already_done": 100,
+      "n_new_attempted": 0,
+      "n_new_completed": 0,
+      "n_correct": 0,
+      "n_parse_failures": 0,
+      "n_errors": 0,
+      "status": "complete",
+      "error_kinds": {},
+      "n_total_evaluated": 100,
+      "n_total_correct": 82,
+      "n_total_parse_failures": 13
+    },
+    {
+      "model": "nemotron-3-ultra-free",
+      "provider": "zen",
+      "n_items_configured": 100,
+      "n_already_done": 85,
+      "n_new_attempted": 15,
+      "n_new_completed": 15,
+      "n_correct": 10,
+      "n_parse_failures": 3,
+      "n_errors": 0,
+      "status": "complete",
+      "error_kinds": {},
+      "n_total_evaluated": 100,
+      "n_total_correct": 77,
+      "n_total_parse_failures": 14
+    },
+    {
+      "model": "google/gemma-4-31b-it:free",
+      "provider": "openrouter",
+      "n_items_configured": 100,
+      "n_already_done": 1,
+      "n_new_attempted": 1,
+      "n_new_completed": 0,
+      "n_correct": 0,
+      "n_parse_failures": 0,
+      "n_errors": 0,
+      "status": "partial_daily_budget",
+      "error_kinds": {
+        "daily_budget_exceeded": 1
+      },
+      "n_total_evaluated": 1,
+      "n_total_correct": 1,
+      "n_total_parse_failures": 0
+    },
+    {
+      "model": "openai/gpt-oss-20b:free",
+      "provider": "openrouter",
+      "n_items_configured": 100,
+      "n_already_done": 17,
+      "n_new_attempted": 1,
+      "n_new_completed": 0,
+      "n_correct": 0,
+      "n_parse_failures": 0,
+      "n_errors": 0,
+      "status": "partial_daily_budget",
+      "error_kinds": {
+        "daily_budget_exceeded": 1
+      },
+      "n_total_evaluated": 17,
+      "n_total_correct": 13,
+      "n_total_parse_failures": 0
+    },
+    {
+      "model": "z-ai/glm-5.2:free",
+      "provider": "openrouter",
+      "n_items_configured": 100,
+      "n_already_done": 2,
+      "n_new_attempted": 1,
+      "n_new_completed": 0,
+      "n_correct": 0,
+      "n_parse_failures": 0,
+      "n_errors": 0,
+      "status": "partial_daily_budget",
+      "error_kinds": {
+        "daily_budget_exceeded": 1
+      },
+      "n_total_evaluated": 2,
+      "n_total_correct": 2,
+      "n_total_parse_failures": 0
+    },
+    {
+      "model": "stealth/ox-alpha",
+      "provider": "openrouter",
+      "n_items_configured": 100,
+      "n_already_done": 0,
+      "n_new_attempted": 100,
+      "n_new_completed": 100,
+      "n_correct": 80,
+      "n_parse_failures": 0,
+      "n_errors": 0,
+      "status": "complete",
+      "error_kinds": {},
+      "n_total_evaluated": 100,
+      "n_total_correct": 80,
+      "n_total_parse_failures": 0
+    }
+  ],
+  "budget_usage": {
+    "openrouter_used_today": 50,
+    "zen_used_today": 420
+  },
+  "counts": {
+    "n_items": 100,
+    "n_models": 8,
+    "total_evaluated": 520
+  },
+  "status": "partial",
+  "started_at": "2026-08-21T19:23:59+00:00",
+  "finished_at": "2026-08-21T19:35:57+00:00",
+  "git_commit": "fee503cd8f37cff5572461e8c3430c39f9a6564f",
+  "code_dirty": true,
+  "notes": "Stage 2 evaluation on the original bilingual benchmark (STEMBench v0.1.0-candidate), 50 pairs stratified by subject, seed 2026. Eight models across two free-tier providers. OpenRouter models extend via daily-budget resume (50 req/day free tier); Zen models have no documented account cap. Zero paid spend enforced."
+}
