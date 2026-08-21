@@ -62,11 +62,11 @@ was silently weakened; every deviation is recorded in `decisions.md` (D1–D12).
 9. **Traceability of claims.** Every number in `reports/` and `paper/` cites its
    generated artifact; reports regenerate by command (`docs/reproducibility.md`);
    no hand-entered result values (verified by the placeholder sweep at this audit).
-10. **Fresh-checkout reproduction.** `pip install -e ".[dev]"` → `pytest` (197 tests,
+10. **Fresh-checkout reproduction.** `pip install -e ".[dev]"` → `pytest` (205 tests,
     offline, green; ruff clean) → dry-run e2e → deterministic benchmark rebuild
     (hash-checked) → `stembench report` regenerates all tables/figures from committed
     records. CI runs the same on push (incl. secret scan + build determinism).
-11. **Tests / what could not run.** 197 tests green locally and on GitHub Actions
+11. **Tests / what could not run.** 205 tests green locally and on GitHub Actions
     (3.10 + 3.12; critical modules: parsing 98%, calibration/significance 100%,
     classification 97%, providers 94%, intervals 81%, agreement 76% coverage). Not
     runnable in CI: live-provider paths (no secrets in CI) and the Ollama adapter
@@ -80,7 +80,7 @@ was silently weakened; every deviation is recorded in `decisions.md` (D1–D12).
 
 ## Validation evidence (commands run at this audit)
 
-- `pytest tests/ -q` → 197 passed (exit 0); `ruff check src tests scripts` → clean.
+- `pytest tests/ -q` → 205 passed (exit 0); `ruff check src tests scripts` → clean.
 - Benchmark rebuild × 2 → byte-identical `items.jsonl`; SHA-256 matches
   `DATASET_VERSION`.
 - Stage 1 reports regenerated post-rescore (2 parser-fix flips documented in

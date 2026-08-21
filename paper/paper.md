@@ -259,7 +259,8 @@ benchmark. Full tables, breakdowns, and the forest figure:
 
 ## 7. Limitations
 
-Free-tier budgets cap per-model n (17–100) and exclude closed-weight frontier models;
+Free-tier budgets cap per-model n (three models at 1–17 of 100, extended by
+documented daily-budget resumes) and exclude closed-weight frontier models;
 nulls reflect limited power, not equivalence. MMLU contamination likely inflates
 Stage 1 absolutes (paired within-run contrasts less affected). RU/EN templates are
 parallel but not translationally equivalent in reading difficulty — a confound the
