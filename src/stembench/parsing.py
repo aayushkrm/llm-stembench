@@ -53,7 +53,7 @@ UNIT_WORDS = [
     "m/s", "km/h", "m/s^2", "m/s²", "N", "J", "kJ", "W", "kW", "Pa", "kPa", "atm",
     "V", "A", "Ω", "ohm", "C", "F", "mol", "mol/L", "M", "g", "kg", "mg", "m", "km",
     "cm", "mm", "s", "ms", "min", "h", "L", "mL", "°C", "°F", "K", "Hz", "kJ/mol",
-    "g/mol", "J/(kg·K)", "m^2", "m^3", "cm^3", "dm^3", "%", "units",
+    "g/mol", "J/(kg·K)", "kg*m/s", "m^2", "m^3", "cm^3", "dm^3", "%", "units",
 ]
 
 
@@ -173,6 +173,77 @@ def extract_unit(text: str) -> str:
             if re.search(pattern, norm, flags):
                 return u
     return ""
+
+
+# Russian unit spellings -> canonical UNIT_WORDS entries (lowercase keys).
+RU_UNIT_ALIASES = {
+    "моль/л": "mol/L", "г/моль": "g/mol", "м/с²": "m/s²", "м/с": "m/s",
+    "км/ч": "km/h", "кдж": "kJ", "дж": "J", "моль": "mol", "кг": "kg",
+    "мг": "mg", "км": "km", "см": "cm", "мм": "mm", "мл": "mL", "кпа": "kPa",
+    "па": "Pa", "вт": "W", "квт": "kW", "г": "g", "м": "m", "с": "s",
+    "н": "N", "к": "K", "в": "V", "а": "A", "л": "L", "%": "%",
+    "кг·м/с": "kg*m/s", "кг*м/с": "kg*m/s",
+}
+
+_ANSWER_SEG_RE = re.compile(
+    r"(?:answer|ответ)\s*(?:is|=|:)?\s*[:＝:=]?\s*(.+?)(?:\n|$)", re.IGNORECASE,
+)
+_CONF_TAIL_RE = re.compile(
+    r"(?:confidence|уверенность)\s*[:＝:=]?.*$", re.IGNORECASE,
+)
+
+
+def _unit_match_form(u: str) -> str:
+    """Normalize a unit for matching: unify separators (·, × -> *), drop the
+    spaces models put inside compound units ("mol / L" -> "mol/L"), rewrite
+    negative-exponent notation ("mol L⁻¹" -> "mol/L"), and join the implicit
+    multiplication of the momentum compound ("kg m/s" -> "kg*m/s")."""
+    u = re.sub(r"([\w.]+)\s*(?:⁻¹|\⁻¹|\^-1)", r"/\1", u)
+    u = re.sub(r"(\w)\s*([/*·×])\s*(\w)", r"\1\2\3", u)
+    u = re.sub(r"\bkg\s+m/s\b", "kg*m/s", u)
+    return u.replace("·", "*").replace("×", "*")
+
+
+def answer_units(text: str) -> list[str]:
+    """Unit tokens stated in the answer-scoped region of ``text``.
+
+    Scope = the content after the last substantive final-answer marker
+    (Answer:/Ответ:) whose segment contains a digit, falling back to the last
+    non-empty line. Units stated elsewhere (restated problem, intermediate
+    reasoning) must never influence scoring. Several tokens may coexist
+    ("399000 J (399 кДж)" -> ["J", "kJ"]); Russian spellings map to canonical
+    UNIT_WORDS entries. Returned tokens are separator-normalized ("kg·m/s" and
+    "kg*m/s" both -> "kg*m/s").
+    """
+    if not text:
+        return []
+    norm = normalize_ws(normalize_cyrillic_letters(text))
+    segments = _ANSWER_SEG_RE.findall(norm)
+    seg = ""
+    with_digit = [s for s in segments if re.search(r"\d", s)]
+    if with_digit:
+        seg = with_digit[-1]
+    elif segments:
+        seg = segments[-1]
+    seg = _CONF_TAIL_RE.sub("", seg).strip()
+    if not seg:
+        lines = [ln.strip() for ln in norm.splitlines() if ln.strip()]
+        seg = lines[-1] if lines else ""
+    if not seg:
+        return []
+    seg_match = _unit_match_form(seg)
+    found: list[str] = []
+    for u in sorted(UNIT_WORDS, key=len, reverse=True):
+        entry = _unit_match_form(u)
+        if re.search(rf"(?<![\w.]){re.escape(entry)}(?![\w.])", seg_match, re.IGNORECASE):
+            found.append(entry)
+    low = _unit_match_form(seg.lower())
+    for ru in sorted(RU_UNIT_ALIASES, key=len, reverse=True):
+        if re.search(rf"(?<![\w.]){re.escape(_unit_match_form(ru))}(?![\w.])", low):
+            canon = RU_UNIT_ALIASES[ru]
+            if canon not in found:
+                found.append(canon)
+    return found
 
 
 def normalize_exact(text: str) -> str:

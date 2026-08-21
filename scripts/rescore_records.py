@@ -31,20 +31,21 @@ def _sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
-def _score(record: dict[str, Any]) -> tuple[bool | None, str, str]:
+def _score(record: dict[str, Any], meta: dict[str, Any] | None = None) -> tuple[bool | None, str, str]:
     answer_type = record.get("answer_type")
     reference = record.get("reference_answer", "")
     raw = record.get("raw_response", "")
+    extra = dict(meta or {})
+    extra.update({k: v for k, v in (record.get("extra") or {}).items() if v not in (None, "", [])})
     if answer_type == "mc":
         if len(reference) != 1 or not reference.upper().isalpha():
             raise ValueError(f"invalid MC reference {reference!r}")
-        n_choices = int(record.get("extra", {}).get("n_choices", 4))
+        n_choices = int(extra.get("n_choices", 4))
         return score_mc(raw, ord(reference.upper()) - ord("A"), n_choices=n_choices)
     if answer_type == "exact":
-        alternatives = record.get("extra", {}).get("acceptable_answers")
+        alternatives = extra.get("acceptable_answers")
         return score_exact(raw, reference, alternatives=alternatives)
     if answer_type == "numeric":
-        extra = record.get("extra", {})
         return score_numeric(
             raw,
             float(reference),
@@ -53,6 +54,27 @@ def _score(record: dict[str, Any]) -> tuple[bool | None, str, str]:
             require_unit=extra.get("unit", ""),
         )
     raise ValueError(f"unsupported answer_type {answer_type!r}")
+
+
+def _load_items_meta(path: Path) -> dict[str, dict[str, Any]]:
+    """Canonical scoring metadata per item_id from the built dataset."""
+    meta: dict[str, Any] = {}
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if not line.strip():
+            continue
+        it = json.loads(line)
+        entry: dict[str, Any] = {}
+        if it.get("answer_type") == "mc":
+            entry["n_choices"] = len(it.get("choices") or [])
+        elif it.get("answer_type") == "numeric":
+            entry["unit"] = it.get("units") or ""
+            tol = it.get("tolerance") or {}
+            entry["rel_tol"] = tol.get("rel")
+            entry["abs_tol"] = tol.get("abs")
+        else:
+            entry["acceptable_answers"] = it.get("acceptable_alternatives") or []
+        meta[it["item_id"]] = entry
+    return meta
 
 
 def _atomic_write_jsonl(path: Path, records: list[dict[str, Any]]) -> None:
@@ -72,7 +94,7 @@ def _atomic_write_jsonl(path: Path, records: list[dict[str, Any]]) -> None:
         raise
 
 
-def rescore_run(run_dir: Path, *, apply: bool) -> dict[str, Any]:
+def rescore_run(run_dir: Path, *, apply: bool, items_meta: dict[str, Any] | None = None) -> dict[str, Any]:
     files: list[dict[str, Any]] = []
     totals = {"records": 0, "eligible": 0, "changed": 0, "correctness_flips": 0}
 
@@ -97,7 +119,7 @@ def rescore_run(run_dir: Path, *, apply: bool) -> dict[str, Any]:
 
             eligible += 1
             totals["eligible"] += 1
-            ok, parsed, method = _score(record)
+            ok, parsed, method = _score(record, (items_meta or {}).get(record.get("item_id")))
             new_status = "parse_failure" if ok is None else ""
             new_values = {
                 "parsed_answer": parsed,
@@ -146,6 +168,10 @@ def main() -> int:
     parser.add_argument("runs", nargs="+", type=Path, help="run directories containing JSONL")
     parser.add_argument("--apply", action="store_true", help="atomically rewrite changed files")
     parser.add_argument(
+        "--items", type=Path, default=None,
+        help="items.jsonl supplying canonical unit/tolerance/alternatives per item_id",
+    )
+    parser.add_argument(
         "--manifest",
         type=Path,
         default=Path("results/stage1/rescore_manifest.json"),
@@ -153,13 +179,19 @@ def main() -> int:
     )
     args = parser.parse_args()
 
+    items_meta = _load_items_meta(args.items) if args.items else None
     summary = {
-        "schema_version": 1,
+        "schema_version": 2,
         "operation": "offline_rescore_from_stored_raw_responses",
-        "parser_change": "MC answer letter must not be part of a longer word",
+        "scoring_change": (
+            "numeric unit check is answer-scoped (Answer: segment) with membership "
+            "matching and RU aliases; whole-response unit extraction was picking "
+            "units out of reasoning text"
+        ),
+        "items_source": str(args.items) if args.items else None,
         "provider_calls": 0,
         "applied": bool(args.apply),
-        "runs": [rescore_run(path, apply=args.apply) for path in args.runs],
+        "runs": [rescore_run(path, apply=args.apply, items_meta=items_meta) for path in args.runs],
     }
     print(json.dumps(summary, indent=2, ensure_ascii=False))
     if args.apply:

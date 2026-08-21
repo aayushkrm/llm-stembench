@@ -1,0 +1,94 @@
+{
+  "schema_version": 2,
+  "operation": "offline_rescore_from_stored_raw_responses",
+  "scoring_change": "numeric unit check is answer-scoped (Answer: segment) with membership matching and RU aliases; whole-response unit extraction was picking units out of reasoning text",
+  "items_source": "data/stembench_v1/items.jsonl",
+  "provider_calls": 0,
+  "applied": true,
+  "runs": [
+    {
+      "run_id": "S2-E1",
+      "files": [
+        {
+          "path": "results/stage2/S2-E1/openrouter__google_gemma-4-31b-it_free.jsonl",
+          "records": 6,
+          "eligible": 1,
+          "changed": 1,
+          "correctness_flips": 0,
+          "sha256_before": "95223a88951d510ad690487af57e19fcc000b2996e1b711f2562564301e69e6f",
+          "sha256_after": "57b9ca1495491a1f84a1d0c33d75494609a44b9881a7e787e5dfbdbd84e49315"
+        },
+        {
+          "path": "results/stage2/S2-E1/openrouter__openai_gpt-oss-20b_free.jsonl",
+          "records": 20,
+          "eligible": 17,
+          "changed": 3,
+          "correctness_flips": 0,
+          "sha256_before": "641a6be4b26a04ec8b49eef2993593ca5c9ec1f6354578ce0ee414fb46482765",
+          "sha256_after": "652981ef2cde6c841b08ecdc240365b52d71855cb3656af931a2553ace488edb"
+        },
+        {
+          "path": "results/stage2/S2-E1/openrouter__stealth_ox-alpha.jsonl",
+          "records": 100,
+          "eligible": 100,
+          "changed": 22,
+          "correctness_flips": 11,
+          "sha256_before": "46699f570ad65fef5498f841e6e11d5904d590885ec7ba9e4de19ff2802c7b99",
+          "sha256_after": "c8a30bbea74223b1e810dead0f08848014102508795df322765f0c5e5a59b1a6"
+        },
+        {
+          "path": "results/stage2/S2-E1/openrouter__z-ai_glm-5.2_free.jsonl",
+          "records": 6,
+          "eligible": 2,
+          "changed": 2,
+          "correctness_flips": 0,
+          "sha256_before": "3a3e73f97e1edf2c18259551e248d94deba0f0d74682ef67e2fbe62977942abe",
+          "sha256_after": "2671123fde3873511fe69bb788507eed8abb186fe6715afd879db9c055bc947f"
+        },
+        {
+          "path": "results/stage2/S2-E1/zen__hy3-free.jsonl",
+          "records": 100,
+          "eligible": 87,
+          "changed": 7,
+          "correctness_flips": 0,
+          "sha256_before": "e9ab78682092af0b92737fbdfa242747ab2d5d66f767ecc414f97f6a7a37ea88",
+          "sha256_after": "d215dd74d979e2979e3bd2b6c748c1a1a14c2bd0bed092858172d305f4c1c34b"
+        },
+        {
+          "path": "results/stage2/S2-E1/zen__laguna-s-2.1-free.jsonl",
+          "records": 100,
+          "eligible": 84,
+          "changed": 14,
+          "correctness_flips": 6,
+          "sha256_before": "d495921f20b94b6e5883da3bb478fd4638dba83429f955c7c4e9a03c53f670d4",
+          "sha256_after": "afa51d3f6e46b4b437cdf19e39b603f9c6611e5656baea3590dfadeeeccf5cf5"
+        },
+        {
+          "path": "results/stage2/S2-E1/zen__nemotron-3-ultra-free.jsonl",
+          "records": 100,
+          "eligible": 87,
+          "changed": 13,
+          "correctness_flips": 2,
+          "sha256_before": "6b1bfe683088463197372c52c2d6a3c2891b9be2112745ed93bfe05f2c6e1ffd",
+          "sha256_after": "dfdec2752ae55cb356a316acfee848e7e87ff965269b3a06ee9dace971f36557"
+        },
+        {
+          "path": "results/stage2/S2-E1/zen__nemotron-3.5-lightning-free.jsonl",
+          "records": 100,
+          "eligible": 99,
+          "changed": 14,
+          "correctness_flips": 0,
+          "sha256_before": "2127f3039e5900ac48aa358e02c4d5cecfbcc39ff0a1a3922473983ca87a2d9e",
+          "sha256_after": "87a4e3a551e37a75f2e7ef3984d0de005bd4be606662514c1ac6145c0c66a030"
+        }
+      ],
+      "totals": {
+        "records": 532,
+        "eligible": 477,
+        "changed": 76,
+        "correctness_flips": 19
+      }
+    }
+  ],
+  "completed_at": "2026-08-21T20:34:51.226046+00:00"
+}

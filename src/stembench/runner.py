@@ -196,6 +196,16 @@ def _run_one_model(
                 started_at=utcnow(),
                 code_commit=commit,
             )
+            # scoring metadata so records can be rescored standalone
+            if isinstance(item, MCItem):
+                rec.extra["n_choices"] = len(item.choices)
+            elif item.answer_type.value == "numeric":
+                rec.extra["unit"] = item.units or ""
+                if item.tolerance:
+                    rec.extra["rel_tol"] = item.tolerance.rel
+                    rec.extra["abs_tol"] = item.tolerance.abs
+            else:
+                rec.extra["acceptable_answers"] = list(item.alternatives or [])
             try:
                 comp: Completion = provider.complete(
                     model=model_spec.model,
