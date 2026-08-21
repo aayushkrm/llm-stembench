@@ -6,7 +6,7 @@ import hashlib
 import json
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -55,8 +55,8 @@ class Choice(BaseModel):
 
 
 class Tolerance(BaseModel):
-    rel: Optional[float] = None  # relative tolerance, e.g. 0.01 = 1%
-    abs: Optional[float] = None  # absolute tolerance
+    rel: float | None = None  # relative tolerance, e.g. 0.01 = 1%
+    abs: float | None = None  # absolute tolerance
 
 
 class VerifierRecord(BaseModel):
@@ -73,6 +73,7 @@ class BenchmarkItem(BaseModel):
     language: Language
     subject: Subject
     topic: str
+    template_id: str = ""  # stable generator family/variant identifier
     difficulty: Difficulty
     difficulty_rubric: str = ""  # evidence for the difficulty assignment
     question: str
@@ -80,7 +81,7 @@ class BenchmarkItem(BaseModel):
     choices: list[Choice] = Field(default_factory=list)  # required for MC
     canonical_answer: str  # letter for MC; canonical string/number otherwise
     acceptable_alternatives: list[str] = Field(default_factory=list)
-    tolerance: Optional[Tolerance] = None  # for NUMERIC
+    tolerance: Tolerance | None = None  # for NUMERIC
     units: str = ""
     solution: str  # worked solution or concise rationale
     provenance: str = "original_procedural"
@@ -108,6 +109,7 @@ class MCItem(BaseModel):
     item_id: str
     dataset: str
     subject: str
+    template_id: str = ""
     language: Language = Language.EN
     difficulty: str = "unknown"
     question: str
@@ -119,21 +121,22 @@ class FreeResponseItem(BaseModel):
     item_id: str
     dataset: str
     subject: str
+    template_id: str = ""
     language: Language = Language.EN
     difficulty: str = "unknown"
     question: str
     answer_type: AnswerType = AnswerType.EXACT
     gold: str  # canonical reference answer
     alternatives: list[str] = Field(default_factory=list)
-    tolerance: Optional[Tolerance] = None
+    tolerance: Tolerance | None = None
     units: str = ""
 
 
 class DecodingSettings(BaseModel):
     temperature: float = 0.0
     max_tokens: int = 2048
-    top_p: Optional[float] = None
-    seed: Optional[int] = None
+    top_p: float | None = None
+    seed: int | None = None
     notes: str = ""
 
 
@@ -142,7 +145,7 @@ class ModelSpec(BaseModel):
     model: str  # exact model ID at the provider
     display_name: str = ""
     decoding: DecodingSettings = Field(default_factory=DecodingSettings)
-    n_items: Optional[int] = None  # per-model cap (budget), None = all
+    n_items: int | None = None  # per-model cap (budget), None = all
 
     @property
     def key(self) -> str:
@@ -173,9 +176,9 @@ class RunConfig(BaseModel):
 
 
 class Usage(BaseModel):
-    prompt_tokens: Optional[int] = None
-    completion_tokens: Optional[int] = None
-    total_tokens: Optional[int] = None
+    prompt_tokens: int | None = None
+    completion_tokens: int | None = None
+    total_tokens: int | None = None
 
 
 class LogprobTop(BaseModel):
@@ -191,6 +194,7 @@ class ResponseRecord(BaseModel):
     dataset: str
     dataset_revision: str = ""
     subject: str = ""
+    template_id: str = ""
     language: str = "en"
     difficulty: str = "unknown"
     answer_type: str = "mc"
@@ -202,18 +206,18 @@ class ResponseRecord(BaseModel):
     prompt_text: str = ""
     started_at: str = ""
     finished_at: str = ""
-    latency_ms: Optional[int] = None
+    latency_ms: int | None = None
     raw_response: str = ""
     finish_reason: str = ""
-    usage: Optional[Usage] = None
-    logprobs_raw: Optional[list[dict[str, Any]]] = None  # provider top_logprobs, if exposed
-    parsed_answer: Optional[str] = None
+    usage: Usage | None = None
+    logprobs_raw: list[dict[str, Any]] | None = None  # provider top_logprobs, if exposed
+    parsed_answer: str | None = None
     parse_method: str = ""
     reference_answer: str = ""
-    correctness: Optional[bool] = None  # None = unparseable/abstained
-    self_reported_confidence: Optional[float] = None  # 0..1
+    correctness: bool | None = None  # None = unparseable/abstained
+    self_reported_confidence: float | None = None  # 0..1
     confidence_provenance: list[str] = Field(default_factory=list)
-    estimated_cost: Optional[float] = None
+    estimated_cost: float | None = None
     error_status: str = ""  # "", "rate_limited", "timeout", "provider_error", "parse_failure"
     code_commit: str = ""
     extra: dict[str, Any] = Field(default_factory=dict)

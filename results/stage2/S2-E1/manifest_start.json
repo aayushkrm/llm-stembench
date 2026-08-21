@@ -1,0 +1,32 @@
+{
+  "run_id": "S2-E1",
+  "stage": 2,
+  "dataset": "stembench_v1",
+  "dataset_revision": "",
+  "dataset_snapshot": {
+    "path": "data/stembench_v1/items.jsonl",
+    "n_total": 1248,
+    "n_selected": 1212,
+    "split": "test",
+    "language": null,
+    "n_pairs_sampled": 50
+  },
+  "sample": {
+    "n": 50,
+    "seed": 2026,
+    "stratify_by": "subject",
+    "split": "test"
+  },
+  "prompt_template": "mc_answer_confidence_v1",
+  "prompt_template_text": "Solve the following multiple-choice problem. Reason briefly if needed, then give your final answer in exactly this format:\n\nAnswer: <letter>\nConfidence: <integer 0-100>\n\nProblem:\n{question}\n{choices}",
+  "prompt_template_hash": "cc4611f2e42678f6c7441add3e2f87290f76062118b4dc1fe9a9d086e616d12e",
+  "models": [],
+  "budget_usage": {},
+  "counts": {},
+  "status": "running",
+  "started_at": "2026-08-21T18:42:29+00:00",
+  "finished_at": "",
+  "git_commit": "0a82950fff2d6b98a7bd02098ccd82790af09542",
+  "code_dirty": true,
+  "notes": "Stage 2 evaluation on the original bilingual benchmark (STEMBench v0.1.0-candidate), 50 pairs stratified by subject, seed 2026. Seven models across two free-tier providers. OpenRouter models extend via daily-budget resume (50 req/day free tier); Zen models have no documented account cap. Zero paid spend enforced."
+}

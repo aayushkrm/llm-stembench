@@ -13,15 +13,12 @@ CLI:
 from __future__ import annotations
 
 from ._core import DEFAULT_SEED, VERSION
-from .build import assemble, build_dataset
 from .qc import run_qc
 from .verify import verify_pair
 
 __all__ = [
     "DEFAULT_SEED",
     "VERSION",
-    "assemble",
-    "build_dataset",
     "run_qc",
     "verify_pair",
 ]

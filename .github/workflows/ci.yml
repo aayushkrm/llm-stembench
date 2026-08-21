@@ -38,7 +38,9 @@ jobs:
           python -m stembench.benchmark_gen.build --out /tmp/bench_a --seed 20260817
           python -m stembench.benchmark_gen.build --out /tmp/bench_b --seed 20260817
           cmp /tmp/bench_a/items.jsonl /tmp/bench_b/items.jsonl
+          cmp /tmp/bench_a/items.jsonl data/stembench_v1/items.jsonl
           sha256sum /tmp/bench_a/items.jsonl /tmp/bench_b/items.jsonl
+          python -c 'import hashlib,json,pathlib; p=pathlib.Path("data/stembench_v1"); h=hashlib.sha256((p/"items.jsonl").read_bytes()).hexdigest(); m=json.loads((p/"DATASET_VERSION").read_text()); r=json.loads((p/"verification_report.json").read_text()); assert h == m["items_jsonl_sha256"] == r["checksums"]["items_jsonl_sha256"]'
 
   secret-scan:
     runs-on: ubuntu-latest

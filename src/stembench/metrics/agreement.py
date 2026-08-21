@@ -8,7 +8,6 @@ anywhere in this project because no human annotators were available.
 from __future__ import annotations
 
 import numpy as np
-from scipy import stats
 
 
 def cohens_kappa(r1: list[int], r2: list[int], n_classes: int) -> dict[str, float]:

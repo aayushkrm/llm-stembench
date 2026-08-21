@@ -1,0 +1,985 @@
+{
+  "run_dir": "results/stage1/S1-P2",
+  "models": {
+    "zen::hy3-free": {
+      "n": 120,
+      "n_parsed": 107,
+      "parse_failure_rate": 0.10833333333333334,
+      "accuracy_strict": {
+        "acc": 0.9813084112149533,
+        "ci_lo": 0.9343961469302772,
+        "ci_hi": 0.9948590351638246,
+        "n": 107
+      },
+      "accuracy_lenient": {
+        "acc": 0.875,
+        "ci_lo": 0.8039705979199262,
+        "ci_hi": 0.9227650272660463,
+        "n": 120
+      },
+      "calibration_self_report": {
+        "n": 107,
+        "population": "parsed answers only (parse failures excluded)",
+        "ECE": 0.011682242990654346,
+        "MCE": 0.011682242990654346,
+        "brier": 0.019042056074766354,
+        "mean_confidence": 0.9929906542056076,
+        "reliability_bins": [
+          {
+            "bin_lo": 0.0,
+            "bin_hi": 0.1,
+            "n": 0,
+            "avg_conf": NaN,
+            "acc": NaN
+          },
+          {
+            "bin_lo": 0.1,
+            "bin_hi": 0.2,
+            "n": 0,
+            "avg_conf": NaN,
+            "acc": NaN
+          },
+          {
+            "bin_lo": 0.2,
+            "bin_hi": 0.30000000000000004,
+            "n": 0,
+            "avg_conf": NaN,
+            "acc": NaN
+          },
+          {
+            "bin_lo": 0.30000000000000004,
+            "bin_hi": 0.4,
+            "n": 0,
+            "avg_conf": NaN,
+            "acc": NaN
+          },
+          {
+            "bin_lo": 0.4,
+            "bin_hi": 0.5,
+            "n": 0,
+            "avg_conf": NaN,
+            "acc": NaN
+          },
+          {
+            "bin_lo": 0.5,
+            "bin_hi": 0.6000000000000001,
+            "n": 0,
+            "avg_conf": NaN,
+            "acc": NaN
+          },
+          {
+            "bin_lo": 0.6000000000000001,
+            "bin_hi": 0.7000000000000001,
+            "n": 0,
+            "avg_conf": NaN,
+            "acc": NaN
+          },
+          {
+            "bin_lo": 0.7000000000000001,
+            "bin_hi": 0.8,
+            "n": 0,
+            "avg_conf": NaN,
+            "acc": NaN
+          },
+          {
+            "bin_lo": 0.8,
+            "bin_hi": 0.9,
+            "n": 0,
+            "avg_conf": NaN,
+            "acc": NaN
+          },
+          {
+            "bin_lo": 0.9,
+            "bin_hi": 1.0,
+            "n": 107,
+            "avg_conf": 0.9929906542056076,
+            "acc": 0.9813084112149533
+          }
+        ]
+      },
+      "h2_overconfidence_gap_lenient": {
+        "diff": 0.011682242990654346,
+        "ci_lo": -0.008878504672897192,
+        "ci_hi": 0.041588785046728916,
+        "p_bootstrap": 0.3334
+      },
+      "mc_confusion": [
+        [
+          22,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          30,
+          0,
+          0
+        ],
+        [
+          1,
+          0,
+          35,
+          0
+        ],
+        [
+          0,
+          1,
+          0,
+          18
+        ]
+      ],
+      "mc_macro_f1": {
+        "precision_per_class": [
+          0.9565217391304348,
+          0.967741935483871,
+          1.0,
+          1.0
+        ],
+        "recall_per_class": [
+          1.0,
+          1.0,
+          0.9722222222222222,
+          0.9473684210526315
+        ],
+        "f1_per_class": [
+          0.9777777777777777,
+          0.9836065573770492,
+          0.9859154929577464,
+          0.972972972972973
+        ],
+        "support": [
+          22,
+          30,
+          36,
+          19
+        ],
+        "precision": 0.9810659186535764,
+        "recall": 0.9798976608187134,
+        "f1": 0.9800682002713865
+      }
+    },
+    "zen::laguna-s-2.1-free": {
+      "n": 119,
+      "n_parsed": 107,
+      "parse_failure_rate": 0.10084033613445378,
+      "accuracy_strict": {
+        "acc": 0.9626168224299065,
+        "ci_lo": 0.907799501476478,
+        "ci_hi": 0.9853681007304741,
+        "n": 107
+      },
+      "accuracy_lenient": {
+        "acc": 0.865546218487395,
+        "ci_lo": 0.7927150943383466,
+        "ci_hi": 0.9155148537200674,
+        "n": 119
+      },
+      "calibration_self_report": {
+        "n": 107,
+        "population": "parsed answers only (parse failures excluded)",
+        "ECE": 0.013551401869158774,
+        "MCE": 0.027272727272727337,
+        "brier": 0.036004672897196256,
+        "mean_confidence": 0.9705607476635515,
+        "reliability_bins": [
+          {
+            "bin_lo": 0.0,
+            "bin_hi": 0.1,
+            "n": 0,
+            "avg_conf": NaN,
+            "acc": NaN
+          },
+          {
+            "bin_lo": 0.1,
+            "bin_hi": 0.2,
+            "n": 0,
+            "avg_conf": NaN,
+            "acc": NaN
+          },
+          {
+            "bin_lo": 0.2,
+            "bin_hi": 0.30000000000000004,
+            "n": 0,
+            "avg_conf": NaN,
+            "acc": NaN
+          },
+          {
+            "bin_lo": 0.30000000000000004,
+            "bin_hi": 0.4,
+            "n": 0,
+            "avg_conf": NaN,
+            "acc": NaN
+          },
+          {
+            "bin_lo": 0.4,
+            "bin_hi": 0.5,
+            "n": 0,
+            "avg_conf": NaN,
+            "acc": NaN
+          },
+          {
+            "bin_lo": 0.5,
+            "bin_hi": 0.6000000000000001,
+            "n": 0,
+            "avg_conf": NaN,
+            "acc": NaN
+          },
+          {
+            "bin_lo": 0.6000000000000001,
+            "bin_hi": 0.7000000000000001,
+            "n": 0,
+            "avg_conf": NaN,
+            "acc": NaN
+          },
+          {
+            "bin_lo": 0.7000000000000001,
+            "bin_hi": 0.8,
+            "n": 0,
+            "avg_conf": NaN,
+            "acc": NaN
+          },
+          {
+            "bin_lo": 0.8,
+            "bin_hi": 0.9,
+            "n": 11,
+            "avg_conf": 0.8818181818181817,
+            "acc": 0.9090909090909091
+          },
+          {
+            "bin_lo": 0.9,
+            "bin_hi": 1.0,
+            "n": 96,
+            "avg_conf": 0.9807291666666665,
+            "acc": 0.96875
+          }
+        ]
+      },
+      "h2_overconfidence_gap_lenient": {
+        "diff": 0.007943925233644955,
+        "ci_lo": -0.022897196261682295,
+        "ci_hi": 0.04813084112149524,
+        "p_bootstrap": 0.7248
+      },
+      "mc_confusion": [
+        [
+          22,
+          0,
+          1,
+          0
+        ],
+        [
+          0,
+          29,
+          1,
+          0
+        ],
+        [
+          1,
+          0,
+          33,
+          1
+        ],
+        [
+          0,
+          0,
+          0,
+          19
+        ]
+      ],
+      "mc_macro_f1": {
+        "precision_per_class": [
+          0.9565217391304348,
+          1.0,
+          0.9428571428571428,
+          0.95
+        ],
+        "recall_per_class": [
+          0.9565217391304348,
+          0.9666666666666667,
+          0.9428571428571428,
+          1.0
+        ],
+        "f1_per_class": [
+          0.9565217391304348,
+          0.983050847457627,
+          0.9428571428571428,
+          0.9743589743589743
+        ],
+        "support": [
+          23,
+          30,
+          35,
+          19
+        ],
+        "precision": 0.9623447204968945,
+        "recall": 0.9665113871635611,
+        "f1": 0.9641971759510448
+      }
+    },
+    "zen::nemotron-3.5-lightning-free": {
+      "n": 120,
+      "n_parsed": 119,
+      "parse_failure_rate": 0.008333333333333333,
+      "accuracy_strict": {
+        "acc": 0.9495798319327731,
+        "ci_lo": 0.894351752607072,
+        "ci_hi": 0.976689677763621,
+        "n": 119
+      },
+      "accuracy_lenient": {
+        "acc": 0.9416666666666667,
+        "ci_lo": 0.8844740796636988,
+        "ci_hi": 0.9714589899997798,
+        "n": 120
+      },
+      "calibration_self_report": {
+        "n": 115,
+        "population": "parsed answers only (parse failures excluded)",
+        "ECE": 0.009826086956521717,
+        "MCE": 0.5,
+        "brier": 0.02698173913043478,
+        "mean_confidence": 0.9733043478260869,
+        "reliability_bins": [
+          {
+            "bin_lo": 0.0,
+            "bin_hi": 0.1,
+            "n": 0,
+            "avg_conf": NaN,
+            "acc": NaN
+          },
+          {
+            "bin_lo": 0.1,
+            "bin_hi": 0.2,
+            "n": 0,
+            "avg_conf": NaN,
+            "acc": NaN
+          },
+          {
+            "bin_lo": 0.2,
+            "bin_hi": 0.30000000000000004,
+            "n": 0,
+            "avg_conf": NaN,
+            "acc": NaN
+          },
+          {
+            "bin_lo": 0.30000000000000004,
+            "bin_hi": 0.4,
+            "n": 0,
+            "avg_conf": NaN,
+            "acc": NaN
+          },
+          {
+            "bin_lo": 0.4,
+            "bin_hi": 0.5,
+            "n": 1,
+            "avg_conf": 0.5,
+            "acc": 1.0
+          },
+          {
+            "bin_lo": 0.5,
+            "bin_hi": 0.6000000000000001,
+            "n": 0,
+            "avg_conf": NaN,
+            "acc": NaN
+          },
+          {
+            "bin_lo": 0.6000000000000001,
+            "bin_hi": 0.7000000000000001,
+            "n": 0,
+            "avg_conf": NaN,
+            "acc": NaN
+          },
+          {
+            "bin_lo": 0.7000000000000001,
+            "bin_hi": 0.8,
+            "n": 4,
+            "avg_conf": 0.8,
+            "acc": 0.75
+          },
+          {
+            "bin_lo": 0.8,
+            "bin_hi": 0.9,
+            "n": 1,
+            "avg_conf": 0.9,
+            "acc": 1.0
+          },
+          {
+            "bin_lo": 0.9,
+            "bin_hi": 1.0,
+            "n": 109,
+            "avg_conf": 0.9846788990825688,
+            "acc": 0.981651376146789
+          }
+        ]
+      },
+      "h2_overconfidence_gap_lenient": {
+        "diff": -0.0006086956521740294,
+        "ci_lo": -0.02669565217391312,
+        "ci_hi": 0.032173913043478275,
+        "p_bootstrap": 0.914
+      },
+      "mc_confusion": [
+        [
+          26,
+          0,
+          0,
+          1
+        ],
+        [
+          1,
+          33,
+          0,
+          0
+        ],
+        [
+          3,
+          0,
+          35,
+          0
+        ],
+        [
+          0,
+          1,
+          0,
+          19
+        ]
+      ],
+      "mc_macro_f1": {
+        "precision_per_class": [
+          0.8666666666666667,
+          0.9705882352941176,
+          1.0,
+          0.95
+        ],
+        "recall_per_class": [
+          0.9629629629629629,
+          0.9705882352941176,
+          0.9210526315789473,
+          0.95
+        ],
+        "f1_per_class": [
+          0.912280701754386,
+          0.9705882352941176,
+          0.958904109589041,
+          0.9500000000000001
+        ],
+        "support": [
+          27,
+          34,
+          38,
+          20
+        ],
+        "precision": 0.946813725490196,
+        "recall": 0.9511509574590069,
+        "f1": 0.9479432616593862
+      }
+    }
+  },
+  "comparisons": {
+    "pairwise_mcnemar": [
+      {
+        "model_a": "zen::hy3-free",
+        "model_b": "zen::laguna-s-2.1-free",
+        "n_common": 119,
+        "acc_a": 0.8739495798319328,
+        "acc_b": 0.865546218487395,
+        "diff": 0.008403361344537785,
+        "b": 9,
+        "c": 8,
+        "p_exact": 1.0,
+        "p_chi2": 1.0,
+        "p_bh": 1.0,
+        "significant_0.05": false
+      },
+      {
+        "model_a": "zen::hy3-free",
+        "model_b": "zen::nemotron-3.5-lightning-free",
+        "n_common": 120,
+        "acc_a": 0.875,
+        "acc_b": 0.9416666666666667,
+        "diff": -0.06666666666666665,
+        "b": 1,
+        "c": 9,
+        "p_exact": 0.04296875,
+        "p_chi2": 0.02685669550752441,
+        "p_bh": 0.0673828125,
+        "significant_0.05": false
+      },
+      {
+        "model_a": "zen::laguna-s-2.1-free",
+        "model_b": "zen::nemotron-3.5-lightning-free",
+        "n_common": 119,
+        "acc_a": 0.865546218487395,
+        "acc_b": 0.9411764705882353,
+        "diff": -0.07563025210084029,
+        "b": 2,
+        "c": 11,
+        "p_exact": 0.044921875,
+        "p_chi2": 0.026500280602491884,
+        "p_bh": 0.0673828125,
+        "significant_0.05": false
+      }
+    ],
+    "cochran_q": {
+      "Q": 7.3,
+      "df": 2.0,
+      "p": 0.02599112877875535,
+      "n_items": 119,
+      "models": [
+        "zen::hy3-free",
+        "zen::laguna-s-2.1-free",
+        "zen::nemotron-3.5-lightning-free"
+      ]
+    }
+  },
+  "by_subject": {
+    "zen::hy3-free": {
+      "abstract_algebra": {
+        "acc": 1.0,
+        "ci_lo": 0.43850296824495455,
+        "ci_hi": 1.0,
+        "n": 3,
+        "small_cell": true
+      },
+      "anatomy": {
+        "acc": 0.6,
+        "ci_lo": 0.2307242812760128,
+        "ci_hi": 0.882379225767352,
+        "n": 5,
+        "small_cell": false
+      },
+      "astronomy": {
+        "acc": 1.0,
+        "ci_lo": 0.5655175352168251,
+        "ci_hi": 1.0,
+        "n": 5,
+        "small_cell": false
+      },
+      "college_biology": {
+        "acc": 1.0,
+        "ci_lo": 0.5655175352168251,
+        "ci_hi": 1.0,
+        "n": 5,
+        "small_cell": false
+      },
+      "college_chemistry": {
+        "acc": 0.75,
+        "ci_lo": 0.30064184258240184,
+        "ci_hi": 0.9544127391902995,
+        "n": 4,
+        "small_cell": true
+      },
+      "college_computer_science": {
+        "acc": 0.75,
+        "ci_lo": 0.30064184258240184,
+        "ci_hi": 0.9544127391902995,
+        "n": 4,
+        "small_cell": true
+      },
+      "college_mathematics": {
+        "acc": 1.0,
+        "ci_lo": 0.5101091635454027,
+        "ci_hi": 1.0,
+        "n": 4,
+        "small_cell": true
+      },
+      "college_physics": {
+        "acc": 0.75,
+        "ci_lo": 0.30064184258240184,
+        "ci_hi": 0.9544127391902995,
+        "n": 4,
+        "small_cell": true
+      },
+      "computer_security": {
+        "acc": 1.0,
+        "ci_lo": 0.43850296824495455,
+        "ci_hi": 1.0,
+        "n": 3,
+        "small_cell": true
+      },
+      "conceptual_physics": {
+        "acc": 1.0,
+        "ci_lo": 0.6755924351161198,
+        "ci_hi": 1.0,
+        "n": 8,
+        "small_cell": false
+      },
+      "electrical_engineering": {
+        "acc": 0.6,
+        "ci_lo": 0.2307242812760128,
+        "ci_hi": 0.882379225767352,
+        "n": 5,
+        "small_cell": false
+      },
+      "elementary_mathematics": {
+        "acc": 1.0,
+        "ci_lo": 0.7719046276458016,
+        "ci_hi": 0.9999999999999999,
+        "n": 13,
+        "small_cell": false
+      },
+      "formal_logic": {
+        "acc": 0.75,
+        "ci_lo": 0.30064184258240184,
+        "ci_hi": 0.9544127391902995,
+        "n": 4,
+        "small_cell": true
+      },
+      "high_school_biology": {
+        "acc": 1.0,
+        "ci_lo": 0.7411670330319684,
+        "ci_hi": 1.0,
+        "n": 11,
+        "small_cell": false
+      },
+      "high_school_chemistry": {
+        "acc": 0.8571428571428571,
+        "ci_lo": 0.4868721707256811,
+        "ci_hi": 0.9743203756552565,
+        "n": 7,
+        "small_cell": false
+      },
+      "high_school_computer_science": {
+        "acc": 0.6666666666666666,
+        "ci_lo": 0.20765960080204765,
+        "ci_hi": 0.9385080552796037,
+        "n": 3,
+        "small_cell": true
+      },
+      "high_school_mathematics": {
+        "acc": 0.8888888888888888,
+        "ci_lo": 0.565000294423344,
+        "ci_hi": 0.980109112361455,
+        "n": 9,
+        "small_cell": false
+      },
+      "high_school_physics": {
+        "acc": 0.8,
+        "ci_lo": 0.3755346297625253,
+        "ci_hi": 0.9637758913675698,
+        "n": 5,
+        "small_cell": false
+      },
+      "high_school_statistics": {
+        "acc": 1.0,
+        "ci_lo": 0.6755924351161198,
+        "ci_hi": 1.0,
+        "n": 8,
+        "small_cell": false
+      },
+      "machine_learning": {
+        "acc": 0.75,
+        "ci_lo": 0.30064184258240184,
+        "ci_hi": 0.9544127391902995,
+        "n": 4,
+        "small_cell": true
+      },
+      "virology": {
+        "acc": 0.6666666666666666,
+        "ci_lo": 0.299993315138392,
+        "ci_hi": 0.9032285888942195,
+        "n": 6,
+        "small_cell": false
+      }
+    },
+    "zen::laguna-s-2.1-free": {
+      "abstract_algebra": {
+        "acc": 1.0,
+        "ci_lo": 0.43850296824495455,
+        "ci_hi": 1.0,
+        "n": 3,
+        "small_cell": true
+      },
+      "anatomy": {
+        "acc": 0.8,
+        "ci_lo": 0.3755346297625253,
+        "ci_hi": 0.9637758913675698,
+        "n": 5,
+        "small_cell": false
+      },
+      "astronomy": {
+        "acc": 1.0,
+        "ci_lo": 0.5101091635454027,
+        "ci_hi": 1.0,
+        "n": 4,
+        "small_cell": true
+      },
+      "college_biology": {
+        "acc": 1.0,
+        "ci_lo": 0.5655175352168251,
+        "ci_hi": 1.0,
+        "n": 5,
+        "small_cell": false
+      },
+      "college_chemistry": {
+        "acc": 0.75,
+        "ci_lo": 0.30064184258240184,
+        "ci_hi": 0.9544127391902995,
+        "n": 4,
+        "small_cell": true
+      },
+      "college_computer_science": {
+        "acc": 0.75,
+        "ci_lo": 0.30064184258240184,
+        "ci_hi": 0.9544127391902995,
+        "n": 4,
+        "small_cell": true
+      },
+      "college_mathematics": {
+        "acc": 1.0,
+        "ci_lo": 0.5101091635454027,
+        "ci_hi": 1.0,
+        "n": 4,
+        "small_cell": true
+      },
+      "college_physics": {
+        "acc": 1.0,
+        "ci_lo": 0.5101091635454027,
+        "ci_hi": 1.0,
+        "n": 4,
+        "small_cell": true
+      },
+      "computer_security": {
+        "acc": 1.0,
+        "ci_lo": 0.43850296824495455,
+        "ci_hi": 1.0,
+        "n": 3,
+        "small_cell": true
+      },
+      "conceptual_physics": {
+        "acc": 1.0,
+        "ci_lo": 0.6755924351161198,
+        "ci_hi": 1.0,
+        "n": 8,
+        "small_cell": false
+      },
+      "electrical_engineering": {
+        "acc": 0.6,
+        "ci_lo": 0.2307242812760128,
+        "ci_hi": 0.882379225767352,
+        "n": 5,
+        "small_cell": false
+      },
+      "elementary_mathematics": {
+        "acc": 0.9230769230769231,
+        "ci_lo": 0.6668604907890041,
+        "ci_hi": 0.9862895787574435,
+        "n": 13,
+        "small_cell": false
+      },
+      "formal_logic": {
+        "acc": 0.75,
+        "ci_lo": 0.30064184258240184,
+        "ci_hi": 0.9544127391902995,
+        "n": 4,
+        "small_cell": true
+      },
+      "high_school_biology": {
+        "acc": 1.0,
+        "ci_lo": 0.7411670330319684,
+        "ci_hi": 1.0,
+        "n": 11,
+        "small_cell": false
+      },
+      "high_school_chemistry": {
+        "acc": 1.0,
+        "ci_lo": 0.6456695649333126,
+        "ci_hi": 1.0,
+        "n": 7,
+        "small_cell": false
+      },
+      "high_school_computer_science": {
+        "acc": 1.0,
+        "ci_lo": 0.43850296824495455,
+        "ci_hi": 1.0,
+        "n": 3,
+        "small_cell": true
+      },
+      "high_school_mathematics": {
+        "acc": 0.5555555555555556,
+        "ci_lo": 0.2666512934954931,
+        "ci_hi": 0.8112214789023354,
+        "n": 9,
+        "small_cell": false
+      },
+      "high_school_physics": {
+        "acc": 1.0,
+        "ci_lo": 0.5655175352168251,
+        "ci_hi": 1.0,
+        "n": 5,
+        "small_cell": false
+      },
+      "high_school_statistics": {
+        "acc": 0.875,
+        "ci_lo": 0.5291118177871464,
+        "ci_hi": 0.9775825085499433,
+        "n": 8,
+        "small_cell": false
+      },
+      "machine_learning": {
+        "acc": 0.75,
+        "ci_lo": 0.30064184258240184,
+        "ci_hi": 0.9544127391902995,
+        "n": 4,
+        "small_cell": true
+      },
+      "virology": {
+        "acc": 0.5,
+        "ci_lo": 0.18761630648265054,
+        "ci_hi": 0.8123836935173494,
+        "n": 6,
+        "small_cell": false
+      }
+    },
+    "zen::nemotron-3.5-lightning-free": {
+      "abstract_algebra": {
+        "acc": 1.0,
+        "ci_lo": 0.43850296824495455,
+        "ci_hi": 1.0,
+        "n": 3,
+        "small_cell": true
+      },
+      "anatomy": {
+        "acc": 1.0,
+        "ci_lo": 0.5655175352168251,
+        "ci_hi": 1.0,
+        "n": 5,
+        "small_cell": false
+      },
+      "astronomy": {
+        "acc": 1.0,
+        "ci_lo": 0.5655175352168251,
+        "ci_hi": 1.0,
+        "n": 5,
+        "small_cell": false
+      },
+      "college_biology": {
+        "acc": 1.0,
+        "ci_lo": 0.5655175352168251,
+        "ci_hi": 1.0,
+        "n": 5,
+        "small_cell": false
+      },
+      "college_chemistry": {
+        "acc": 0.75,
+        "ci_lo": 0.30064184258240184,
+        "ci_hi": 0.9544127391902995,
+        "n": 4,
+        "small_cell": true
+      },
+      "college_computer_science": {
+        "acc": 1.0,
+        "ci_lo": 0.5101091635454027,
+        "ci_hi": 1.0,
+        "n": 4,
+        "small_cell": true
+      },
+      "college_mathematics": {
+        "acc": 1.0,
+        "ci_lo": 0.5101091635454027,
+        "ci_hi": 1.0,
+        "n": 4,
+        "small_cell": true
+      },
+      "college_physics": {
+        "acc": 1.0,
+        "ci_lo": 0.5101091635454027,
+        "ci_hi": 1.0,
+        "n": 4,
+        "small_cell": true
+      },
+      "computer_security": {
+        "acc": 0.6666666666666666,
+        "ci_lo": 0.20765960080204765,
+        "ci_hi": 0.9385080552796037,
+        "n": 3,
+        "small_cell": true
+      },
+      "conceptual_physics": {
+        "acc": 1.0,
+        "ci_lo": 0.6755924351161198,
+        "ci_hi": 1.0,
+        "n": 8,
+        "small_cell": false
+      },
+      "electrical_engineering": {
+        "acc": 0.8,
+        "ci_lo": 0.3755346297625253,
+        "ci_hi": 0.9637758913675698,
+        "n": 5,
+        "small_cell": false
+      },
+      "elementary_mathematics": {
+        "acc": 1.0,
+        "ci_lo": 0.7719046276458016,
+        "ci_hi": 0.9999999999999999,
+        "n": 13,
+        "small_cell": false
+      },
+      "formal_logic": {
+        "acc": 0.75,
+        "ci_lo": 0.30064184258240184,
+        "ci_hi": 0.9544127391902995,
+        "n": 4,
+        "small_cell": true
+      },
+      "high_school_biology": {
+        "acc": 1.0,
+        "ci_lo": 0.7411670330319684,
+        "ci_hi": 1.0,
+        "n": 11,
+        "small_cell": false
+      },
+      "high_school_chemistry": {
+        "acc": 1.0,
+        "ci_lo": 0.6456695649333126,
+        "ci_hi": 1.0,
+        "n": 7,
+        "small_cell": false
+      },
+      "high_school_computer_science": {
+        "acc": 1.0,
+        "ci_lo": 0.43850296824495455,
+        "ci_hi": 1.0,
+        "n": 3,
+        "small_cell": true
+      },
+      "high_school_mathematics": {
+        "acc": 0.8888888888888888,
+        "ci_lo": 0.565000294423344,
+        "ci_hi": 0.980109112361455,
+        "n": 9,
+        "small_cell": false
+      },
+      "high_school_physics": {
+        "acc": 1.0,
+        "ci_lo": 0.5655175352168251,
+        "ci_hi": 1.0,
+        "n": 5,
+        "small_cell": false
+      },
+      "high_school_statistics": {
+        "acc": 1.0,
+        "ci_lo": 0.6755924351161198,
+        "ci_hi": 1.0,
+        "n": 8,
+        "small_cell": false
+      },
+      "machine_learning": {
+        "acc": 1.0,
+        "ci_lo": 0.5101091635454027,
+        "ci_hi": 1.0,
+        "n": 4,
+        "small_cell": true
+      },
+      "virology": {
+        "acc": 0.6666666666666666,
+        "ci_lo": 0.299993315138392,
+        "ci_hi": 0.9032285888942195,
+        "n": 6,
+        "small_cell": false
+      }
+    }
+  }
+}

@@ -71,11 +71,11 @@ def accuracy_ci_plot(metrics: dict, out_dir: Path) -> None:
     out_dir.mkdir(parents=True, exist_ok=True)
     rows = []
     for key, m in sorted(metrics.items()):
-        l = m["accuracy_lenient"]
-        rows.append((_short(key), l["acc"], l["ci_lo"], l["ci_hi"], l["n"]))
+        lent = m["accuracy_lenient"]
+        rows.append((_short(key), lent["acc"], lent["ci_lo"], lent["ci_hi"], lent["n"]))
     rows.sort(key=lambda r: r[1])
     fig, ax = plt.subplots(figsize=(6, 0.5 * len(rows) + 1.5))
-    for i, (name, acc, lo, hi, n) in enumerate(rows):
+    for i, (_, acc, lo, hi, n) in enumerate(rows):
         ax.errorbar(acc, i, xerr=[[acc - lo], [hi - acc]], fmt="o",
                     color=PALETTE[0], capsize=3)
         ax.annotate(f"n={n}", (hi, i), fontsize=7, color="grey", xytext=(4, -3),
@@ -133,7 +133,7 @@ def confusion_grid(metrics: dict, out_dir: Path) -> None:
         with np.errstate(divide="ignore", invalid="ignore"):
             norm = np.where(arr.sum(axis=1, keepdims=True) > 0,
                             arr / arr.sum(axis=1, keepdims=True), 0.0)
-        im = ax.imshow(norm, cmap="Blues", vmin=0, vmax=1)
+        ax.imshow(norm, cmap="Blues", vmin=0, vmax=1)
         for i in range(arr.shape[0]):
             for j in range(arr.shape[1]):
                 ax.text(j, i, int(arr[i, j]), ha="center", va="center",

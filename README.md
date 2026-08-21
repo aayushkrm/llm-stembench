@@ -12,6 +12,12 @@ independently verified answers.
 
 ## What's inside
 
+The Git repository is this `llm-stembench/` directory. Its parent `LLM-Bench/`
+directory is only a local Codex workspace holding the authoritative project brief and
+transfer notes; it is not a second checkout or a second project. Workspace-wide
+instructions live in `../AGENTS.md`, while this repository's specific commands and
+architecture rules live in `AGENTS.md`.
+
 | Path | Contents |
 |---|---|
 | `src/stembench/` | The `stembench` Python package (CLI included) |

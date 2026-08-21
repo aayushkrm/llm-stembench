@@ -14,7 +14,6 @@ Correctness conventions (documented in reports):
 from __future__ import annotations
 
 import math
-from typing import Optional
 
 from stembench.parsing import (
     extract_exact_answer,
@@ -25,7 +24,7 @@ from stembench.parsing import (
 )
 
 
-def score_mc(raw_text: str, gold_index: int, n_choices: int = 4) -> tuple[Optional[bool], str, str]:
+def score_mc(raw_text: str, gold_index: int, n_choices: int = 4) -> tuple[bool | None, str, str]:
     """-> (correct, parsed_letter, method)"""
     got = extract_mc_answer(raw_text, n_choices=n_choices)
     if got is None:
@@ -37,7 +36,7 @@ def score_mc(raw_text: str, gold_index: int, n_choices: int = 4) -> tuple[Option
 
 def score_exact(
     raw_text: str, gold: str, alternatives: list[str] | None = None
-) -> tuple[Optional[bool], str, str]:
+) -> tuple[bool | None, str, str]:
     parsed = extract_exact_answer(raw_text)
     if parsed is None:
         return None, "", "none"
@@ -50,10 +49,10 @@ def score_exact(
 def score_numeric(
     raw_text: str,
     gold: float,
-    rel_tol: Optional[float] = None,
-    abs_tol: Optional[float] = None,
+    rel_tol: float | None = None,
+    abs_tol: float | None = None,
     require_unit: str = "",
-) -> tuple[Optional[bool], str, str]:
+) -> tuple[bool | None, str, str]:
     got = extract_numeric(raw_text)
     if got is None:
         return None, "", "none"

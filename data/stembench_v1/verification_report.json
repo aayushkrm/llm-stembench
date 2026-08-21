@@ -1,0 +1,1213 @@
+{
+  "version": "0.1.0-candidate",
+  "seed": 20260817,
+  "generated_at_utc": "2026-08-21T18:34:07+00:00",
+  "counts": {
+    "pairs": 624,
+    "items": 1248,
+    "pairs_per_subject": {
+      "chemistry": 180,
+      "math": 244,
+      "physics": 200
+    },
+    "items_per_language": {
+      "en": 624,
+      "ru": 624
+    },
+    "n_dev_pairs": 18,
+    "n_test_pairs": 606
+  },
+  "difficulty_per_subject": {
+    "math": {
+      "olympiad": 36,
+      "school": 98,
+      "university": 110
+    },
+    "physics": {
+      "olympiad": 30,
+      "school": 80,
+      "university": 90
+    },
+    "chemistry": {
+      "olympiad": 18,
+      "school": 78,
+      "university": 84
+    }
+  },
+  "answer_type_share": {
+    "mc": 0.4295,
+    "numeric": 0.4359,
+    "exact": 0.1346
+  },
+  "mc_letter_distribution": {
+    "A": 62,
+    "B": 83,
+    "C": 58,
+    "D": 65
+  },
+  "near_duplicates": {
+    "metric": "word-3gram Jaccard on normalized question text, per subject+language",
+    "max_overall": 0.7778,
+    "worst_pair": [
+      "MATH-0047-en",
+      "MATH-0052-en"
+    ],
+    "per_subject_language": {
+      "math/en": 0.7778,
+      "math/ru": 0.7692,
+      "physics/en": 0.7692,
+      "physics/ru": 0.7391,
+      "chemistry/en": 0.7273,
+      "chemistry/ru": 0.7391
+    },
+    "gate": "< 0.80"
+  },
+  "structural_templates": {
+    "metric": "exact normalized question match after masking standalone numeric tokens",
+    "purpose": "descriptive dependence audit; repeated procedural templates are reported, not rejected",
+    "per_subject_language": {
+      "chemistry/en": {
+        "items": 180,
+        "unique_number_masked_questions": 131,
+        "items_in_repeated_mask_groups": 66,
+        "largest_mask_group": 12,
+        "unique_template_ids": 33,
+        "dev_masks_also_in_test": 1,
+        "dev_unique_masks": 6
+      },
+      "chemistry/ru": {
+        "items": 180,
+        "unique_number_masked_questions": 131,
+        "items_in_repeated_mask_groups": 66,
+        "largest_mask_group": 12,
+        "unique_template_ids": 33,
+        "dev_masks_also_in_test": 1,
+        "dev_unique_masks": 6
+      },
+      "math/en": {
+        "items": 244,
+        "unique_number_masked_questions": 117,
+        "items_in_repeated_mask_groups": 183,
+        "largest_mask_group": 9,
+        "unique_template_ids": 66,
+        "dev_masks_also_in_test": 3,
+        "dev_unique_masks": 6
+      },
+      "math/ru": {
+        "items": 244,
+        "unique_number_masked_questions": 123,
+        "items_in_repeated_mask_groups": 175,
+        "largest_mask_group": 9,
+        "unique_template_ids": 66,
+        "dev_masks_also_in_test": 2,
+        "dev_unique_masks": 6
+      },
+      "physics/en": {
+        "items": 200,
+        "unique_number_masked_questions": 65,
+        "items_in_repeated_mask_groups": 176,
+        "largest_mask_group": 14,
+        "unique_template_ids": 54,
+        "dev_masks_also_in_test": 6,
+        "dev_unique_masks": 6
+      },
+      "physics/ru": {
+        "items": 200,
+        "unique_number_masked_questions": 65,
+        "items_in_repeated_mask_groups": 176,
+        "largest_mask_group": 14,
+        "unique_template_ids": 54,
+        "dev_masks_also_in_test": 6,
+        "dev_unique_masks": 6
+      }
+    }
+  },
+  "challenge_design_evidence": {
+    "caveat": "generator metadata supports audit but does not replace independent expert difficulty review",
+    "pairs": {
+      "MATH-0209": {
+        "concepts": [
+          "prime-exponent divisor representation",
+          "square parity constraints"
+        ],
+        "feature": "Two divisibility filters alter separate exponent ranges."
+      },
+      "MATH-0210": {
+        "concepts": [
+          "multiplicative order",
+          "strict threshold arithmetic"
+        ],
+        "feature": "A residue cycle must be found before selecting the next admissible exponent."
+      },
+      "MATH-0211": {
+        "concepts": [
+          "prime-exponent divisor representation",
+          "square parity constraints"
+        ],
+        "feature": "Two divisibility filters alter separate exponent ranges."
+      },
+      "MATH-0212": {
+        "concepts": [
+          "multiplicative order",
+          "strict threshold arithmetic"
+        ],
+        "feature": "A residue cycle must be found before selecting the next admissible exponent."
+      },
+      "MATH-0213": {
+        "concepts": [
+          "simultaneous congruences",
+          "arithmetic progressions"
+        ],
+        "feature": "The least CRT residue must be lifted past a strict threshold."
+      },
+      "MATH-0214": {
+        "concepts": [
+          "power residue cycles",
+          "modular addition"
+        ],
+        "feature": "Two long powers must be reduced separately before their residues combine."
+      },
+      "MATH-0215": {
+        "concepts": [
+          "simultaneous congruences",
+          "arithmetic progressions"
+        ],
+        "feature": "The least CRT residue must be lifted past a strict threshold."
+      },
+      "MATH-0216": {
+        "concepts": [
+          "power residue cycles",
+          "modular addition"
+        ],
+        "feature": "Two long powers must be reduced separately before their residues combine."
+      },
+      "MATH-0217": {
+        "concepts": [
+          "simultaneous congruences",
+          "arithmetic progressions"
+        ],
+        "feature": "The least CRT residue must be lifted past a strict threshold."
+      },
+      "MATH-0218": {
+        "concepts": [
+          "simultaneous congruences",
+          "arithmetic progressions"
+        ],
+        "feature": "The least CRT residue must be lifted past a strict threshold."
+      },
+      "MATH-0219": {
+        "concepts": [
+          "simultaneous congruences",
+          "arithmetic progressions"
+        ],
+        "feature": "The least CRT residue must be lifted past a strict threshold."
+      },
+      "MATH-0220": {
+        "concepts": [
+          "prime-exponent divisor representation",
+          "square parity constraints"
+        ],
+        "feature": "Two divisibility filters alter separate exponent ranges."
+      },
+      "MATH-0221": {
+        "concepts": [
+          "power residue cycles",
+          "modular addition"
+        ],
+        "feature": "Two long powers must be reduced separately before their residues combine."
+      },
+      "MATH-0222": {
+        "concepts": [
+          "multiplicative order",
+          "strict threshold arithmetic"
+        ],
+        "feature": "A residue cycle must be found before selecting the next admissible exponent."
+      },
+      "MATH-0223": {
+        "concepts": [
+          "divisibility",
+          "inclusion-exclusion"
+        ],
+        "feature": "The word exactly requires removing the intersection twice."
+      },
+      "MATH-0224": {
+        "concepts": [
+          "divisibility",
+          "inclusion-exclusion"
+        ],
+        "feature": "The word exactly requires removing the intersection twice."
+      },
+      "MATH-0225": {
+        "concepts": [
+          "combinations",
+          "adjacency-exclusion bijection"
+        ],
+        "feature": "Mandatory separators transform the available-position count."
+      },
+      "MATH-0226": {
+        "concepts": [
+          "circular permutations",
+          "complement with a block"
+        ],
+        "feature": "Rotational symmetry and the two block orders must both be handled."
+      },
+      "MATH-0227": {
+        "concepts": [
+          "combinations",
+          "adjacency-exclusion bijection"
+        ],
+        "feature": "Mandatory separators transform the available-position count."
+      },
+      "MATH-0228": {
+        "concepts": [
+          "circular permutations",
+          "complement with a block"
+        ],
+        "feature": "Rotational symmetry and the two block orders must both be handled."
+      },
+      "MATH-0229": {
+        "concepts": [
+          "combinations",
+          "adjacency-exclusion bijection"
+        ],
+        "feature": "Mandatory separators transform the available-position count."
+      },
+      "MATH-0230": {
+        "concepts": [
+          "circular permutations",
+          "complement with a block"
+        ],
+        "feature": "Rotational symmetry and the two block orders must both be handled."
+      },
+      "MATH-0231": {
+        "concepts": [
+          "combinations",
+          "adjacency-exclusion bijection"
+        ],
+        "feature": "Mandatory separators transform the available-position count."
+      },
+      "MATH-0232": {
+        "concepts": [
+          "circular permutations",
+          "complement with a block"
+        ],
+        "feature": "Rotational symmetry and the two block orders must both be handled."
+      },
+      "MATH-0233": {
+        "concepts": [
+          "combinations",
+          "adjacency-exclusion bijection"
+        ],
+        "feature": "Mandatory separators transform the available-position count."
+      },
+      "MATH-0234": {
+        "concepts": [
+          "circular permutations",
+          "complement with a block"
+        ],
+        "feature": "Rotational symmetry and the two block orders must both be handled."
+      },
+      "MATH-0235": {
+        "concepts": [
+          "combinations",
+          "adjacency-exclusion bijection"
+        ],
+        "feature": "Mandatory separators transform the available-position count."
+      },
+      "MATH-0236": {
+        "concepts": [
+          "circular permutations",
+          "complement with a block"
+        ],
+        "feature": "Rotational symmetry and the two block orders must both be handled."
+      },
+      "MATH-0237": {
+        "concepts": [
+          "lattice-path binomial encoding",
+          "complement via path decomposition"
+        ],
+        "feature": "Paths through the forbidden point factor into two independent segments."
+      },
+      "MATH-0238": {
+        "concepts": [
+          "lattice-path binomial encoding",
+          "complement via path decomposition"
+        ],
+        "feature": "Paths through the forbidden point factor into two independent segments."
+      },
+      "MATH-0239": {
+        "concepts": [
+          "rational-function domain",
+          "factor sign chart"
+        ],
+        "feature": "The pole splits an otherwise included interval and must never be retained."
+      },
+      "MATH-0240": {
+        "concepts": [
+          "rational-function domain",
+          "factor sign chart"
+        ],
+        "feature": "The pole splits an otherwise included interval and must never be retained."
+      },
+      "MATH-0241": {
+        "concepts": [
+          "rational-function domain",
+          "factor sign chart"
+        ],
+        "feature": "The pole splits an otherwise included interval and must never be retained."
+      },
+      "MATH-0242": {
+        "concepts": [
+          "rational-function domain",
+          "factor sign chart"
+        ],
+        "feature": "The pole splits an otherwise included interval and must never be retained."
+      },
+      "MATH-0243": {
+        "concepts": [
+          "rational-function domain",
+          "factor sign chart"
+        ],
+        "feature": "The pole splits an otherwise included interval and must never be retained."
+      },
+      "MATH-0244": {
+        "concepts": [
+          "rational-function domain",
+          "factor sign chart"
+        ],
+        "feature": "The pole splits an otherwise included interval and must never be retained."
+      },
+      "PHYS-0171": {
+        "concepts": [
+          "mechanical-energy conservation",
+          "centripetal force balance"
+        ],
+        "feature": "At the top, gravity and the normal force point toward the center."
+      },
+      "PHYS-0172": {
+        "concepts": [
+          "static-friction limit",
+          "banked centripetal force resolution"
+        ],
+        "feature": "The high-speed limit fixes friction down the bank and changes both force components."
+      },
+      "PHYS-0173": {
+        "concepts": [
+          "mechanical-energy conservation",
+          "centripetal force balance"
+        ],
+        "feature": "At the top, gravity and the normal force point toward the center."
+      },
+      "PHYS-0174": {
+        "concepts": [
+          "static-friction limit",
+          "banked centripetal force resolution"
+        ],
+        "feature": "The high-speed limit fixes friction down the bank and changes both force components."
+      },
+      "PHYS-0175": {
+        "concepts": [
+          "mechanical-energy conservation",
+          "centripetal force balance"
+        ],
+        "feature": "At the top, gravity and the normal force point toward the center."
+      },
+      "PHYS-0176": {
+        "concepts": [
+          "static-friction limit",
+          "banked centripetal force resolution"
+        ],
+        "feature": "The high-speed limit fixes friction down the bank and changes both force components."
+      },
+      "PHYS-0177": {
+        "concepts": [
+          "mechanical-energy conservation",
+          "centripetal force balance"
+        ],
+        "feature": "At the top, gravity and the normal force point toward the center."
+      },
+      "PHYS-0178": {
+        "concepts": [
+          "static-friction limit",
+          "banked centripetal force resolution"
+        ],
+        "feature": "The high-speed limit fixes friction down the bank and changes both force components."
+      },
+      "PHYS-0179": {
+        "concepts": [
+          "mechanical-energy conservation",
+          "centripetal force balance"
+        ],
+        "feature": "At the top, gravity and the normal force point toward the center."
+      },
+      "PHYS-0180": {
+        "concepts": [
+          "static-friction limit",
+          "banked centripetal force resolution"
+        ],
+        "feature": "The high-speed limit fixes friction down the bank and changes both force components."
+      },
+      "PHYS-0181": {
+        "concepts": [
+          "vertical quadratic flight time",
+          "horizontal component motion"
+        ],
+        "feature": "Only the positive time root is physical because launch and landing elevations differ."
+      },
+      "PHYS-0182": {
+        "concepts": [
+          "vertical quadratic flight time",
+          "horizontal component motion"
+        ],
+        "feature": "Only the positive time root is physical because launch and landing elevations differ."
+      },
+      "PHYS-0183": {
+        "concepts": [
+          "vertical quadratic flight time",
+          "horizontal component motion"
+        ],
+        "feature": "Only the positive time root is physical because launch and landing elevations differ."
+      },
+      "PHYS-0184": {
+        "concepts": [
+          "vertical quadratic flight time",
+          "horizontal component motion"
+        ],
+        "feature": "Only the positive time root is physical because launch and landing elevations differ."
+      },
+      "PHYS-0185": {
+        "concepts": [
+          "vertical quadratic flight time",
+          "horizontal component motion"
+        ],
+        "feature": "Only the positive time root is physical because launch and landing elevations differ."
+      },
+      "PHYS-0186": {
+        "concepts": [
+          "vertical quadratic flight time",
+          "horizontal component motion"
+        ],
+        "feature": "Only the positive time root is physical because launch and landing elevations differ."
+      },
+      "PHYS-0187": {
+        "concepts": [
+          "vertical quadratic flight time",
+          "horizontal component motion"
+        ],
+        "feature": "Only the positive time root is physical because launch and landing elevations differ."
+      },
+      "PHYS-0188": {
+        "concepts": [
+          "vertical quadratic flight time",
+          "horizontal component motion"
+        ],
+        "feature": "Only the positive time root is physical because launch and landing elevations differ."
+      },
+      "PHYS-0189": {
+        "concepts": [
+          "vertical quadratic flight time",
+          "horizontal component motion"
+        ],
+        "feature": "Only the positive time root is physical because launch and landing elevations differ."
+      },
+      "PHYS-0190": {
+        "concepts": [
+          "vertical quadratic flight time",
+          "horizontal component motion"
+        ],
+        "feature": "Only the positive time root is physical because launch and landing elevations differ."
+      },
+      "PHYS-0191": {
+        "concepts": [
+          "projectile range",
+          "trigonometric supplementary-angle symmetry"
+        ],
+        "feature": "The same-range equation has two distinct acute-angle branches."
+      },
+      "PHYS-0192": {
+        "concepts": [
+          "projectile range",
+          "trigonometric supplementary-angle symmetry"
+        ],
+        "feature": "The same-range equation has two distinct acute-angle branches."
+      },
+      "PHYS-0193": {
+        "concepts": [
+          "projectile range",
+          "trigonometric supplementary-angle symmetry"
+        ],
+        "feature": "The same-range equation has two distinct acute-angle branches."
+      },
+      "PHYS-0194": {
+        "concepts": [
+          "projectile range",
+          "trigonometric supplementary-angle symmetry"
+        ],
+        "feature": "The same-range equation has two distinct acute-angle branches."
+      },
+      "PHYS-0195": {
+        "concepts": [
+          "sequential thin-lens imaging",
+          "compound magnification"
+        ],
+        "feature": "The intermediate-image position determines the second signed object distance."
+      },
+      "PHYS-0196": {
+        "concepts": [
+          "sequential thin-lens imaging",
+          "compound magnification"
+        ],
+        "feature": "The intermediate-image position determines the second signed object distance."
+      },
+      "PHYS-0197": {
+        "concepts": [
+          "sequential thin-lens imaging",
+          "compound magnification"
+        ],
+        "feature": "The intermediate-image position determines the second signed object distance."
+      },
+      "PHYS-0198": {
+        "concepts": [
+          "sequential thin-lens imaging",
+          "compound magnification"
+        ],
+        "feature": "The intermediate-image position determines the second signed object distance."
+      },
+      "PHYS-0199": {
+        "concepts": [
+          "sequential thin-lens imaging",
+          "compound magnification"
+        ],
+        "feature": "The intermediate-image position determines the second signed object distance."
+      },
+      "PHYS-0200": {
+        "concepts": [
+          "sequential thin-lens imaging",
+          "compound magnification"
+        ],
+        "feature": "The intermediate-image position determines the second signed object distance."
+      },
+      "CHEM-0163": {
+        "concepts": [
+          "sample-purity mass correction",
+          "limiting-reagent extent comparison",
+          "percent-yield conversion"
+        ],
+        "feature": "Yield applies only after the purity-corrected limiting extent is found."
+      },
+      "CHEM-0164": {
+        "concepts": [
+          "sample-purity mass correction",
+          "limiting-reagent extent comparison",
+          "percent-yield conversion"
+        ],
+        "feature": "Yield applies only after the purity-corrected limiting extent is found."
+      },
+      "CHEM-0165": {
+        "concepts": [
+          "sample-purity mass correction",
+          "limiting-reagent extent comparison",
+          "percent-yield conversion"
+        ],
+        "feature": "Yield applies only after the purity-corrected limiting extent is found."
+      },
+      "CHEM-0166": {
+        "concepts": [
+          "sample-purity mass correction",
+          "limiting-reagent extent comparison",
+          "percent-yield conversion"
+        ],
+        "feature": "Yield applies only after the purity-corrected limiting extent is found."
+      },
+      "CHEM-0167": {
+        "concepts": [
+          "sample-purity mass correction",
+          "limiting-reagent extent comparison",
+          "percent-yield conversion"
+        ],
+        "feature": "Yield applies only after the purity-corrected limiting extent is found."
+      },
+      "CHEM-0168": {
+        "concepts": [
+          "sample-purity mass correction",
+          "limiting-reagent extent comparison",
+          "percent-yield conversion"
+        ],
+        "feature": "Yield applies only after the purity-corrected limiting extent is found."
+      },
+      "CHEM-0169": {
+        "concepts": [
+          "sample-purity mass correction",
+          "limiting-reagent extent comparison",
+          "percent-yield conversion"
+        ],
+        "feature": "Yield applies only after the purity-corrected limiting extent is found."
+      },
+      "CHEM-0170": {
+        "concepts": [
+          "sample-purity mass correction",
+          "limiting-reagent extent comparison",
+          "percent-yield conversion"
+        ],
+        "feature": "Yield applies only after the purity-corrected limiting extent is found."
+      },
+      "CHEM-0171": {
+        "concepts": [
+          "sample-purity mass correction",
+          "limiting-reagent extent comparison",
+          "percent-yield conversion"
+        ],
+        "feature": "Yield applies only after the purity-corrected limiting extent is found."
+      },
+      "CHEM-0172": {
+        "concepts": [
+          "sample-purity mass correction",
+          "limiting-reagent extent comparison",
+          "percent-yield conversion"
+        ],
+        "feature": "Yield applies only after the purity-corrected limiting extent is found."
+      },
+      "CHEM-0173": {
+        "concepts": [
+          "sample-purity mass correction",
+          "limiting-reagent extent comparison",
+          "percent-yield conversion"
+        ],
+        "feature": "Yield applies only after the purity-corrected limiting extent is found."
+      },
+      "CHEM-0174": {
+        "concepts": [
+          "sample-purity mass correction",
+          "limiting-reagent extent comparison",
+          "percent-yield conversion"
+        ],
+        "feature": "Yield applies only after the purity-corrected limiting extent is found."
+      },
+      "CHEM-0175": {
+        "concepts": [
+          "sample-purity mass correction",
+          "limiting-reagent extent comparison",
+          "percent-yield conversion"
+        ],
+        "feature": "Yield applies only after the purity-corrected limiting extent is found."
+      },
+      "CHEM-0176": {
+        "concepts": [
+          "sample-purity mass correction",
+          "limiting-reagent extent comparison",
+          "percent-yield conversion"
+        ],
+        "feature": "Yield applies only after the purity-corrected limiting extent is found."
+      },
+      "CHEM-0177": {
+        "concepts": [
+          "sample-purity mass correction",
+          "limiting-reagent extent comparison",
+          "percent-yield conversion"
+        ],
+        "feature": "Yield applies only after the purity-corrected limiting extent is found."
+      },
+      "CHEM-0178": {
+        "concepts": [
+          "sample-purity mass correction",
+          "limiting-reagent extent comparison",
+          "percent-yield conversion"
+        ],
+        "feature": "Yield applies only after the purity-corrected limiting extent is found."
+      },
+      "CHEM-0179": {
+        "concepts": [
+          "sample-purity mass correction",
+          "limiting-reagent extent comparison"
+        ],
+        "feature": "Inert sample mass must be removed before comparing stoichiometric extents."
+      },
+      "CHEM-0180": {
+        "concepts": [
+          "sample-purity mass correction",
+          "limiting-reagent extent comparison"
+        ],
+        "feature": "Inert sample mass must be removed before comparing stoichiometric extents."
+      }
+    }
+  },
+  "verifiers": {
+    "methods": {
+      "candidate_binding": 624,
+      "dimensional": 32,
+      "mc_recompute": 268,
+      "numeric_recompute": 458,
+      "symbolic": 134
+    },
+    "passed": 1516,
+    "failed": 0,
+    "pass_rate": 1.0
+  },
+  "per_topic": {
+    "Newton's second law": {
+      "pairs": 16,
+      "methods": {
+        "numeric_recompute": 16,
+        "candidate_binding": 16,
+        "mc_recompute": 6
+      },
+      "failed": 0
+    },
+    "Ohm's law and series resistors": {
+      "pairs": 16,
+      "methods": {
+        "numeric_recompute": 16,
+        "candidate_binding": 16,
+        "mc_recompute": 6
+      },
+      "failed": 0
+    },
+    "arithmetic and geometric sequences": {
+      "pairs": 18,
+      "methods": {
+        "numeric_recompute": 18,
+        "candidate_binding": 18,
+        "mc_recompute": 6
+      },
+      "failed": 0
+    },
+    "arithmetic word problems": {
+      "pairs": 26,
+      "methods": {
+        "numeric_recompute": 26,
+        "candidate_binding": 26,
+        "mc_recompute": 6
+      },
+      "failed": 0
+    },
+    "balancing chemical equations": {
+      "pairs": 10,
+      "methods": {
+        "symbolic": 10,
+        "candidate_binding": 10,
+        "mc_recompute": 10
+      },
+      "failed": 0
+    },
+    "derivatives of polynomials": {
+      "pairs": 18,
+      "methods": {
+        "numeric_recompute": 18,
+        "candidate_binding": 18,
+        "mc_recompute": 6
+      },
+      "failed": 0
+    },
+    "dilution of solutions": {
+      "pairs": 12,
+      "methods": {
+        "numeric_recompute": 12,
+        "candidate_binding": 12,
+        "mc_recompute": 4
+      },
+      "failed": 0
+    },
+    "electron configuration and the periodic table": {
+      "pairs": 14,
+      "methods": {
+        "symbolic": 14,
+        "candidate_binding": 14,
+        "mc_recompute": 10
+      },
+      "failed": 0
+    },
+    "empirical formula": {
+      "pairs": 8,
+      "methods": {
+        "symbolic": 8,
+        "candidate_binding": 8,
+        "mc_recompute": 4
+      },
+      "failed": 0
+    },
+    "hydrostatic pressure": {
+      "pairs": 10,
+      "methods": {
+        "dimensional": 10,
+        "candidate_binding": 10,
+        "mc_recompute": 4
+      },
+      "failed": 0
+    },
+    "ideal gas law and isoprocesses": {
+      "pairs": 10,
+      "methods": {
+        "dimensional": 10,
+        "candidate_binding": 10,
+        "mc_recompute": 4
+      },
+      "failed": 0
+    },
+    "ideal gas: amount of substance": {
+      "pairs": 12,
+      "methods": {
+        "dimensional": 12,
+        "candidate_binding": 12,
+        "mc_recompute": 4
+      },
+      "failed": 0
+    },
+    "inequalities": {
+      "pairs": 12,
+      "methods": {
+        "symbolic": 12,
+        "candidate_binding": 12,
+        "mc_recompute": 12
+      },
+      "failed": 0
+    },
+    "kinematics: constant acceleration": {
+      "pairs": 14,
+      "methods": {
+        "numeric_recompute": 14,
+        "candidate_binding": 14,
+        "mc_recompute": 6
+      },
+      "failed": 0
+    },
+    "kinematics: constant velocity": {
+      "pairs": 18,
+      "methods": {
+        "numeric_recompute": 18,
+        "candidate_binding": 18,
+        "mc_recompute": 6
+      },
+      "failed": 0
+    },
+    "limiting reagent": {
+      "pairs": 18,
+      "methods": {
+        "numeric_recompute": 18,
+        "candidate_binding": 18,
+        "mc_recompute": 6
+      },
+      "failed": 0
+    },
+    "linear equations": {
+      "pairs": 18,
+      "methods": {
+        "symbolic": 18,
+        "candidate_binding": 18,
+        "mc_recompute": 2
+      },
+      "failed": 0
+    },
+    "logarithms and exponentials": {
+      "pairs": 18,
+      "methods": {
+        "numeric_recompute": 18,
+        "candidate_binding": 18,
+        "mc_recompute": 14
+      },
+      "failed": 0
+    },
+    "mechanical and electrical power": {
+      "pairs": 12,
+      "methods": {
+        "numeric_recompute": 12,
+        "candidate_binding": 12,
+        "mc_recompute": 4
+      },
+      "failed": 0
+    },
+    "molar mass computation": {
+      "pairs": 14,
+      "methods": {
+        "numeric_recompute": 14,
+        "candidate_binding": 14,
+        "mc_recompute": 6
+      },
+      "failed": 0
+    },
+    "momentum and its conservation": {
+      "pairs": 12,
+      "methods": {
+        "numeric_recompute": 12,
+        "candidate_binding": 12,
+        "mc_recompute": 4
+      },
+      "failed": 0
+    },
+    "number theory: remainders and divisibility": {
+      "pairs": 16,
+      "methods": {
+        "numeric_recompute": 16,
+        "candidate_binding": 16,
+        "mc_recompute": 2
+      },
+      "failed": 0
+    },
+    "pH of strong acids and bases": {
+      "pairs": 12,
+      "methods": {
+        "numeric_recompute": 12,
+        "candidate_binding": 12,
+        "mc_recompute": 4
+      },
+      "failed": 0
+    },
+    "percent composition": {
+      "pairs": 14,
+      "methods": {
+        "numeric_recompute": 14,
+        "candidate_binding": 14,
+        "mc_recompute": 4
+      },
+      "failed": 0
+    },
+    "percentages": {
+      "pairs": 22,
+      "methods": {
+        "numeric_recompute": 22,
+        "candidate_binding": 22,
+        "mc_recompute": 6
+      },
+      "failed": 0
+    },
+    "planar geometry: area and perimeter": {
+      "pairs": 18,
+      "methods": {
+        "numeric_recompute": 18,
+        "candidate_binding": 18,
+        "mc_recompute": 8
+      },
+      "failed": 0
+    },
+    "probability and combinatorics": {
+      "pairs": 38,
+      "methods": {
+        "numeric_recompute": 38,
+        "candidate_binding": 38,
+        "mc_recompute": 24
+      },
+      "failed": 0
+    },
+    "projectile motion": {
+      "pairs": 14,
+      "methods": {
+        "numeric_recompute": 14,
+        "candidate_binding": 14,
+        "mc_recompute": 4
+      },
+      "failed": 0
+    },
+    "quadratic equations": {
+      "pairs": 14,
+      "methods": {
+        "symbolic": 14,
+        "candidate_binding": 14,
+        "mc_recompute": 10
+      },
+      "failed": 0
+    },
+    "reaction products and precipitates": {
+      "pairs": 26,
+      "methods": {
+        "symbolic": 26,
+        "candidate_binding": 26,
+        "mc_recompute": 10
+      },
+      "failed": 0
+    },
+    "series and parallel resistor networks": {
+      "pairs": 14,
+      "methods": {
+        "numeric_recompute": 14,
+        "candidate_binding": 14,
+        "mc_recompute": 8
+      },
+      "failed": 0
+    },
+    "solution concentration (molarity)": {
+      "pairs": 20,
+      "methods": {
+        "numeric_recompute": 20,
+        "candidate_binding": 20,
+        "mc_recompute": 4
+      },
+      "failed": 0
+    },
+    "stoichiometry: mass and moles": {
+      "pairs": 20,
+      "methods": {
+        "numeric_recompute": 20,
+        "candidate_binding": 20,
+        "mc_recompute": 8
+      },
+      "failed": 0
+    },
+    "systems of two linear equations": {
+      "pairs": 16,
+      "methods": {
+        "symbolic": 16,
+        "candidate_binding": 16,
+        "mc_recompute": 4
+      },
+      "failed": 0
+    },
+    "thermal energy: Q = m*c*dT": {
+      "pairs": 26,
+      "methods": {
+        "numeric_recompute": 26,
+        "candidate_binding": 26,
+        "mc_recompute": 10
+      },
+      "failed": 0
+    },
+    "thin lenses": {
+      "pairs": 16,
+      "methods": {
+        "symbolic": 16,
+        "candidate_binding": 16,
+        "mc_recompute": 12
+      },
+      "failed": 0
+    },
+    "trigonometry basics": {
+      "pairs": 10,
+      "methods": {
+        "numeric_recompute": 10,
+        "candidate_binding": 10,
+        "mc_recompute": 8
+      },
+      "failed": 0
+    },
+    "uniform circular motion": {
+      "pairs": 10,
+      "methods": {
+        "numeric_recompute": 10,
+        "candidate_binding": 10,
+        "mc_recompute": 8
+      },
+      "failed": 0
+    },
+    "work-energy theorem": {
+      "pairs": 12,
+      "methods": {
+        "numeric_recompute": 12,
+        "candidate_binding": 12,
+        "mc_recompute": 4
+      },
+      "failed": 0
+    }
+  },
+  "distractor_perturbation_counts": {
+    "added_distances_before_ratio": 1,
+    "added_one_free_position": 6,
+    "added_percent_as_units": 1,
+    "added_rates": 1,
+    "added_speed_and_time": 1,
+    "added_values": 16,
+    "area_confusion": 2,
+    "atom_count_error_Cl": 1,
+    "atom_count_error_S": 1,
+    "boundary_slip": 5,
+    "circumference_confusion": 1,
+    "complement": 2,
+    "complement_error": 8,
+    "confused_sin_cos": 5,
+    "counted_common_once": 2,
+    "decimal_shift_div10": 14,
+    "decimal_shift_x10": 16,
+    "degree_slip": 2,
+    "delta_slip": 1,
+    "did_not_differentiate": 5,
+    "did_not_remove_common": 1,
+    "direction_flip": 4,
+    "divided_instead_of_multiplying": 4,
+    "divided_wrong_way": 1,
+    "dropped_included_zeros": 3,
+    "dropped_last_term": 2,
+    "element_order_swap": 8,
+    "factor_of_2": 86,
+    "factor_of_2_half": 45,
+    "forgot_14_minus": 1,
+    "forgot_acceleration": 1,
+    "forgot_block_order": 3,
+    "forgot_constant": 1,
+    "forgot_dT": 6,
+    "forgot_division": 3,
+    "forgot_g": 1,
+    "forgot_mass": 2,
+    "forgot_percent_yield": 3,
+    "forgot_spending": 1,
+    "forgot_square_root": 1,
+    "forgot_time": 1,
+    "gave_total_instead_of_change": 1,
+    "ignored_adjacency": 3,
+    "ignored_first_event": 2,
+    "ignored_initial_vertical_speed": 1,
+    "ignored_launch_height": 1,
+    "ignored_nonadjacency": 5,
+    "ignored_one_resistor": 2,
+    "ignored_purity_and_yield": 1,
+    "ignored_second_event": 2,
+    "ignored_series_part": 1,
+    "included_undefined_point": 4,
+    "inverted_ratio": 6,
+    "inverted_sign_regions": 6,
+    "inverted_total_magnification": 2,
+    "lost_solution_component": 5,
+    "molecular_instead_of_empirical": 7,
+    "multiplied_bases": 1,
+    "multiplied_everything": 1,
+    "multiplied_extra": 2,
+    "multiplied_values": 7,
+    "neighbor_configuration": 30,
+    "off_by_one": 130,
+    "off_by_one_index": 1,
+    "off_by_two": 66,
+    "one_subscript_doubled": 7,
+    "perimeter_confusion": 1,
+    "power_not_reduced": 3,
+    "reciprocal": 11,
+    "removed_one_gap_too_many": 6,
+    "returned_adjacent_count": 5,
+    "returned_argument": 5,
+    "returned_base": 2,
+    "returned_common_only": 1,
+    "returned_discount": 1,
+    "returned_final": 1,
+    "returned_focal_length": 1,
+    "returned_image_distance": 2,
+    "returned_initial_volume": 1,
+    "returned_parallel_part": 2,
+    "returned_product_of_roots": 3,
+    "returned_sum_of_roots": 3,
+    "sign_error": 92,
+    "sign_error_x": 2,
+    "sign_error_xy": 2,
+    "sign_error_y": 2,
+    "single_position_removed": 3,
+    "smaller_root": 3,
+    "special_angle_confusion": 5,
+    "stoichiometry_slip": 4,
+    "subscript_off_by_one": 2,
+    "swapped_and_sign": 2,
+    "swapped_coefficients": 6,
+    "tangent_confusion": 5,
+    "tangent_slip": 2,
+    "treated_as_series": 3,
+    "treated_rotations_as_distinct": 5,
+    "unit_confusion": 2,
+    "unit_slip_x10": 18,
+    "used_first_lens_only": 1,
+    "used_low_speed_limit": 2,
+    "used_second_lens_only": 1,
+    "wrong_angle": 2,
+    "wrong_base": 1,
+    "wrong_denominator": 1,
+    "wrong_element": 1,
+    "wrong_force_direction": 2,
+    "wrong_product": 30,
+    "wrong_total": 6
+  },
+  "checksums": {
+    "items_jsonl_sha256": "bc74deada6a70613203dc3c261939a005a726d28064280d823c127c42b358998"
+  }
+}

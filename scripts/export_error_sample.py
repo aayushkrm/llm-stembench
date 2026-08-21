@@ -42,7 +42,7 @@ def main() -> None:
             ):
                 continue
             n_total += 1
-            if rec.get("correctness") is False:
+            if rec.get("correctness") is False or rec.get("error_status") == "parse_failure":
                 n_incorrect += 1
                 incorrect.append(rec)
 

@@ -1,0 +1,14 @@
+[
+ {
+  "run_id": "S1-P2",
+  "model": "laguna-s-2.1-free",
+  "item_id": "mmlu-high_school_statistics-14",
+  "reason": "rescored to non-error after parser fix"
+ },
+ {
+  "run_id": "S1-P2",
+  "model": "nemotron-3.5-lightning-free",
+  "item_id": "mmlu-high_school_biology-56",
+  "reason": "rescored to non-error after parser fix"
+ }
+]

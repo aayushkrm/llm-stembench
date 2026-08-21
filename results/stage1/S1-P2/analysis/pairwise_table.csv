@@ -1,0 +1,4 @@
+model_a,model_b,n_common,acc_a,acc_b,diff,b,c,p_exact,p_bh,significant_0.05
+zen::hy3-free,zen::laguna-s-2.1-free,119,0.8739,0.8655,0.0084,9,8,1,1,False
+zen::hy3-free,zen::nemotron-3.5-lightning-free,120,0.8750,0.9417,-0.0667,1,9,0.04297,0.06738,False
+zen::laguna-s-2.1-free,zen::nemotron-3.5-lightning-free,119,0.8655,0.9412,-0.0756,2,11,0.04492,0.06738,False

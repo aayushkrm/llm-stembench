@@ -273,12 +273,12 @@ def _write_model_table(metrics: dict, path: Path) -> None:
         ])
         for key, m in sorted(metrics.items()):
             s = m.get("accuracy_strict", {})
-            l = m["accuracy_lenient"]
+            lent = m["accuracy_lenient"]
             cal = m.get("calibration_self_report", {})
             tcal = m.get("calibration_token_prob", {})
             w.writerow([
                 key, m["n"], m["n_parsed"],
-                f"{l['acc']:.4f}", f"{l['ci_lo']:.4f}", f"{l['ci_hi']:.4f}",
+                f"{lent['acc']:.4f}", f"{lent['ci_lo']:.4f}", f"{lent['ci_hi']:.4f}",
                 f"{s.get('acc', float('nan')):.4f}",
                 f"{m['parse_failure_rate']:.4f}",
                 f"{cal.get('mean_confidence', float('nan')):.4f}",

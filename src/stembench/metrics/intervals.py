@@ -9,7 +9,6 @@ from __future__ import annotations
 import math
 
 import numpy as np
-from scipy import stats
 
 
 def wilson_interval(k: int | float, n: int, z: float = 1.959963984540054) -> tuple[float, float]:

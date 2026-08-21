@@ -2,7 +2,7 @@
 
 The build runs every gate before any file is written; a single error makes the
 build exit nonzero ("no partial dataset").  Near-duplicate detection uses
-character 3-gram Jaccard similarity of the normalized question text within
+word 3-gram Jaccard similarity of the normalized question text within
 each (subject, language) group; the generation-time guard keeps same-topic
 questions further apart (0.72), the hard QC gate is 0.80.
 """
@@ -14,11 +14,13 @@ from collections import Counter, defaultdict
 from dataclasses import dataclass, field
 from typing import Any
 
-from stembench.schemas import AnswerType, BenchmarkItem, Language, Split
+from stembench.parsing import normalize_exact
+from stembench.schemas import AnswerType, BenchmarkItem, Difficulty, Language, Split
 
 from ._core import QC_SIMILARITY_CAP, PairBundle, jaccard, normalize_text, sig_digits, word_trigrams
 
 CYRILLIC = re.compile(r"[а-яА-ЯёЁ]")
+NUMBER_TOKEN = re.compile(r"(?<![A-Za-zА-Яа-яЁё])[-+]?(?:\d+(?:\.\d+)?|\.\d+)")
 
 # Bounds for the distribution gates (fractions of pairs/items).
 MIN_PAIRS_TOTAL = 620
@@ -79,7 +81,7 @@ def qc_pairing(bundles: list[PairBundle], errors: list[str]) -> None:
         en = next(g for g in group if g.language == Language.EN)
         ru = next(g for g in group if g.language == Language.RU)
         for attr in (
-            "canonical_answer", "answer_type", "subject", "topic", "difficulty",
+            "canonical_answer", "answer_type", "subject", "topic", "template_id", "difficulty",
             "units", "split", "acceptable_alternatives",
         ):
             if getattr(en, attr) != getattr(ru, attr):
@@ -94,7 +96,7 @@ def qc_pairing(bundles: list[PairBundle], errors: list[str]) -> None:
             if [c.label for c in en.choices] != [c.label for c in ru.choices] or len(en.choices) != 4:
                 errors.append(f"{pid}: MC labels misaligned")
                 continue
-            for ce, cr in zip(en.choices, ru.choices):
+            for ce, cr in zip(en.choices, ru.choices, strict=True):
                 if ce.text == cr.text:
                     continue  # language-invariant numeric options are fine
                 ve, vr = _parse_number(ce.text), _parse_number(cr.text)
@@ -170,6 +172,38 @@ def qc_dedup(bundles: list[PairBundle], errors: list[str], metrics: dict[str, An
     metrics["max_jaccard_overall"] = round(worst[2], 4)
     metrics["max_jaccard_pair"] = [worst[0], worst[1]]
 
+    structural: dict[str, dict[str, Any]] = {}
+    for subject in sorted({bundle.subject.value for bundle in bundles}):
+        for language in (Language.EN, Language.RU):
+            selected = [
+                (bundle.en if language == Language.EN else bundle.ru)
+                for bundle in bundles
+                if bundle.subject.value == subject
+            ]
+            groups: Counter[str] = Counter(
+                NUMBER_TOKEN.sub("#", normalize_text(item.question)) for item in selected
+            )
+            dev_masks = {
+                NUMBER_TOKEN.sub("#", normalize_text(item.question))
+                for item in selected
+                if item.split == Split.DEV
+            }
+            test_masks = {
+                NUMBER_TOKEN.sub("#", normalize_text(item.question))
+                for item in selected
+                if item.split == Split.TEST
+            }
+            structural[f"{subject}/{language.value}"] = {
+                "items": len(selected),
+                "unique_number_masked_questions": len(groups),
+                "items_in_repeated_mask_groups": sum(n for n in groups.values() if n > 1),
+                "largest_mask_group": max(groups.values(), default=0),
+                "unique_template_ids": len({item.template_id for item in selected}),
+                "dev_masks_also_in_test": len(dev_masks & test_masks),
+                "dev_unique_masks": len(dev_masks),
+            }
+    metrics["structural_templates"] = structural
+
 
 def qc_distribution(bundles: list[PairBundle], metrics: dict[str, Any], errors: list[str]) -> None:
     items = [it for b in bundles for it in (b.en, b.ru)]
@@ -213,6 +247,48 @@ def qc_distribution(bundles: list[PairBundle], metrics: dict[str, Any], errors: 
     ]
 
 
+def _check_solution_final(it: BenchmarkItem) -> str | None:
+    """Return an error when the final worked-solution answer is not canonical."""
+    lines = [line.strip() for line in it.solution.splitlines() if line.strip()]
+    if not lines:
+        return "solution is empty"
+    prefix = "Answer:" if it.language == Language.EN else "Ответ:"
+    final = lines[-1]
+    if not final.startswith(prefix):
+        return f"final solution line must start with {prefix!r}: {final!r}"
+    body = final[len(prefix) :].strip()
+    if it.answer_type == AnswerType.MC:
+        word = "option" if it.language == Language.EN else "вариант"
+        match = re.fullmatch(rf"(.+?)\s*\({word}\s+([ABCD])\)\.?", body, re.IGNORECASE)
+        if match is None:
+            return f"malformed MC final answer: {final!r}"
+        displayed, letter = match.group(1).strip(), match.group(2).upper()
+        if letter != it.canonical_answer:
+            return f"final option {letter} != canonical {it.canonical_answer}"
+        correct_choice = next(
+            (choice.text for choice in it.choices if choice.label == it.canonical_answer), None
+        )
+        if correct_choice is None or normalize_text(displayed) != normalize_text(correct_choice):
+            return f"displayed answer {displayed!r} != canonical choice {correct_choice!r}"
+        return None
+    body = body.rstrip(".").strip()
+    if it.units and body.endswith(f" {it.units}"):
+        body = body[: -len(it.units)].strip()
+    if it.answer_type == AnswerType.NUMERIC:
+        try:
+            displayed = float(body.replace(",", "."))
+            canonical = float(it.canonical_answer)
+        except ValueError:
+            return f"numeric final answer is not parseable: {body!r}"
+        if not (displayed == canonical):
+            return f"final numeric answer {displayed} != canonical {canonical}"
+        return None
+    accepted = [it.canonical_answer, *it.acceptable_alternatives]
+    if not any(normalize_exact(body) == normalize_exact(value) for value in accepted):
+        return f"final exact answer {body!r} is not canonical/acceptable"
+    return None
+
+
 def qc_answers(bundles: list[PairBundle], errors: list[str]) -> None:
     for b in bundles:
         for it in (b.en, b.ru):
@@ -227,10 +303,13 @@ def qc_answers(bundles: list[PairBundle], errors: list[str]) -> None:
             steps = [ln for ln in it.solution.splitlines() if re.match(r"^\d+\)", ln)]
             if not (2 <= len(steps) <= 5):
                 errors.append(f"{pid_lang}: solution has {len(steps)} numbered steps (need 2-5)")
-            if it.canonical_answer not in it.solution:
-                errors.append(f"{pid_lang}: canonical answer missing from solution")
+            final_error = _check_solution_final(it)
+            if final_error:
+                errors.append(f"{pid_lang}: {final_error}")
             if not it.difficulty_rubric:
                 errors.append(f"{pid_lang}: empty difficulty_rubric")
+            if not it.template_id:
+                errors.append(f"{pid_lang}: empty template_id")
             if it.answer_type == AnswerType.NUMERIC:
                 try:
                     v = float(it.canonical_answer)
@@ -248,6 +327,30 @@ def qc_answers(bundles: list[PairBundle], errors: list[str]) -> None:
                     errors.append(f"{pid_lang}: exact canonical malformed: {it.canonical_answer!r}")
                 if CYRILLIC.search(it.canonical_answer):
                     errors.append(f"{pid_lang}: Cyrillic in canonical answer {it.canonical_answer!r}")
+
+
+def qc_difficulty_evidence(bundles: list[PairBundle], errors: list[str]) -> None:
+    """Require auditable design evidence for every challenge-tier item.
+
+    Metadata cannot establish genuine olympiad difficulty without expert review,
+    but it prevents a one-formula generator from being labeled ``olympiad`` by
+    accident and makes the intended construct inspectable during review.
+    """
+    for bundle in bundles:
+        if bundle.difficulty != Difficulty.OLYMPIAD:
+            continue
+        concepts = bundle.params.get("challenge_concepts")
+        feature = bundle.params.get("challenge_feature")
+        if (
+            not isinstance(concepts, list)
+            or len(concepts) < 2
+            or any(not isinstance(concept, str) or not concept.strip() for concept in concepts)
+        ):
+            errors.append(
+                f"{bundle.pair_id}: olympiad item needs at least two declared challenge_concepts"
+            )
+        if not isinstance(feature, str) or not feature.strip():
+            errors.append(f"{bundle.pair_id}: olympiad item needs a declared challenge_feature")
 
 
 def qc_splits(bundles: list[PairBundle], metrics: dict[str, Any], errors: list[str]) -> None:
@@ -300,8 +403,9 @@ def run_qc(bundles: list[PairBundle]) -> QCResult:
     qc_pairing(bundles, errors)
     qc_mc(bundles, errors, metrics)
     qc_dedup(bundles, errors, metrics)
-    qc_distribution(bundles, errors)
+    qc_distribution(bundles, metrics, errors)
     qc_answers(bundles, errors)
-    qc_splits(bundles, errors)
-    qc_verifiers(bundles, errors, metrics)
+    qc_difficulty_evidence(bundles, errors)
+    qc_splits(bundles, metrics, errors)
+    qc_verifiers(bundles, metrics, errors)
     return QCResult(errors=errors, metrics=metrics)

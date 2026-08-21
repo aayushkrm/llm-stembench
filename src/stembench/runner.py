@@ -18,12 +18,11 @@ from pathlib import Path
 from typing import Any
 
 from stembench import prompts
+from stembench.parsing import extract_confidence
 from stembench.providers.base import Completion, DailyBudgetExceeded, ProviderError
-from stembench.providers.fake import FakeProvider
 from stembench.providers.registry import build_provider
 from stembench.schemas import (
     MCItem,
-    FreeResponseItem,
     ModelSpec,
     ResponseRecord,
     RunConfig,
@@ -31,7 +30,6 @@ from stembench.schemas import (
     utcnow,
 )
 from stembench.scoring import score_exact, score_mc, score_numeric
-from stembench.parsing import extract_confidence
 
 
 def git_state(repo: Path) -> tuple[str, bool]:
@@ -80,10 +78,21 @@ def _load_items_for_run(config: RunConfig) -> tuple[list[Any], dict[str, Any]]:
             by_pair.setdefault(pid, []).append(it)
             by_subject.setdefault(str(it.subject), []).append(pid)
         target_pairs = config.sample.n  # n = number of PAIRS for this dataset
-        per = max(1, target_pairs // max(1, len(by_subject)))
         picked_pids: list[str] = []
-        for s, pids in sorted(by_subject.items()):
-            picked_pids.extend(rng.sample(sorted(set(pids)), min(per, len(set(pids)))))
+        pools: dict[str, list[str]] = {}
+        for subject, pids in sorted(by_subject.items()):
+            pool = sorted(set(pids))
+            rng.shuffle(pool)
+            pools[subject] = pool
+        target_pairs = min(target_pairs, sum(len(pool) for pool in pools.values()))
+        while len(picked_pids) < target_pairs:
+            progressed = False
+            for subject in sorted(pools):
+                if pools[subject] and len(picked_pids) < target_pairs:
+                    picked_pids.append(pools[subject].pop())
+                    progressed = True
+            if not progressed:  # defensive: all subject pools exhausted
+                break
         eval_items = [it for pid in picked_pids for it in by_pair[pid]]
         eval_items.sort(key=lambda it: it.item_id)
         stats["n_pairs_sampled"] = len(picked_pids)
@@ -171,6 +180,7 @@ def _run_one_model(
                 dataset=config.dataset,
                 dataset_revision=config.dataset_revision,
                 subject=str(item.subject),
+                template_id=item.template_id,
                 language=item.language.value if hasattr(item.language, "value") else str(item.language),
                 difficulty=str(item.difficulty),
                 answer_type="mc" if isinstance(item, MCItem) else item.answer_type.value,
@@ -194,7 +204,7 @@ def _run_one_model(
                     temperature=model_spec.decoding.temperature,
                     top_p=model_spec.decoding.top_p,
                 )
-            except DailyBudgetExceeded as e:
+            except DailyBudgetExceeded:
                 rec.error_status = "daily_budget_exceeded"
                 rec.finished_at = utcnow()
                 fh.write(rec.model_dump_json() + "\n")

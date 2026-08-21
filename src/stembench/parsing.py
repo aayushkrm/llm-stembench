@@ -8,8 +8,6 @@ models frequently answer with Cyrillic letters.
 from __future__ import annotations
 
 import re
-import unicodedata
-from typing import Optional
 
 # Cyrillic letters that look like Latin MC labels -> Latin
 CYRILLIC_TO_LATIN = {
@@ -19,11 +17,22 @@ CYRILLIC_TO_LATIN = {
 
 LABEL_RE = re.compile(r"^\(?([A-Fa-f])\)?[\.\)\:]?", re.UNICODE)
 
+# A captured letter must not be part of a longer word (e.g. the 'A' of 'Answer'):
+_NOT_WORD = r"(?![A-Za-zА-Яа-яЁё])"
+
 ANSWER_PATTERNS = [
-    # "Answer: B" / "Answer: (B)" / "Ответ: B" / "answer is C"
-    re.compile(r"(?:final\s+)?answer\s*(?:is)?\s*[:＝:]?\s*\(?\**\s*([A-Fa-fА-Яа-я])\s*\**\)?", re.IGNORECASE),
-    re.compile(r"(?:ответ|ответик)\s*(?:is|=|:)?\s*\(?\**\s*([A-Fa-fА-Яа-я])\s*\**\)?", re.IGNORECASE),
-    re.compile(r"^\**\(?([A-F])\)?\**\s*[\.\)]", re.MULTILINE),  # line starting with "B." / "**B)**"
+    # "Answer: B" / "Answer: (B)" / "ответ: B" / "answer is C"
+    re.compile(
+        r"(?:final\s+)?answer\s*(?:is)?\s*[:＝:]?\s*\(?\**\s*([A-Fa-fА-Яа-я])"
+        + _NOT_WORD + r"\s*\**\)?",
+        re.IGNORECASE,
+    ),
+    re.compile(
+        r"(?:ответ|ответик)\s*(?:is|=|:)?\s*\(?\**\s*([A-Fa-fА-Яа-я])"
+        + _NOT_WORD + r"\s*\**\)?",
+        re.IGNORECASE,
+    ),
+    re.compile(r"^\**\(?([A-F])\)?\**\s*[\.\)]", re.MULTILINE),  # line starting "B." / "**B)**"
 ]
 
 CONFIDENCE_RE = re.compile(
@@ -32,10 +41,10 @@ CONFIDENCE_RE = re.compile(
 )
 
 NUM_RE = re.compile(
-    r"""[-−+]?\s?\d{1,3}(?:[ \u00A0]\d{3})+(?:[.,]\d+)?   # 1 234 567.8 (space thousands)
-      |[-−+]?\d{1,3}(?:,\d{3})+(?:\.\d+)?                 # 1,234,567.8
-      |[-−+]?\d+(?:[.,]\d+)?(?:\s?[eE]\s?[-+]?\d+)?       # plain / 1e-3
-      |[-−+]?\d+(?:[.,]\d+)?\s?[×x*]\s?10\^?[\{\(]?([-+]?\d+)[\}\)]?  # 3.2×10^4
+    r"""[-−+]?\d+(?:[.,]\d+)?\s?[×x*]\s?10\^?[\{\(]?([-+]?\d+)[\}\)]?  # 3.2×10^4 form first
+      |[-−+]?\s?\d{1,3}(?:[ \u00A0]\d{3})+(?:[.,]\d+)?  # 1 234 567.8 space-thousands
+      |[-−+]?\d{1,3}(?:,\d{3})+(?:\.\d+)?  # 1,234,567.8 comma-thousands
+      |[-−+]?\d+(?:[.,]\d+)?(?:\s?[eE]\s?[-+]?\d+)?  # plain or 1e-3 form
     """,
     re.VERBOSE,
 )
@@ -63,31 +72,35 @@ def strip_punct(text: str) -> str:
     return re.sub(r"[«»\"'`*_#$]+", "", text)
 
 
-def extract_mc_answer(text: str, n_choices: int = 4) -> Optional[tuple[str, str]]:
+def extract_mc_answer(text: str, n_choices: int = 4) -> tuple[str, str] | None:
     """Extract a choice letter. Returns (letter, method) or None."""
     if not text or not text.strip():
         return None
     limit = chr(ord("A") + n_choices)  # exclusive upper bound
     norm = normalize_cyrillic_letters(text)
 
-    for i, pat in enumerate(ANSWER_PATTERNS):
-        for m in pat.finditer(norm):
-            letter = m.group(1).upper()
-            if "A" <= letter < limit:
-                return letter, f"pattern{i + 1}"
+    # match against both the raw text (RU keywords intact) and the normalized text
+    for source in (text, norm):
+        for i, pat in enumerate(ANSWER_PATTERNS):
+            for m in pat.finditer(source):
+                letter = normalize_cyrillic_letters(m.group(1)).upper()
+                if "A" <= letter < limit:
+                    return letter, f"pattern{i + 1}"
 
-    # Bare letter as the first non-whitespace character of a short final line
+    # Bare letter as a short final line, possibly bold/underscore-wrapped: "**D**",
+    # "__B__", "(C)", "A."
     lines = [ln.strip() for ln in norm.strip().splitlines() if ln.strip()]
     if lines:
-        m = LABEL_RE.match(lines[-1])
-        if m and len(lines[-1]) <= 4:
+        stripped = re.sub(r"^[*_~>\s]+|[*_~>\s]+$", "", lines[-1])
+        m = LABEL_RE.match(stripped)
+        if m and len(stripped) <= 4:
             letter = m.group(1).upper()
             if "A" <= letter < limit:
                 return letter, "last_line"
     return None
 
 
-def extract_confidence(text: str) -> Optional[float]:
+def extract_confidence(text: str) -> float | None:
     """Self-reported confidence in [0,1], from 'Confidence: 87' style contract."""
     m = CONFIDENCE_RE.search(text or "")
     if not m:
@@ -121,7 +134,7 @@ def _number_from_match(m: re.Match) -> float | None:
         return None
 
 
-def extract_numeric(text: str) -> Optional[tuple[float, str]]:
+def extract_numeric(text: str) -> tuple[float, str] | None:
     """Extract the first plausible numeric value from text after 'Answer:' if present.
 
     Returns (value, raw_match). Looks preferentially inside an Answer: segment.
@@ -130,7 +143,10 @@ def extract_numeric(text: str) -> Optional[tuple[float, str]]:
         return None
     norm = normalize_cyrillic_letters(text)
     ans_part = norm
-    m = re.search(r"answer\s*(?:is)?\s*[:＝:=]?\s*(.+?)(?:\n|$)", norm, re.IGNORECASE)
+    m = re.search(
+        r"(?:answer|ответ)\s*(?:is|=|:)?\s*[:＝:=]?\s*(.+?)(?:\n|$)", norm,
+        re.IGNORECASE,
+    )
     if m:
         ans_part = m.group(1)
     # avoid matching the "0-100" of the confidence contract
@@ -144,10 +160,18 @@ def extract_numeric(text: str) -> Optional[tuple[float, str]]:
 
 
 def extract_unit(text: str) -> str:
+    """Return the first unit symbol that appears as a standalone token.
+
+    Word-boundary aware: the 'N' in 'Answer' or the 'm' in 'team' must not match.
+    Units are case-meaningful (M = molar, m = metre): an exact-case pass runs first,
+    a case-insensitive pass second.
+    """
     norm = normalize_ws(text)
-    for u in sorted(UNIT_WORDS, key=len, reverse=True):
-        if u.lower() in norm.lower():
-            return u
+    for flags in (0, re.IGNORECASE):
+        for u in sorted(UNIT_WORDS, key=len, reverse=True):
+            pattern = rf"(?<![\w.]){re.escape(u)}(?![\w.])"
+            if re.search(pattern, norm, flags):
+                return u
     return ""
 
 
@@ -157,14 +181,19 @@ def normalize_exact(text: str) -> str:
     return t.lower()
 
 
-def extract_exact_answer(text: str) -> Optional[str]:
-    """Prefer the content after 'Answer:'; else the last non-empty line."""
+def extract_exact_answer(text: str) -> str | None:
+    """Prefer the content after 'Answer:'/'Ответ:'; else the last non-empty line."""
     if not text or not text.strip():
         return None
     norm = text.strip()
-    m = re.search(r"answer\s*(?:is)?\s*[:＝:=]?\s*(.+?)(?:\n|$)", norm, re.IGNORECASE)
+    m = re.search(
+        r"(?:answer|ответ)\s*(?:is|=|:)?\s*[:＝:=]?\s*(.+?)(?:\n|$)",
+        norm, re.IGNORECASE,
+    )
     seg = m.group(1).strip() if m else ""
-    seg = re.sub(r"confidence\s*[:＝:=]?.*$", "", seg, flags=re.IGNORECASE).strip()
+    seg = re.sub(
+        r"(?:confidence|уверенность)\s*[:＝:=]?.*$", "", seg, flags=re.IGNORECASE
+    ).strip()
     if seg:
         return seg
     lines = [ln.strip() for ln in norm.splitlines() if ln.strip()]

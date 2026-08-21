@@ -11,7 +11,7 @@ from __future__ import annotations
 import random
 from typing import Any
 
-from stembench.schemas import MCItem, Language
+from stembench.schemas import Language, MCItem
 
 STEM_SUBJECTS = [
     "abstract_algebra", "anatomy", "astronomy", "college_biology",
@@ -82,21 +82,22 @@ def stratified_sample(
     if not strata:
         return []
     total = sum(len(v) for v in strata.values())
+    n = min(n, total)  # cannot sample more than exists (prevents alloc overflow)
     alloc: dict[str, int] = {}
     raw: dict[str, float] = {}
     for s, v in strata.items():
         raw[s] = len(v) / total * n
         alloc[s] = int(raw[s])
-    # largest remainder
+    # largest remainder; each stratum is capped at its own size
     remaining = n - sum(alloc.values())
     order = sorted(strata, key=lambda s: (raw[s] - alloc[s], rng.random()), reverse=True)
-    i = 0
-    while remaining > 0 and strata:
-        s = order[i % len(order)]
+    guard = 0
+    while remaining > 0 and guard < 10 * max(n, 1):
+        s = order[guard % len(order)]
         if alloc[s] < len(strata[s]):
             alloc[s] += 1
             remaining -= 1
-        i += 1
+        guard += 1
     out: list[MCItem] = []
     for s, v in strata.items():
         picked = rng.sample(v, min(alloc[s], len(v)))

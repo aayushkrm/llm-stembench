@@ -23,22 +23,37 @@ import numpy as np
 from stembench.schemas import AnswerType, Difficulty, Subject
 
 from ._core import (
+    PEOPLE,
     PairDraft,
     Person,
-    PEOPLE,
     fmt,
     frac_str,
+    pick_distractors,
     poly_str,
     ru_past,
     ru_plural,
-    ru_was,
-    pick_distractors,
-    sol_en,
-    sol_ru,
 )
+from ._core import sol_en as _core_sol_en
+from ._core import sol_ru as _core_sol_ru
 
 SUBJECT = Subject.MATH
 PREFIX = "MATH"
+
+
+def sol_en(steps: list[str], answer: str, units: str) -> str:
+    """Format a worked solution with the required minimum of two real steps."""
+    if len(steps) == 1:
+        tail = f" {units}" if units else ""
+        steps = [steps[0], f"Therefore the requested value is {answer}{tail}."]
+    return _core_sol_en(steps, answer, units)
+
+
+def sol_ru(steps: list[str], answer: str, units: str) -> str:
+    """Russian counterpart of :func:`sol_en` with parallel reasoning."""
+    if len(steps) == 1:
+        tail = f" {units}" if units else ""
+        steps = [steps[0], f"Следовательно, искомое значение равно {answer}{tail}."]
+    return _core_sol_ru(steps, answer, units)
 
 # Display topic per machine key.
 TOPICS: dict[str, str] = {
@@ -88,8 +103,8 @@ RUBRICS: dict[tuple[str, Difficulty], tuple[str, str]] = {
         "Вероятность сложного события или элементарный комбинаторный подсчёт.",
     ),
     ("prob_comb", Difficulty.OLYMPIAD): (
-        "Multi-step combinatorial count combining two binomial coefficients or repetitions.",
-        "Многошаговый комбинаторный подсчёт с двумя биномиальными коэффициентами или с повторениями.",
+        "Restricted counting needs a bijection or complement argument plus careful constraint handling.",
+        "Подсчёт с ограничениями требует биекции или перехода к дополнению и внимательного учёта условий.",
     ),
     ("derivatives", Difficulty.UNIVERSITY): (
         "Derivative of a cubic polynomial evaluated at a point; power rule only.",
@@ -100,8 +115,8 @@ RUBRICS: dict[tuple[str, Difficulty], tuple[str, str]] = {
         "Логарифмическое или показательное уравнение с целым ответом на степенном основании.",
     ),
     ("numtheory", Difficulty.OLYMPIAD): (
-        "Remainders, divisibility or the Chinese remainder theorem beyond the school syllabus.",
-        "Остатки, делимость или китайская теорема об остатках за пределами школьной программы.",
+        "Combines modular or divisor structure with a threshold, cycle, or inclusion-exclusion constraint.",
+        "Сочетает структуру сравнений или делителей с порогом, циклом либо принципом включения-исключения.",
     ),
     ("geometry_area", Difficulty.SCHOOL): (
         "Area or perimeter of a rectangle, square, circle or triangle from basic formulas.",
@@ -120,8 +135,8 @@ RUBRICS: dict[tuple[str, Difficulty], tuple[str, str]] = {
         "Линейное неравенство, требующее внимательной работы со знаком неравенства.",
     ),
     ("inequalities", Difficulty.OLYMPIAD): (
-        "Quadratic inequality solved from the sign of the parabola between the roots.",
-        "Квадратное неравенство, решаемое по расположению параболы между корнями.",
+        "Rational sign analysis combines two zeros, an excluded pole, and endpoint logic.",
+        "Знаковый анализ рационального выражения сочетает два нуля, исключённый полюс и выбор границ.",
     ),
     ("trig", Difficulty.UNIVERSITY): (
         "Sine, cosine or tangent in a right triangle or at a special angle.",
@@ -139,7 +154,7 @@ SPEC = [
     ("percent", Difficulty.SCHOOL, 6, AnswerType.MC),
     ("geometry_area", Difficulty.SCHOOL, 10, AnswerType.NUMERIC),
     ("geometry_area", Difficulty.SCHOOL, 4, AnswerType.MC),
-    ("geometry_area", Difficulty.UNIVERSITY, 4, AnswerType.MC),
+    ("geometry_area_uni", Difficulty.UNIVERSITY, 4, AnswerType.MC),
     ("prob_comb", Difficulty.SCHOOL, 8, AnswerType.MC),
     ("prob_comb", Difficulty.SCHOOL, 10, AnswerType.EXACT),
     ("quad_eq", Difficulty.UNIVERSITY, 10, AnswerType.MC),
@@ -284,7 +299,8 @@ def g_arith_word(rng: np.random.Generator, idx: int, atype: AnswerType) -> PairD
             f"How many candies does each friend receive?"
         )
         q_ru = (
-            f"У {p.ru_gen} {n_all} конфет. {p.ru_nom} {shared} их {f_cnt} друзьям поровну. "
+            f"У {p.ru_gen} {n_all} {ru_plural(n_all, 'конфета', 'конфеты', 'конфет')}. "
+            f"{p.ru_nom} {shared} их {f_cnt} друзьям поровну. "
             f"Сколько конфет досталось каждому другу?"
         )
         s_en = [
@@ -293,7 +309,9 @@ def g_arith_word(rng: np.random.Generator, idx: int, atype: AnswerType) -> PairD
         ]
         s_ru = [
             f"Деление с остатком: {n_all} = {c} * {f_cnt} + {r}.",
-            f"Каждому другу достаётся {c} конфет; остаётся {r} конфет.",
+            f"Каждому другу достаётся {c} "
+            f"{ru_plural(c, 'конфета', 'конфеты', 'конфет')}; остаётся {r} "
+            f"{ru_plural(r, 'конфета', 'конфеты', 'конфет')}.",
         ]
         value, units = float(c), ""
         params = {"variant": "share", "n": n_all, "friends": f_cnt, "expected": c}
@@ -684,8 +702,8 @@ def g_derivatives(rng: np.random.Generator, idx: int, atype: AnswerType) -> Pair
     fp = 3 * a * x0**2 + 2 * b * x0 + c
     f_str = poly_str([(a, "x^3"), (b, "x^2"), (c, "x")])
     df_str = poly_str([(3 * a, "x^2"), (2 * b, "x"), (c, "")])
-    q_en = f"Find the value of the derivative of f(x) = {f_str} at the point x0 = {x0}."
-    q_ru = f"Найдите значение производной функции f(x) = {f_str} в точке x0 = {x0}."
+    q_en = f"What is the value of the derivative of f(x) = {f_str} at the point x0 = {x0}?"
+    q_ru = f"Чему равно значение производной функции f(x) = {f_str} в точке x0 = {x0}?"
     fx0 = a * x0**3 + b * x0**2 + c * x0
     steps_en = [
         f"Power rule: f'(x) = {df_str}.",
@@ -746,7 +764,7 @@ def g_log_exp(rng: np.random.Generator, idx: int, atype: AnswerType) -> PairDraf
         q_ru = f"Чему равно значение log_10({x})?"
         steps_en = [f"{x} = 10^{k}, therefore log_10({x}) = {k}."]
         steps_ru = [f"{x} = 10^{k}, следовательно log_10({x}) = {k}."]
-    value, units = float(k), ""
+    value = float(k)
     d_ = PairDraft(SUBJECT, "", "", Difficulty.UNIVERSITY, atype, "", question_en=q_en, question_ru=q_ru)
     if atype == AnswerType.EXACT:
         d_.canonical = str(k)
@@ -770,8 +788,9 @@ def g_log_exp(rng: np.random.Generator, idx: int, atype: AnswerType) -> PairDraf
 # --------------------------------------------------------------------------- #
 # 8. Number theory (olympiad)
 # --------------------------------------------------------------------------- #
-PRIMES_SMALL = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47]
-CRT_PAIRS = [(3, 4), (3, 5), (3, 7), (3, 8), (4, 5), (4, 7), (5, 6), (5, 7), (5, 8), (6, 7)]
+PRIMES_SMALL = [2, 3, 5, 7, 11, 13]
+CRT_PAIRS = [(4, 5), (4, 7), (5, 6), (5, 7), (5, 8), (7, 8), (7, 9), (8, 9)]
+ORDER_PAIRS = [(2, 5), (2, 7), (3, 7), (3, 10), (5, 7), (7, 10), (2, 11), (3, 11)]
 
 
 def _crt(m1: int, m2: int, r1: int, r2: int) -> int:
@@ -781,86 +800,210 @@ def _crt(m1: int, m2: int, r1: int, r2: int) -> int:
     raise ValueError("no CRT solution")
 
 
+def _multiplicative_order(a: int, modulus: int) -> int:
+    """Smallest positive k with a**k == 1 (mod modulus); inputs are coprime."""
+    residue = 1
+    for k in range(1, modulus * modulus + 1):
+        residue = residue * a % modulus
+        if residue == 1:
+            return k
+    raise ValueError(f"no multiplicative order for {a} modulo {modulus}")
+
+
 def g_numtheory(rng: np.random.Generator, idx: int, atype: AnswerType) -> PairDraft:
     if atype == AnswerType.MC:
-        big_n = int(rng.integers(60, 301))
-        ddiv = int(rng.integers(3, 10))
-        cnt = big_n // ddiv
-        q_en = f"How many integers from 1 to {big_n} are divisible by {ddiv}?"
-        q_ru = f"Сколько натуральных чисел от 1 до {big_n} делятся на {ddiv} без остатка?"
+        a, b = CRT_PAIRS[int(rng.integers(0, len(CRT_PAIRS)))]
+        big_n = int(rng.integers(180, 421))
+        both = big_n // math.lcm(a, b)
+        cnt = big_n // a + big_n // b - 2 * both
+        q_en = (
+            f"How many integers from 1 to {big_n} are divisible by exactly one of {a} and {b} "
+            "(but not by both)?"
+        )
+        q_ru = (
+            f"Сколько натуральных чисел от 1 до {big_n} делятся ровно на одно из чисел {a} и {b} "
+            "(но не на оба сразу)?"
+        )
         steps_en = [
-            f"These are {ddiv}, {2 * ddiv}, ..., {cnt * ddiv} <= {big_n}.",
-            f"The count is {big_n} / {ddiv} rounded down = {cnt}.",
+            f"There are floor({big_n}/{a}) = {big_n // a} multiples of {a} and "
+            f"floor({big_n}/{b}) = {big_n // b} multiples of {b}.",
+            f"The {both} common multiples were counted twice and must be removed twice: "
+            f"{big_n // a} + {big_n // b} - 2*{both} = {cnt}.",
         ]
         steps_ru = [
-            f"Это числа {ddiv}, {2 * ddiv}, ..., {cnt * ddiv} <= {big_n}.",
-            f"Их количество равно целой части {big_n} / {ddiv} = {cnt}.",
+            f"Кратных {a} имеется floor({big_n}/{a}) = {big_n // a}, а кратных {b} — "
+            f"floor({big_n}/{b}) = {big_n // b}.",
+            f"Каждое из {both} общих кратных посчитано дважды, поэтому вычитаем их два раза: "
+            f"{big_n // a} + {big_n // b} - 2*{both} = {cnt}.",
         ]
         value = float(cnt)
-        pool = _std_pool(value, [(float(big_n // 10), "unit_slip_x10")])
-        params = {"variant": "count_multiples", "N": big_n, "d": ddiv, "expected": cnt}
+        pool = _std_pool(
+            value,
+            [
+                (float(big_n // a + big_n // b - both), "counted_common_once"),
+                (float(big_n // a + big_n // b), "did_not_remove_common"),
+                (float(both), "returned_common_only"),
+            ],
+        )
+        params = {
+            "variant": "exactly_one_divisor",
+            "N": big_n,
+            "a": a,
+            "b": b,
+            "expected": cnt,
+            "challenge_concepts": ["divisibility", "inclusion-exclusion"],
+            "challenge_feature": "The word exactly requires removing the intersection twice.",
+        }
     else:
         variant = int(rng.integers(0, 4))
+        phr = int(rng.integers(0, 2))
         if variant == 0:
-            a = int(rng.integers(100, 1000))
-            m = int(rng.integers(3, 13))
-            r = a % m
-            q_en = f"What is the remainder when {a} is divided by {m}?"
-            q_ru = f"Каков остаток от деления числа {a} на {m}?"
-            steps_en = [f"{a} = {a // m} * {m} + {a % m}.", f"The remainder is {r}."]
-            steps_ru = [f"{a} = {a // m} * {m} + {a % m}.", f"Остаток равен {r}."]
-            ans, steps_en_v, steps_ru_v = str(r), steps_en, steps_ru
-            params = {"variant": "remainder", "a": a, "m": m, "expected": r}
-        elif variant == 1:
-            ps = sorted(int(v) for v in rng.choice(len(PRIMES_SMALL), size=2, replace=False))
-            p1, p2 = PRIMES_SMALL[ps[0]], PRIMES_SMALL[ps[1]]
-            n_all = p1 * p2
-            ans_v = p2
-            q_en = f"What is the largest prime that divides {n_all} exactly?"
-            q_ru = f"Каково наибольшее простое число, на которое число {n_all} делится нацело?"
-            steps_en = [f"Factorization: {n_all} = {p1} * {p2}.", f"The largest prime factor is {p2}."]
-            steps_ru = [f"Разложение: {n_all} = {p1} * {p2}.", f"Наибольший простой делитель равен {p2}."]
-            ans, steps_en_v, steps_ru_v = str(ans_v), steps_en, steps_ru
-            params = {"variant": "largest_prime", "n": n_all, "expected": p2}
-        elif variant == 2:
             m1, m2 = CRT_PAIRS[int(rng.integers(0, len(CRT_PAIRS)))]
             r1 = int(rng.integers(1, m1))
             r2 = int(rng.integers(1, m2))
-            n_all = _crt(m1, m2, r1, r2)
+            base = _crt(m1, m2, r1, r2)
+            period = math.lcm(m1, m2)
+            lower = int(rng.integers(3 * period, 7 * period))
+            ans_v = base + ((lower - base) // period + 1) * period
+            if phr == 0:
+                q_en = (
+                    f"Find the least integer greater than {lower} that leaves remainder {r1} modulo {m1} "
+                    f"and remainder {r2} modulo {m2}?"
+                )
+                q_ru = (
+                    f"Найдите наименьшее целое число, большее {lower}, которое даёт остаток {r1} по модулю "
+                    f"{m1} и остаток {r2} по модулю {m2}?"
+                )
+            else:
+                q_en = (
+                    f"An integer x satisfies x ≡ {r1} (mod {m1}) and x ≡ {r2} (mod {m2}). "
+                    f"What is the smallest possible x with x > {lower}?"
+                )
+                q_ru = (
+                    f"Целое число x удовлетворяет сравнениям x ≡ {r1} (mod {m1}) и x ≡ {r2} (mod {m2}). "
+                    f"Каково наименьшее возможное x при условии x > {lower}?"
+                )
+            steps_en_v = [
+                f"The least positive simultaneous solution is {base}; all solutions are {base} + {period}t.",
+                f"The first term above {lower} is {base} + {period}*{(ans_v - base) // period} = {ans_v}.",
+            ]
+            steps_ru_v = [
+                f"Наименьшее положительное совместное решение равно {base}; все решения имеют вид "
+                f"{base} + {period}t.",
+                f"Первый член этой прогрессии, больший {lower}: "
+                f"{base} + {period}*{(ans_v - base) // period} = {ans_v}.",
+            ]
+            ans = str(ans_v)
+            params = {
+                "variant": "crt_threshold",
+                "m1": m1,
+                "m2": m2,
+                "r1": r1,
+                "r2": r2,
+                "lower": lower,
+                "expected": ans_v,
+                "challenge_concepts": ["simultaneous congruences", "arithmetic progressions"],
+                "challenge_feature": "The least CRT residue must be lifted past a strict threshold.",
+            }
+        elif variant == 1:
+            bases = [2, 3, 7, 8, 12, 13, 17, 18]
+            a, b = (bases[int(i)] for i in rng.choice(len(bases), size=2, replace=False))
+            k = int(rng.integers(25, 81))
+            j = int(rng.integers(20, 76))
+            ra, rb = pow(a, k, 100), pow(b, j, 100)
+            ans_v = (ra + rb) % 100
+            q_en = f"What integer from 0 to 99 represents the last two digits of {a}^{k} + {b}^{j}?"
+            q_ru = (
+                f"Какое целое число от 0 до 99 задаёт две последние цифры числа {a}^{k} + {b}^{j}?"
+            )
+            steps_en_v = [
+                f"Using modular power cycles gives {a}^{k} ≡ {ra} and {b}^{j} ≡ {rb} (mod 100).",
+                f"Therefore the final residue is ({ra} + {rb}) mod 100 = {ans_v}.",
+            ]
+            steps_ru_v = [
+                f"По циклам степенных остатков {a}^{k} ≡ {ra} и {b}^{j} ≡ {rb} (mod 100).",
+                f"Искомый остаток равен ({ra} + {rb}) mod 100 = {ans_v}.",
+            ]
+            ans = str(ans_v)
+            params = {
+                "variant": "power_sum_mod100",
+                "a": a,
+                "b": b,
+                "k": k,
+                "j": j,
+                "expected": ans_v,
+                "challenge_concepts": ["power residue cycles", "modular addition"],
+                "challenge_feature": "Two long powers must be reduced separately before their residues combine.",
+            }
+        elif variant == 2:
+            p1, p2 = (PRIMES_SMALL[int(i)] for i in rng.choice(len(PRIMES_SMALL), size=2, replace=False))
+            alpha = int(rng.integers(4, 9))
+            beta = int(rng.integers(3, 8))
+            p_exp = list(range(2, alpha + 1, 2))
+            q_exp = list(range(0, beta, 2))
+            ans_v = len(p_exp) * len(q_exp)
+            n_all = p1**alpha * p2**beta
             q_en = (
-                f"Find the smallest positive integer that leaves remainder {r1} when divided by {m1} "
-                f"and remainder {r2} when divided by {m2}. What is it?"
+                f"Let N = {p1}^{alpha} * {p2}^{beta}. How many positive divisors of N are perfect squares, "
+                f"are divisible by {p1}^2, and are not divisible by {p2}^{beta}?"
             )
             q_ru = (
-                f"Найдите наименьшее натуральное число, которое при делении на {m1} даёт остаток {r1}, "
-                f"а при делении на {m2} — остаток {r2}. Каково это число?"
+                f"Пусть N = {p1}^{alpha} * {p2}^{beta}. Сколько положительных делителей N являются полными "
+                f"квадратами, делятся на {p1}^2 и не делятся на {p2}^{beta}?"
             )
-            steps_en = [
-                f"Numbers of the form {m1}*t + {r1}: {r1}, {m1 + r1}, {2 * m1 + r1}, ...",
-                f"The first one congruent to {r2} modulo {m2} is {n_all}.",
+            steps_en_v = [
+                f"A square divisor has even exponents. For {p1}, allowed exponents are {p_exp}; "
+                f"for {p2}, they are {q_exp} because exponent {beta} is forbidden.",
+                f"The exponent choices are independent, so the count is {len(p_exp)}*{len(q_exp)} = {ans_v}.",
             ]
-            steps_ru = [
-                f"Числа вида {m1}*t + {r1}: {r1}, {m1 + r1}, {2 * m1 + r1}, ...",
-                f"Первое число, дающее остаток {r2} при делении на {m2}, — это {n_all}.",
+            steps_ru_v = [
+                f"У делителя-квадрата показатели чётны. Для {p1} допустимы {p_exp}, а для {p2} — {q_exp}, "
+                f"поскольку показатель {beta} запрещён.",
+                f"Показатели выбираются независимо: {len(p_exp)}*{len(q_exp)} = {ans_v}.",
             ]
-            ans, steps_en_v, steps_ru_v = str(n_all), steps_en, steps_ru
-            params = {"variant": "crt", "m1": m1, "m2": m2, "r1": r1, "r2": r2, "expected": n_all}
+            ans = str(ans_v)
+            params = {
+                "variant": "square_divisor_filter",
+                "p": p1,
+                "q": p2,
+                "alpha": alpha,
+                "beta": beta,
+                "n": n_all,
+                "expected": ans_v,
+                "challenge_concepts": ["prime-exponent divisor representation", "square parity constraints"],
+                "challenge_feature": "Two divisibility filters alter separate exponent ranges.",
+            }
         else:
-            a = int(rng.integers(2, 10))
-            k = int(rng.integers(3, 16))
-            dig = pow(a, k, 10)
-            q_en = f"What is the last digit of the number {a}^{k}?"
-            q_ru = f"Какова последняя цифра числа {a}^{k}?"
-            steps_en = [
-                f"Last digits of powers of {a} repeat with period {1 if a in (0, 1, 5, 6) else 2 if a in (4, 9) else 4}.",
-                f"{a}^{k} ends in {dig}.",
+            a, modulus = ORDER_PAIRS[int(rng.integers(0, len(ORDER_PAIRS)))]
+            order = _multiplicative_order(a, modulus)
+            lower = int(rng.integers(12, 41))
+            ans_v = ((lower // order) + 1) * order
+            q_en = (
+                f"What is the smallest integer k > {lower} for which {a}^k leaves remainder 1 "
+                f"when divided by {modulus}?"
+            )
+            q_ru = (
+                f"Каково наименьшее целое k > {lower}, при котором {a}^k даёт остаток 1 "
+                f"при делении на {modulus}?"
+            )
+            steps_en_v = [
+                f"The powers of {a} modulo {modulus} return to 1 every {order} exponents.",
+                f"The first multiple of {order} strictly above {lower} is {ans_v}.",
             ]
-            steps_ru = [
-                f"Последние цифры степеней числа {a} повторяются с периодом {1 if a in (0, 1, 5, 6) else 2 if a in (4, 9) else 4}.",
-                f"Число {a}^{k} оканчивается цифрой {dig}.",
+            steps_ru_v = [
+                f"Степени {a} по модулю {modulus} возвращаются к остатку 1 через каждые {order} показателей.",
+                f"Первое кратное {order}, строго большее {lower}, равно {ans_v}.",
             ]
-            ans, steps_en_v, steps_ru_v = str(dig), steps_en, steps_ru
-            params = {"variant": "last_digit", "a": a, "k": k, "expected": dig}
+            ans = str(ans_v)
+            params = {
+                "variant": "order_threshold",
+                "a": a,
+                "modulus": modulus,
+                "lower": lower,
+                "expected": ans_v,
+                "challenge_concepts": ["multiplicative order", "strict threshold arithmetic"],
+                "challenge_feature": "A residue cycle must be found before selecting the next admissible exponent.",
+            }
         d_ = PairDraft(SUBJECT, "", "", Difficulty.OLYMPIAD, atype, "", question_en=q_en, question_ru=q_ru)
         d_.canonical = ans
         d_.solution_en = sol_en(steps_en_v, ans, "")
@@ -868,10 +1011,10 @@ def g_numtheory(rng: np.random.Generator, idx: int, atype: AnswerType) -> PairDr
         d_.params = params
         return _finish(d_, TOPICS["numtheory"], "numtheory", Difficulty.OLYMPIAD)
     d_ = PairDraft(SUBJECT, "", "", Difficulty.OLYMPIAD, atype, "", question_en=q_en, question_ru=q_ru)
+    d_.params = params
     _mc_numeric(d_, rng, value, pool, "")
     d_.solution_en = sol_en(steps_en, fmt(value), "")
     d_.solution_ru = sol_ru(steps_ru, fmt(value), "")
-    d_.params = params
     return _finish(d_, TOPICS["numtheory"], "numtheory", Difficulty.OLYMPIAD)
 
 
@@ -1028,25 +1171,29 @@ def g_sys_lin2(rng: np.random.Generator, idx: int, atype: AnswerType) -> PairDra
             (f"({x0}, {-y0})", "sign_error_y"),
             (f"({-x0}, {-y0})", "sign_error_xy"),
             (f"({y0}, {-x0})", "swapped_and_sign"),
+            (f"({x0 + 1}, {y0})", "off_by_one"),
+            (f"({x0}, {y0 + 1})", "off_by_one"),
+            (f"({x0 - 1}, {y0 - 1})", "off_by_one"),
         ]
         seen: list[tuple[str, str]] = []
-        for txt, tag in cands:
-            if txt == f"({x0}, {y0})":
-                seen.append((txt, tag))
         for txt, tag in cands[1:]:
-            if all(txt != t for t, _ in seen) and len(seen) < 4:
+            if txt != cands[0][0] and all(txt != t for t, _ in seen):
                 seen.append((txt, tag))
-        correct = f"({x0}, {y0})"
-        wrongs = [(t, tag) for t, tag in seen[1:]]
+        correct = cands[0][0]
+        wrongs = seen
         wrongs3 = pick_distractors_str(rng, correct, wrongs)
         opts = [correct] + [w for w, _ in wrongs3]
+        x_num = c1 * b2 - b1 * c2
+        y_num = a1 * c2 - c1 * a2
         steps_en = [
-            f"Eliminate y: multiply the equations suitably and add; x = {x0}.",
-            f"Substitute back: {poly_str([(a1, 'x'), (b1, 'y')])} gives y = {y0}.",
+            f"The determinant is D = {a1}*({b2}) - {b1}*({a2}) = {det}.",
+            f"Cramer's rule gives x = {x_num}/{det} = {x0} and "
+            f"y = {y_num}/{det} = {y0}.",
         ]
         steps_ru = [
-            f"Исключим y: умножим уравнения на подходящие числа и сложим; x = {x0}.",
-            f"Подставим обратно: из {poly_str([(a1, 'x'), (b1, 'y')])} = {c1} получаем y = {y0}.",
+            f"Определитель D = {a1}*({b2}) - {b1}*({a2}) = {det}.",
+            f"По формулам Крамера x = {x_num}/{det} = {x0}, "
+            f"y = {y_num}/{det} = {y0}.",
         ]
         d_ = PairDraft(SUBJECT, "", "", Difficulty.UNIVERSITY, atype, "", question_en=q_en, question_ru=q_ru)
         d_.mc_en = tuple(opts)
@@ -1071,7 +1218,6 @@ def g_sys_lin2(rng: np.random.Generator, idx: int, atype: AnswerType) -> PairDra
         f"Проверка: {a1}*({x0}) + {b1}*({y0}) = {c1}.",
     ]
     value = float(x0)
-    pool = _std_pool(value, [(float(y0), "returned_y_instead_of_x"), (float(c1), "returned_constant")])
     d_ = PairDraft(SUBJECT, "", "", Difficulty.UNIVERSITY, atype, "", question_en=q_en, question_ru=q_ru)
     _set_numeric(d_, value, "")
     d_.solution_en = sol_en(steps_en, d_.canonical, "")
@@ -1136,12 +1282,12 @@ def g_inequalities(rng: np.random.Generator, idx: int, atype: AnswerType, diffic
         p = -(r1 + r2)
         q = r1 * r2
         poly = f"{poly_str([(1, 'x^2'), (p, 'x'), (q, '')])}"
-        correct = f"{r1} < x < {r2}"
+        correct = f"({r1}, {r2})"
         options = [
             (correct, "correct"),
-            (f"x < {r1} or x > {r2}", "inverted_region"),
-            (f"{r1} <= x <= {r2}", "boundary_slip"),
-            (f"x < {r2}", "half_interval"),
+            (f"(-∞, {r1}) ∪ ({r2}, ∞)", "inverted_region"),
+            (f"[{r1}, {r2}]", "boundary_slip"),
+            (f"(-∞, {r2})", "half_interval"),
         ]
         steps_en = [
             f"The roots of {poly} = 0 are {r1} and {r2}.",
@@ -1174,7 +1320,76 @@ def g_ineq_uni(rng: np.random.Generator, idx: int, atype: AnswerType) -> PairDra
 
 
 def g_ineq_olym(rng: np.random.Generator, idx: int, atype: AnswerType) -> PairDraft:
-    return g_inequalities(rng, idx, atype, Difficulty.OLYMPIAD)
+    a = int(rng.integers(1, 6))
+    c = a + int(rng.integers(2, 6))
+    b = c + int(rng.integers(2, 6))
+    relation = "le" if bool(rng.integers(0, 2)) else "ge"
+    expression = f"((x - {a})(x - {b})) / (x - {c})"
+    if relation == "le":
+        symbol = "<= 0"
+        correct = f"(-∞, {a}] ∪ ({c}, {b}]"
+        inverted = f"[{a}, {c}) ∪ [{b}, ∞)"
+        included_pole = f"(-∞, {a}] ∪ [{c}, {b}]"
+        dropped_zeros = f"(-∞, {a}) ∪ ({c}, {b})"
+        half_only = f"({c}, {b}]"
+    else:
+        symbol = ">= 0"
+        correct = f"[{a}, {c}) ∪ [{b}, ∞)"
+        inverted = f"(-∞, {a}] ∪ ({c}, {b}]"
+        included_pole = f"[{a}, {c}] ∪ [{b}, ∞)"
+        dropped_zeros = f"({a}, {c}) ∪ ({b}, ∞)"
+        half_only = f"[{a}, {c})"
+    q_en = (
+        f"Solve the rational inequality {expression} {symbol}. Which option gives its complete solution set?"
+    )
+    q_ru = (
+        f"Решите рациональное неравенство {expression} {symbol}. Какой вариант задаёт всё множество решений?"
+    )
+    steps_en = [
+        f"The numerator vanishes at {a} and {b}, while x = {c} is excluded; the ordered critical "
+        f"points are {a} < {c} < {b}.",
+        f"A sign chart for the three factors, with the zeros included and the pole excluded, gives {correct}.",
+    ]
+    steps_ru = [
+        f"Числитель обращается в ноль при {a} и {b}, а x = {c} исключён; критические точки "
+        f"упорядочены так: {a} < {c} < {b}.",
+        f"Таблица знаков трёх множителей с включёнными нулями и исключённым полюсом даёт {correct}.",
+    ]
+    wrongs = [
+        (inverted, "inverted_sign_regions"),
+        (included_pole, "included_undefined_point"),
+        (dropped_zeros, "dropped_included_zeros"),
+        (half_only, "lost_solution_component"),
+    ]
+    wrongs3 = pick_distractors_str(rng, correct, wrongs)
+    opts = [correct] + [text for text, _ in wrongs3]
+    d_ = PairDraft(
+        SUBJECT,
+        "",
+        "",
+        Difficulty.OLYMPIAD,
+        atype,
+        "",
+        question_en=q_en,
+        question_ru=q_ru,
+    )
+    d_.mc_en = tuple(opts)
+    d_.mc_ru = tuple(opts)
+    d_.distractor_tags = tuple(tag for _, tag in wrongs3)
+    d_.canonical = correct
+    d_.solution_en = sol_en(steps_en, correct, "")
+    d_.solution_ru = sol_ru(steps_ru, correct, "")
+    d_.params = {
+        "kind": "rational_sign",
+        "a": a,
+        "b": b,
+        "c": c,
+        "relation": relation,
+        "expected_text": correct,
+        "challenge_concepts": ["rational-function domain", "factor sign chart"],
+        "challenge_feature": "The pole splits an otherwise included interval and must never be retained.",
+    }
+    return _finish(d_, TOPICS["inequalities"], "inequalities", Difficulty.OLYMPIAD)
 
 
 # --------------------------------------------------------------------------- #
@@ -1189,7 +1404,10 @@ SPECIALS = [
 
 
 def g_trig(rng: np.random.Generator, idx: int, atype: AnswerType) -> PairDraft:
-    variant = int(rng.integers(0, 3))
+    if atype == AnswerType.NUMERIC:
+        variant = 2
+    else:
+        variant = int(rng.integers(0, 2))
     if variant == 0:
         a, b, c = TRIPLES[int(rng.integers(0, len(TRIPLES)))]
         ask = int(rng.integers(0, 2))
@@ -1224,10 +1442,17 @@ def g_trig(rng: np.random.Generator, idx: int, atype: AnswerType) -> PairDraft:
     if variant == 1:
         fn, deg, val = SPECIALS[int(rng.integers(0, len(SPECIALS)))]
         correct = fmt(val)
-        q_en = f"What is the exact decimal value of {fn}({deg}°)?"
-        q_ru = f"Чему равно значение {fn}({deg}°)?"
-        steps_en = [f"From the special-angle table: {fn}({deg}°) = {correct}."]
-        steps_ru = [f"Из таблицы значений: {fn}({deg}°) = {correct}."]
+        approximate = correct not in {"0.5", "1"}
+        if approximate:
+            q_en = f"What is the approximate decimal value of {fn}({deg}°)?"
+            q_ru = f"Чему приближённо равно значение {fn}({deg}°)?"
+            steps_en = [f"From the special-angle table: {fn}({deg}°) ≈ {correct}."]
+            steps_ru = [f"Из таблицы значений: {fn}({deg}°) ≈ {correct}."]
+        else:
+            q_en = f"What is the decimal value of {fn}({deg}°)?"
+            q_ru = f"Чему равно значение {fn}({deg}°)?"
+            steps_en = [f"From the special-angle table: {fn}({deg}°) = {correct}."]
+            steps_ru = [f"Из таблицы значений: {fn}({deg}°) = {correct}."]
         pool = [
             ("0.5", "special_angle_confusion"),
             ("0.866", "special_angle_confusion"),
@@ -1289,14 +1514,25 @@ def g_prob_comb(rng: np.random.Generator, idx: int, atype: AnswerType, difficult
             b = int(rng.integers(5, 10))
             t = r + g + b
             correct = frac_str(r, t)
-            q_en = (
-                f"An urn contains {r} red, {g} green and {b} blue balls. One ball is drawn at random. "
-                f"What is the probability that it is red?"
-            )
-            q_ru = (
-                f"В урне лежат {r} красных, {g} зелёных и {b} синих шаров. Из урны наугад достают один шар. "
-                f"Какова вероятность того, что этот шар окажется красным?"
-            )
+            phr = int(rng.integers(0, 2))
+            if phr == 0:
+                q_en = (
+                    f"An urn contains {r} red, {g} green and {b} blue balls. One ball is drawn at random. "
+                    f"What is the probability that it is red?"
+                )
+                q_ru = (
+                    f"В урне лежат {r} красных, {g} зелёных и {b} синих шаров. Из урны наугад достают один шар. "
+                    f"Какова вероятность того, что этот шар окажется красным?"
+                )
+            else:
+                q_en = (
+                    f"A box holds {r} red, {g} green and {b} blue balls, all identical to the touch. "
+                    f"One ball is taken out without looking. What is the probability of drawing a red ball?"
+                )
+                q_ru = (
+                    f"В коробке находится {r} красных, {g} зелёных и {b} синих шаров, неотличимых на ощупь. "
+                    f"Не глядя, из коробки вынимают один шар. Какова вероятность вынуть красный шар?"
+                )
             steps_en = [f"Total balls: {r} + {g} + {b} = {t}.", f"P(red) = {r} / {t} = {correct}."]
             steps_ru = [f"Всего шаров: {r} + {g} + {b} = {t}.", f"P(красный) = {r} / {t} = {correct}."]
             wrongs = [
@@ -1308,12 +1544,26 @@ def g_prob_comb(rng: np.random.Generator, idx: int, atype: AnswerType, difficult
             _mc_text(d_, rng, correct, wrongs, {"r": r, "g": g, "b": b, "kind": "urn"})
         else:
             kind = int(rng.integers(0, 2))
+            phr = int(rng.integers(0, 3))
             if kind == 0:
                 n = int(rng.integers(5, 11))
                 k = int(rng.integers(2, min(4, n - 1)))
                 val = math.comb(n, k)
-                q_en = f"In how many ways can {k} students on duty be chosen from a class of {n} students?"
-                q_ru = f"Сколькими способами можно выбрать {k} дежурных из {n} учеников класса?"
+                if phr == 0:
+                    q_en = f"In how many ways can {k} students on duty be chosen from a class of {n} students?"
+                    q_ru = f"Сколькими способами можно выбрать {k} дежурных из {n} учеников класса?"
+                elif phr == 1:
+                    q_en = (
+                        f"Of the {n} submitted conference abstracts, exactly {k} will be selected for the "
+                        f"shortlist. How many different shortlists are possible?"
+                    )
+                    q_ru = (
+                        f"Из {n} поданных на конференцию заявок отберут ровно {k} в шорт-лист. "
+                        f"Сколько различных шорт-листов можно составить?"
+                    )
+                else:
+                    q_en = f"A gift set is assembled from {k} of the {n} available kinds of tea. How many different sets are there?"
+                    q_ru = f"Подарочный набор составляют из {k} сортов чая из {n} имеющихся в магазине. Сколько различных наборов можно составить?"
                 steps_en = [
                     f"The order does not matter, so we count combinations: C({n}, {k}) = {n}! / ({k}! * {n - k}!).",
                     f"C({n}, {k}) = {val}.",
@@ -1327,8 +1577,27 @@ def g_prob_comb(rng: np.random.Generator, idx: int, atype: AnswerType, difficult
                 a = int(rng.integers(3, 7))
                 bb = int(rng.integers(3, 7))
                 val = a * bb
-                q_en = f"A cafeteria offers {a} main dishes and {bb} drinks. In how many ways can one choose a dish and a drink?"
-                q_ru = f"В столовой в меню {a} первых блюд и {bb} напитков. Сколькими способами можно выбрать одно блюдо и один напиток?"
+                if phr == 0:
+                    q_en = f"A cafeteria offers {a} main dishes and {bb} drinks. In how many ways can one choose a dish and a drink?"
+                    q_ru = (
+                        f"В столовой в меню {a} "
+                        f"{ru_plural(a, 'первое блюдо', 'первых блюда', 'первых блюд')} и {bb} "
+                        f"{ru_plural(bb, 'напиток', 'напитка', 'напитков')}. "
+                        f"Сколькими способами можно выбрать одно блюдо и один напиток?"
+                    )
+                elif phr == 1:
+                    q_en = f"Tatiana has {a} blouses and {bb} skirts. How many different blouse-skirt outfits can she put together?"
+                    q_ru = (
+                        f"У Татьяны {a} {ru_plural(a, 'блузка', 'блузки', 'блузок')} и {bb} "
+                        f"{ru_plural(bb, 'юбка', 'юбки', 'юбок')}. Сколько различных нарядов из блузки и юбки "
+                        f"она может составить?"
+                    )
+                else:
+                    q_en = f"A breakfast consists of one of {a} kinds of porridge and one of {bb} drinks. How many breakfast options are there?"
+                    q_ru = (
+                        f"На завтрак выбирают один из {a} видов каши и один из {bb} напитков. "
+                        f"Сколько вариантов завтрака можно составить?"
+                    )
                 steps_en = [f"Product rule: {a} * {bb} = {val} ways."]
                 steps_ru = [f"Правило произведения: {a} * {bb} = {val} способов."]
                 d_.params = {"kind": "product_rule", "a": a, "b": bb, "expected": val}
@@ -1338,113 +1607,95 @@ def g_prob_comb(rng: np.random.Generator, idx: int, atype: AnswerType, difficult
             d_.solution_en = sol_en(steps_en, d_.canonical, "")
             d_.solution_ru = sol_ru(steps_ru, d_.canonical, "")
     elif difficulty == Difficulty.UNIVERSITY:
-        kind = int(rng.integers(0, 2))
-        if kind == 0:
-            s = int(rng.integers(4, 11))
-            cnt = 6 - abs(s - 7)
-            correct = frac_str(cnt, 36)
-            q_en = f"Two fair dice are rolled. What is the probability that the sum of the points is exactly {s}?"
-            q_ru = f"Бросают две игральные кости. Какова вероятность того, что сумма выпавших очков равна {s}?"
-            steps_en = [
-                f"Favorable outcomes: {cnt} (out of 6 * 6 = 36 equiprobable outcomes).",
-                f"P = {cnt} / 36 = {correct}.",
-            ]
-            steps_ru = [
-                f"Благоприятных исходов: {cnt} (из 6 * 6 = 36 равновозможных).",
-                f"P = {cnt} / 36 = {correct}.",
-            ]
-            wrongs = [
-                (frac_str(cnt + 1, 36), "off_by_one"),
-                (frac_str(cnt, 12), "wrong_denominator"),
-                (frac_str(s, 36), "used_sum_as_count"),
-                (frac_str(cnt, 30), "wrong_denominator"),
-            ]
-            _mc_text(d_, rng, correct, wrongs, {"s": s, "kind": "dice"})
-        else:
-            t1 = int(rng.integers(3, 7))
-            r1 = int(rng.integers(1, t1))
-            t2 = int(rng.integers(3, 7))
-            r2 = int(rng.integers(1, t2))
-            correct = frac_str(r1 * r2, t1 * t2)
-            q_en = (
-                f"One ball is drawn from each of two urns: the first holds {r1} red balls out of {t1}, "
-                f"the second {r2} red balls out of {t2}. What is the probability that both drawn balls are red?"
-            )
-            q_ru = (
-                f"Из каждой из двух урн достают по одному шару: в первой урне {r1} красных шаров из {t1}, "
-                f"во второй — {r2} красных из {t2}. Какова вероятность, что оба вынутых шара окажутся красными?"
-            )
-            steps_en = [
-                f"Independence: P = ({r1}/{t1}) * ({r2}/{t2}) = {correct}.",
-            ]
-            steps_ru = [
-                f"Независимость событий: P = ({r1}/{t1}) * ({r2}/{t2}) = {correct}.",
-            ]
-            sum_frac = frac_str(r1 * t2 + r2 * t1, t1 * t2)
-            wrongs = [
-                (sum_frac, "added_probabilities"),
-                (frac_str(r1, t1), "ignored_second_event"),
-                (frac_str(r1 * r2, t1 + t2), "wrong_denominator"),
-                (frac_str(r2, t2), "ignored_first_event"),
-            ]
-            _mc_text(d_, rng, correct, wrongs, {"t1": t1, "r1": r1, "t2": t2, "r2": r2, "kind": "independent"})
-    else:
         if atype == AnswerType.MC:
             kind = int(rng.integers(0, 2))
             if kind == 0:
-                ng = int(rng.integers(4, 8))
-                nb = int(rng.integers(4, 8))
-                k = int(rng.integers(2, 4))
-                j = int(rng.integers(2, 4))
-                val = math.comb(ng, k) * math.comb(nb, j)
-                q_en = f"A club has {ng} girls and {nb} boys. In how many ways can a team of {k} girls and {j} boys be formed?"
-                q_ru = f"В кружке занимаются {ng} девочек и {nb} мальчиков. Сколькими способами можно составить команду из {k} девочек и {j} мальчиков?"
+                s = int(rng.integers(4, 11))
+                cnt = 6 - abs(s - 7)
+                correct = frac_str(cnt, 36)
+                phr = int(rng.integers(0, 2))
+                if phr == 0:
+                    q_en = f"Two fair dice are rolled. What is the probability that the sum of the points is exactly {s}?"
+                    q_ru = (
+                        f"Бросают две правильные шестигранные игральные кости. Какова вероятность "
+                        f"того, что сумма выпавших очков равна {s}?"
+                    )
+                else:
+                    q_en = (
+                        f"Two fair six-sided dice are thrown simultaneously. What is the probability that "
+                        f"the total number of pips shown equals {s}?"
+                    )
+                    q_ru = (
+                        f"Одновременно бросают две правильные шестигранные игральные кости. "
+                        f"Какова вероятность, что "
+                        f"сумма выпавших очков составит ровно {s}?"
+                    )
                 steps_en = [
-                    f"Choose the girls: C({ng}, {k}) = {math.comb(ng, k)}.",
-                    f"Choose the boys: C({nb}, {j}) = {math.comb(nb, j)}; product = {val}.",
+                    f"Favorable outcomes: {cnt} (out of 6 * 6 = 36 equiprobable outcomes).",
+                    f"P = {cnt} / 36 = {correct}.",
                 ]
                 steps_ru = [
-                    f"Выберем девочек: C({ng}, {k}) = {math.comb(ng, k)}.",
-                    f"Выберем мальчиков: C({nb}, {j}) = {math.comb(nb, j)}; произведение = {val}.",
+                    f"Благоприятных исходов: {cnt} (из 6 * 6 = 36 равновозможных).",
+                    f"P = {cnt} / 36 = {correct}.",
                 ]
                 wrongs = [
-                    (str(math.comb(ng + nb, k + j)), "combined_pool_error"),
-                    (str(math.comb(ng, k) + math.comb(nb, j)), "added_instead_of_multiplied"),
-                    (str(val + math.comb(ng, k)), "extra_term"),
-                    (str(2 * val), "factor_of_2"),
+                    (frac_str(cnt + 1, 36), "off_by_one"),
+                    (frac_str(cnt - 1, 36), "off_by_one"),
+                    (frac_str(cnt + 2, 36), "off_by_two"),
+                    (frac_str(cnt, 12), "wrong_denominator"),
+                    (frac_str(36 - cnt, 36), "complement_error"),
+                    (frac_str(s, 36), "used_sum_as_count"),
+                    (frac_str(cnt, 30), "wrong_denominator"),
                 ]
-                _mc_text(d_, rng, str(val), wrongs, {"ng": ng, "nb": nb, "k": k, "j": j, "kind": "team"})
+                _mc_text(d_, rng, correct, wrongs, {"s": s, "kind": "dice"})
             else:
-                a = int(rng.integers(3, 7))
-                bb = int(rng.integers(3, 7))
-                val = math.comb(a + bb, a)
-                q_en = (
-                    f"How many distinct sequences can be made by arranging {a} identical red balls "
-                    f"and {bb} identical blue balls in a row?"
-                )
-                q_ru = (
-                    f"Сколькими способами можно выложить в ряд {a} одинаковых красных и {bb} одинаковых синих шаров?"
-                )
+                t1 = int(rng.integers(3, 7))
+                r1 = int(rng.integers(1, t1))
+                t2 = int(rng.integers(3, 7))
+                r2 = int(rng.integers(1, t2))
+                correct = frac_str(r1 * r2, t1 * t2)
+                phr = int(rng.integers(0, 2))
+                if phr == 0:
+                    q_en = (
+                        f"One ball is drawn from each of two urns: the first holds {r1} red balls out of {t1}, "
+                        f"the second {r2} red balls out of {t2}. What is the probability that both drawn balls are red?"
+                    )
+                    q_ru = (
+                        f"Из каждой из двух урн достают по одному шару: в первой урне {r1} красных шаров из {t1}, "
+                        f"во второй — {r2} красных из {t2}. Какова вероятность, что оба вынутых шара окажутся красными?"
+                    )
+                else:
+                    q_en = (
+                        f"Box I contains {t1} balls, {r1} of which are red; box II contains {t2} balls, {r2} of "
+                        f"which are red. One ball is taken from each box. What is the probability that both are red?"
+                    )
+                    q_ru = (
+                        f"В первой коробке {t1} шаров, из них {r1} красные; во второй — {t2} шаров, из них {r2} "
+                        f"красные. Из каждой коробки вынимают по одному шару. Какова вероятность, что оба шара красные?"
+                    )
                 steps_en = [
-                    f"Choose the positions of the red balls among {a + bb} places: C({a + bb}, {a}).",
-                    f"C({a + bb}, {a}) = {val}.",
+                    f"Independence: P = ({r1}/{t1}) * ({r2}/{t2}) = {correct}.",
                 ]
                 steps_ru = [
-                    f"Выберем позиции красных шаров среди {a + bb} мест: C({a + bb}, {a}).",
-                    f"C({a + bb}, {a}) = {val}.",
+                    f"Независимость событий: P = ({r1}/{t1}) * ({r2}/{t2}) = {correct}.",
                 ]
+                sum_frac = frac_str(r1 * t2 + r2 * t1, t1 * t2)
                 wrongs = [
-                    (str(math.factorial(a + bb)), "treated_balls_as_distinct"),
-                    (str(math.factorial(a) * math.factorial(bb)), "multiplied_factorials"),
-                    (str(math.comb(a + bb - 1, a)), "off_by_one"),
+                    (sum_frac, "added_probabilities"),
+                    (frac_str(r1, t1), "ignored_second_event"),
+                    (frac_str(r2, t2), "ignored_first_event"),
+                    (frac_str((r1 + 1) * r2, t1 * t2), "off_by_one"),
+                    (frac_str((r1 + 1) * (r2 + 1), t1 * t2), "off_by_one_both"),
+                    (frac_str(r1 * r2 * 2, t1 * t2), "factor_of_2"),
+                    (frac_str(r1 * r2, t1 + t2), "wrong_denominator"),
                 ]
-                _mc_text(d_, rng, str(val), wrongs, {"a": a, "b": bb, "kind": "sequences"})
+                _mc_text(d_, rng, correct, wrongs, {"t1": t1, "r1": r1, "t2": t2, "r2": r2, "kind": "independent"})
         else:
-            n = int(rng.integers(8, 13))
+            n = int(rng.integers(10, 15))
             k = int(rng.integers(3, 5))
             val = math.comb(n, k)
-            q_en = f"In how many ways can {k} winners be selected from {n} contest participants (order does not matter)?"
-            q_ru = f"Сколькими способами можно выбрать {k} победителей из {n} участников конкурса (порядок не важен)?"
+            q_en = f"A jury of {k} people is selected from a pool of {n} candidates. How many different juries can be formed?"
+            q_ru = f"Жюри из {k} человек выбирают из {n} кандидатов. Сколько различных составов жюри можно сформировать?"
             steps_en = [f"C({n}, {k}) = {n}! / ({k}! * {n - k}!) = {val}."]
             steps_ru = [f"C({n}, {k}) = {n}! / ({k}! * {n - k}!) = {val}."]
             d_.canonical = str(val)
@@ -1453,6 +1704,150 @@ def g_prob_comb(rng: np.random.Generator, idx: int, atype: AnswerType, difficult
             d_.solution_en = sol_en(steps_en, d_.canonical, "")
             d_.solution_ru = sol_ru(steps_ru, d_.canonical, "")
             d_.params = {"kind": "comb", "n": n, "k": k, "expected": val}
+    else:
+        if atype == AnswerType.MC:
+            # Alternate challenge structures so a seeded build cannot collapse to one template.
+            kind = idx % 2
+            if kind == 0:
+                k = int(rng.integers(3, 6))
+                n = 2 * k - 1 + int(rng.integers(1, 5))
+                val = math.comb(n - k + 1, k)
+                q_en = (
+                    f"How many binary strings of length {n} contain exactly {k} ones and have no two ones "
+                    "in adjacent positions?"
+                )
+                q_ru = (
+                    f"Сколько двоичных строк длины {n} содержат ровно {k} единиц, причём никакие две единицы "
+                    "не стоят рядом?"
+                )
+                steps_en = [
+                    f"Place one required zero in each of the {k - 1} gaps between consecutive ones.",
+                    f"After shifting away those separators, choose {k} positions among {n - k + 1}: "
+                    f"C({n - k + 1}, {k}) = {val}.",
+                ]
+                steps_ru = [
+                    f"Поместим по одному обязательному нулю в каждый из {k - 1} промежутков между единицами.",
+                    f"После удаления этих разделителей выбираем {k} позиций из {n - k + 1}: "
+                    f"C({n - k + 1}, {k}) = {val}.",
+                ]
+                wrongs = [
+                    (str(math.comb(n, k)), "ignored_adjacency"),
+                    (str(math.comb(n - k, k)), "removed_one_gap_too_many"),
+                    (str(math.comb(n - k + 2, k)), "added_one_free_position"),
+                    (str(math.comb(n - 1, k)), "single_position_removed"),
+                ]
+                params = {
+                    "n": n,
+                    "k": k,
+                    "kind": "restricted_binary",
+                    "challenge_concepts": ["combinations", "adjacency-exclusion bijection"],
+                    "challenge_feature": "Mandatory separators transform the available-position count.",
+                }
+            else:
+                n = int(rng.integers(6, 10))
+                total = math.factorial(n - 1)
+                adjacent = 2 * math.factorial(n - 2)
+                val = total - adjacent
+                first_idx, second_idx = (
+                    int(i) for i in rng.choice(len(PEOPLE), size=2, replace=False)
+                )
+                first, second = PEOPLE[first_idx], PEOPLE[second_idx]
+                phr = int(rng.integers(0, 3))
+                if phr == 0:
+                    q_en = (
+                        f"{n} distinct students sit around a round table, with rotations counted as "
+                        f"the same seating. In how many seatings are {first.en} and {second.en} not adjacent?"
+                    )
+                    q_ru = (
+                        f"{n} различных учеников садятся за круглый стол; рассадки, отличающиеся только "
+                        f"поворотом, считаются одинаковыми. В скольких рассадках {first.ru_nom} и "
+                        f"{second.ru_nom} не сидят рядом?"
+                    )
+                elif phr == 1:
+                    q_en = (
+                        f"At a circular meeting, {n} delegates take distinct seats; cyclic rotations are "
+                        f"identified. How many arrangements keep {first.en} and {second.en} in non-neighboring seats?"
+                    )
+                    q_ru = (
+                        f"На круглом совещании {n} делегатов занимают разные места; циклические сдвиги "
+                        f"считаются одной рассадкой. Сколько рассадок оставляют {first.ru_nom} и "
+                        f"{second.ru_nom} не соседями?"
+                    )
+                else:
+                    q_en = (
+                        f"{n} guests are arranged around a circular banquet table, where only cyclic order "
+                        f"matters. In how many orders is at least one guest between {first.en} and {second.en}?"
+                    )
+                    q_ru = (
+                        f"{n} гостей рассаживают за круглым банкетным столом, причём важен только циклический "
+                        f"порядок. В скольких порядках между {first.ru_nom} и {second.ru_nom} сидит хотя бы один гость?"
+                    )
+                steps_en = [
+                    f"There are ({n} - 1)! = {total} circular seatings in total.",
+                    f"Treating {first.en} and {second.en} as an ordered block gives "
+                    f"2*({n} - 2)! = {adjacent} "
+                    f"adjacent seatings; the complement is {total} - {adjacent} = {val}.",
+                ]
+                steps_ru = [
+                    f"Всего имеется ({n} - 1)! = {total} круговых рассадок.",
+                    f"Объединив места {first.ru_gen} и {second.ru_gen} в упорядоченный блок, "
+                    f"получаем 2*({n} - 2)! = {adjacent} "
+                    f"соседних рассадок; дополнение равно {total} - {adjacent} = {val}.",
+                ]
+                wrongs = [
+                    (str(total), "ignored_nonadjacency"),
+                    (str(adjacent), "returned_adjacent_count"),
+                    (str(math.factorial(n) - adjacent), "treated_rotations_as_distinct"),
+                    (str(total - math.factorial(n - 2)), "forgot_block_order"),
+                ]
+                params = {
+                    "n": n,
+                    "kind": "circular_nonadjacent",
+                    "named_pair": [first.en, second.en],
+                    "challenge_concepts": ["circular permutations", "complement with a block"],
+                    "challenge_feature": "Rotational symmetry and the two block orders must both be handled.",
+                }
+            _mc_text(d_, rng, str(val), wrongs, params)
+        else:
+            width = int(rng.integers(6, 10))
+            height = int(rng.integers(6, 10))
+            fx = int(rng.integers(2, width - 1))
+            fy = int(rng.integers(2, height - 1))
+            total = math.comb(width + height, width)
+            through = math.comb(fx + fy, fx) * math.comb(
+                width - fx + height - fy,
+                width - fx,
+            )
+            val = total - through
+            q_en = (
+                f"A lattice path from (0, 0) to ({width}, {height}) uses only unit right and up steps. "
+                f"How many such paths avoid the point ({fx}, {fy})?"
+            )
+            q_ru = (
+                f"Путь по квадратной решётке из (0, 0) в ({width}, {height}) состоит только из единичных "
+                f"шагов вправо и вверх. Сколько таких путей не проходит через точку ({fx}, {fy})?"
+            )
+            steps_en = [
+                f"All monotone paths number C({width + height}, {width}) = {total}.",
+                f"Paths through ({fx}, {fy}) number C({fx + fy}, {fx})*C({width - fx + height - fy}, "
+                f"{width - fx}) = {through}; subtracting gives {val}.",
+            ]
+            steps_ru = [
+                f"Всего монотонных путей C({width + height}, {width}) = {total}.",
+                f"Через ({fx}, {fy}) проходят C({fx + fy}, {fx})*C({width - fx + height - fy}, "
+                f"{width - fx}) = {through} путей; после вычитания остаётся {val}.",
+            ]
+            d_.canonical = str(val)
+            d_.params = {
+                "kind": "lattice_avoid_point",
+                "width": width,
+                "height": height,
+                "fx": fx,
+                "fy": fy,
+                "expected": val,
+                "challenge_concepts": ["lattice-path binomial encoding", "complement via path decomposition"],
+                "challenge_feature": "Paths through the forbidden point factor into two independent segments.",
+            }
     if not d_.question_en:
         d_.question_en = q_en
         d_.question_ru = q_ru

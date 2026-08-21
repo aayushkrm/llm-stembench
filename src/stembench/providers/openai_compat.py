@@ -16,7 +16,7 @@ import threading
 import time
 from datetime import date
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import httpx
 
@@ -26,11 +26,11 @@ BUDGET_DIR = Path(os.environ.get("STEMBENCH_BUDGET_DIR", "data/cache"))
 
 # Shared per-provider state: one budget tracker + one rate spacer per provider name,
 # so parallel model workers against the same provider respect a single cap/rhythm.
-_SHARED: dict[str, tuple["BudgetTracker", threading.Lock, list[float]]] = {}
+_SHARED: dict[str, tuple[BudgetTracker, threading.Lock, list[float]]] = {}
 _SHARED_LOCK = threading.Lock()
 
 
-def _shared_state(name: str, daily_cap: Optional[int], min_interval: float):
+def _shared_state(name: str, daily_cap: int | None, min_interval: float):
     with _SHARED_LOCK:
         if name not in _SHARED:
             _SHARED[name] = (BudgetTracker(name, daily_cap), threading.Lock(), [0.0])
@@ -43,7 +43,7 @@ def _shared_state(name: str, daily_cap: Optional[int], min_interval: float):
 class BudgetTracker:
     """Persistent per-provider daily request counter (thread-safe)."""
 
-    def __init__(self, provider: str, daily_cap: Optional[int], path: Path | None = None):
+    def __init__(self, provider: str, daily_cap: int | None, path: Path | None = None):
         self.provider = provider
         self.daily_cap = daily_cap
         self.path = path or (BUDGET_DIR / f"budget_{provider}.json")
@@ -80,7 +80,7 @@ class BudgetTracker:
             data["count"] += 1
             self.path.write_text(json.dumps(data, ensure_ascii=False, indent=1))
 
-    def record_success(self, model: str, cost: Optional[float]) -> None:
+    def record_success(self, model: str, cost: float | None) -> None:
         with self._lock:
             data = self._read()
             data.setdefault("requests", []).append(
@@ -98,7 +98,7 @@ class OpenAICompatProvider(Provider):
         free_models: list[str],
         logprob_models: set[str] | None = None,
         requests_per_minute: int = 20,
-        daily_cap: Optional[int] = None,
+        daily_cap: int | None = None,
         timeout_s: float = 180.0,
         extra_headers: dict[str, str] | None = None,
     ):
@@ -152,12 +152,11 @@ class OpenAICompatProvider(Provider):
         messages: list[dict[str, str]],
         max_tokens: int,
         temperature: float = 0.0,
-        top_p: Optional[float] = None,
-        seed: Optional[int] = None,
+        top_p: float | None = None,
+        seed: int | None = None,
         request_logprobs: bool = True,
     ) -> Completion:
         self._assert_free(model)
-        self.budget.reserve()
         payload: dict[str, Any] = {
             "model": model,
             "messages": messages,
@@ -175,6 +174,9 @@ class OpenAICompatProvider(Provider):
 
         last_err: Exception | None = None
         for attempt in range(3):
+            # Provider quotas count HTTP attempts, not logical benchmark items.
+            # Reserve each retry separately so the hard daily cap cannot be exceeded.
+            self.budget.reserve()
             self._space_requests()
             try:
                 resp = self._client_http().post(
@@ -186,10 +188,16 @@ class OpenAICompatProvider(Provider):
                     },
                     json=payload,
                 )
-                if resp.status_code == 429:
-                    raise ProviderError(f"429 rate limited: {resp.text[:200]}")
-                if resp.status_code >= 500:
-                    raise ProviderError(f"{resp.status_code} server error")
+                if resp.status_code == 429 or resp.status_code >= 500:
+                    retry_after: float | None = None
+                    try:
+                        retry_after = float(resp.headers.get("Retry-After", ""))
+                    except ValueError:
+                        pass
+                    raise _RetryableHttpError(
+                        f"{resp.status_code} retryable provider error: {resp.text[:200]}",
+                        retry_after=retry_after,
+                    )
                 if resp.status_code >= 400:
                     # client errors other than auth: record and give up fast
                     raise _FatalClientError(f"{resp.status_code}: {resp.text[:300]}")
@@ -199,7 +207,9 @@ class OpenAICompatProvider(Provider):
                 raise ProviderError(str(e)) from e
             except (httpx.TimeoutException, httpx.TransportError, ProviderError) as e:
                 last_err = e
-                time.sleep(min(2**attempt * 5, 30))
+                requested_wait = e.retry_after if isinstance(e, _RetryableHttpError) else None
+                wait_seconds = requested_wait if requested_wait is not None else 2**attempt * 5
+                time.sleep(min(max(0.0, wait_seconds), 30))
         else:
             raise ProviderError(f"{self.name}/{model}: retries exhausted: {last_err}")
 
@@ -213,6 +223,11 @@ class OpenAICompatProvider(Provider):
         cost = usage.get("cost")
         if cost is None and isinstance(data.get("cost"), dict):
             cost = data["cost"].get("total")
+        if cost is not None and float(cost) > 1e-12:
+            raise ProviderError(
+                f"{self.name}/{model}: provider reported nonzero cost {cost}; "
+                "stopping under the zero-spend policy"
+            )
         self.budget.record_success(model, cost)
         return Completion(
             content=content or "",
@@ -236,3 +251,9 @@ class OpenAICompatProvider(Provider):
 
 class _FatalClientError(Exception):
     pass
+
+
+class _RetryableHttpError(ProviderError):
+    def __init__(self, message: str, retry_after: float | None = None):
+        super().__init__(message)
+        self.retry_after = retry_after

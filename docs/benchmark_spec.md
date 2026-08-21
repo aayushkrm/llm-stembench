@@ -38,8 +38,8 @@ calibration on exact-science tasks, including **paired within-item language effe
 
 ## 3. Item schema (summary — authoritative version: `src/stembench/schemas.py: BenchmarkItem`)
 
-item_id, pair_id, language(ru|en), subject, topic, difficulty(+rubric evidence),
-question, answer_type, choices[label,text] (MC), canonical_answer,
+item_id, pair_id, language(ru|en), subject, topic, stable template_id,
+difficulty(+rubric evidence), question, answer_type, choices[label,text] (MC), canonical_answer,
 acceptable_alternatives, tolerance{rel,abs}, units, solution, provenance, license,
 author, creation_method, translator, verifier[VerifierRecord{method,passed,detail}],
 annotation_version, quality_flags, split, contamination_notes.
@@ -64,8 +64,10 @@ current training cutoffs, reducing — not eliminating — contamination risk).
 4. Numeric answers: parseable, magnitude bounds, tolerance set.
 5. MC: distractors distinct from canonical (beyond tolerance for numerics) and
    textually unique; near-uniform correct-letter distribution across A–D.
-6. Dedup: unique normalized question hash per language; cross-pair 3-gram Jaccard
-   similarity below threshold within subject+language (max reported).
+6. Dedup: unique normalized question hash per language; cross-pair word-3-gram Jaccard
+   similarity below threshold within subject+language (max reported). A separate
+   number-masked structural report quantifies repeated procedural templates and
+   dev/test template overlap; changed numbers are not treated as conceptual independence.
 7. Distribution report by subject × difficulty × answer_type × language.
 8. Determinism: same seed → identical dataset (byte-identical items.jsonl); version
    file with SHA-256 of items.jsonl.
@@ -84,8 +86,11 @@ extraction contract constant).
   (grades 7–9).
 - **university**: multi-step reasoning or non-trivial formula use; typical first-year
   coursework.
-- **olympiad**: requires combining ≥2 concepts, careful edge handling, or uncommon
-  insight; competition style.
+- **olympiad/challenge**: requires combining ≥2 concepts plus a concrete constraint,
+  edge condition, or uncommon insight. Every such generator declares its concepts and
+  challenge feature, and the build rejects missing declarations. This metadata supports
+  auditing but does not establish expert-rated difficulty; that remains a human release
+  gate.
 Each item's `difficulty_rubric` states the justification in one sentence.
 
 ## 8. Scoring

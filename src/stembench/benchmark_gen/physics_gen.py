@@ -8,6 +8,7 @@ Units are untranslated SI symbols in both languages; the decimal separator is
 
 from __future__ import annotations
 
+import math
 from typing import Any
 
 import numpy as np
@@ -17,11 +18,10 @@ from stembench.schemas import AnswerType, Difficulty, Subject
 from ._core import (
     PairDraft,
     fmt,
-    pick_distractors,
     sol_en,
     sol_ru,
 )
-from .math_gen import _mc_numeric, _set_numeric, _std_pool, pick_distractors_str
+from .math_gen import _mc_numeric, _set_numeric, _std_pool
 
 SUBJECT = Subject.PHYSICS
 PREFIX = "PHYS"
@@ -97,16 +97,16 @@ RUBRICS: dict[tuple[str, Difficulty], tuple[str, str]] = {
         "Формула тонкой линзы 1/f = 1/d_o + 1/d_i с действительным изображением.",
     ),
     ("lenses", Difficulty.OLYMPIAD): (
-        "Thin-lens setup with magnification; multi-step arithmetic.",
-        "Задача о тонкой линзе с увеличением; многошаговая арифметика.",
+        "A two-lens system requires sequential imaging, separation geometry, and combined magnification.",
+        "Система двух линз требует последовательного построения изображений, учёта расстояния и общего увеличения.",
     ),
     ("circular", Difficulty.OLYMPIAD): (
-        "Centripetal acceleration a = v^2/r or orbital speed from the period.",
-        "Центростремительное ускорение a = v^2/r или скорость по периоду обращения.",
+        "Couples centripetal dynamics with energy conservation or limiting friction on a banked curve.",
+        "Сочетает центростремительную динамику с сохранением энергии или предельным трением на вираже.",
     ),
     ("projectile", Difficulty.OLYMPIAD): (
-        "Projectile range, flight time or maximum height at a special angle.",
-        "Дальность, время полёта или максимальная высота при особом угле броска.",
+        "Combines two-dimensional motion with a nonzero launch height or a two-angle trajectory constraint.",
+        "Сочетает двумерное движение с ненулевой высотой старта или условием двух углов траектории.",
     ),
 }
 
@@ -142,8 +142,8 @@ SPEC = [
     ("lenses", Difficulty.UNIVERSITY, 2, AnswerType.NUMERIC),
     ("lenses", Difficulty.UNIVERSITY, 6, AnswerType.MC),
     ("lenses", Difficulty.UNIVERSITY, 2, AnswerType.EXACT),
-    ("heat_q", Difficulty.UNIVERSITY, 4, AnswerType.NUMERIC),
-    ("heat_q", Difficulty.UNIVERSITY, 4, AnswerType.MC),
+    ("heat_q_uni", Difficulty.UNIVERSITY, 4, AnswerType.NUMERIC),
+    ("heat_q_uni", Difficulty.UNIVERSITY, 4, AnswerType.MC),
     ("circular", Difficulty.OLYMPIAD, 2, AnswerType.NUMERIC),
     ("circular", Difficulty.OLYMPIAD, 8, AnswerType.MC),
     ("projectile", Difficulty.OLYMPIAD, 6, AnswerType.NUMERIC),
@@ -154,9 +154,22 @@ SPEC = [
 
 G98 = 9.8
 PARALLEL_PAIRS = [(30, 60), (20, 30), (6, 3), (12, 4), (60, 20), (15, 10), (24, 12), (10, 40)]
+# All Russian nouns are masculine so the question tails («он поднимется») agree.
+PROJECTILE_OBJECTS = (("ball", "мяч"), ("stone", "камень"), ("marble", "шарик"), ("cube", "кубик"))
 
 
 def _finish(d: PairDraft, key: str, difficulty: Difficulty) -> PairDraft:
+    # Every benchmark prompt is phrased as a direct question.  A few of the
+    # hydrostatics templates historically ended the interrogative sentence
+    # with a full stop; normalize the punctuation at the subject boundary so
+    # both language variants stay parallel.
+    for attr in ("question_en", "question_ru"):
+        question = getattr(d, attr).rstrip()
+        if question.endswith("."):
+            question = question[:-1] + "?"
+        elif not question.endswith("?"):
+            question += "?"
+        setattr(d, attr, question)
     base = key.replace("_olym", "")
     d.topic = TOPICS[base if base in TOPICS else key]
     d.topic_key = "lenses" if key.startswith("lenses") else base
@@ -176,6 +189,16 @@ def _emit(
     pool: list[tuple[float, str]] | None,
     params: dict[str, Any],
 ) -> PairDraft:
+    if len(steps_en) == 1:
+        steps_en = [
+            "Select the governing relation and isolate the requested physical quantity.",
+            *steps_en,
+        ]
+    if len(steps_ru) == 1:
+        steps_ru = [
+            "Выберем определяющее соотношение и выразим из него искомую физическую величину.",
+            *steps_ru,
+        ]
     if atype == AnswerType.NUMERIC:
         _set_numeric(d, value, units)
         d.solution_en = sol_en(steps_en, d.canonical, units)
@@ -194,10 +217,21 @@ def _emit_exact(
     steps_en: list[str],
     steps_ru: list[str],
     params: dict[str, Any],
+    ans_ru: str | None = None,
 ) -> PairDraft:
+    if len(steps_en) == 1:
+        steps_en = [
+            "Compare the governing relation before and after the stated change.",
+            *steps_en,
+        ]
+    if len(steps_ru) == 1:
+        steps_ru = [
+            "Сравним определяющее соотношение до и после указанного изменения.",
+            *steps_ru,
+        ]
     d.canonical = ans
     d.solution_en = sol_en(steps_en, ans, "")
-    d.solution_ru = sol_ru(steps_ru, ans, "")
+    d.solution_ru = sol_ru(steps_ru, ans_ru or ans, "")
     d.params = params
     return d
 
@@ -216,6 +250,7 @@ KINEM_AGENTS = [
 def g_kinem_const(rng: np.random.Generator, idx: int, atype: AnswerType) -> PairDraft:
     agent_en, agent_ru, _, _ = KINEM_AGENTS[int(rng.integers(0, len(KINEM_AGENTS)))]
     if atype == AnswerType.EXACT:
+        ans_ru: str | None = None
         if bool(rng.integers(0, 2)):
             v1 = int(rng.integers(1, 4))
             v2 = v1 + int(rng.integers(1, 4))
@@ -224,6 +259,7 @@ def g_kinem_const(rng: np.random.Generator, idx: int, atype: AnswerType) -> Pair
             closing = v2 - v1
             catch = d0 / closing <= t_big
             ans = "yes" if catch else "no"
+            ans_ru = "да" if catch else "нет"
             q_en = (
                 f"Boris is {d0} m behind Anna on a straight road. Anna walks at {v1} m/s and Boris "
                 f"at {v2} m/s in the same direction. Will Boris catch up with Anna within {t_big} s?"
@@ -249,19 +285,33 @@ def g_kinem_const(rng: np.random.Generator, idx: int, atype: AnswerType) -> Pair
             v1 = int(rng.integers(1, 5))
             v2 = k * v1
             ans = str(k)
-            q_en = (
-                f"A high-speed train travels at {v2} m/s while a freight train travels at {v1} m/s "
-                f"on a parallel track. How many times is the speed of the high-speed train greater?"
-            )
-            q_ru = (
-                f"Скорый поезд движется со скоростью {v2} m/s, а грузовой поезд по параллельному пути — "
-                f"со скоростью {v1} m/s. Во сколько раз скорость скорого поезда больше?"
-            )
+            if bool(rng.integers(0, 2)):
+                q_en = (
+                    f"A high-speed train travels at {v2} m/s while a freight train travels at {v1} m/s "
+                    f"on a parallel track. How many times is the speed of the high-speed train greater?"
+                )
+                q_ru = (
+                    f"Скорый поезд движется со скоростью {v2} m/s, а грузовой поезд по параллельному пути — "
+                    f"со скоростью {v1} m/s. Во сколько раз скорость скорого поезда больше?"
+                )
+            else:
+                q_en = (
+                    f"A motorbike moves at {v2} m/s and a cyclist at {v1} m/s along the same road. "
+                    f"How many times faster is the motorbike?"
+                )
+                q_ru = (
+                    f"Мотоциклист движется со скоростью {v2} m/s, а велосипедист по той же дороге — "
+                    f"{v1} m/s. Во сколько раз скорость мотоциклиста больше?"
+                )
             steps_en = [f"Ratio of speeds: {v2} / {v1} = {k}."]
             steps_ru = [f"Отношение скоростей: {v2} / {v1} = {k}."]
             exact_params = {"kind": "ratio", "v1": v1, "v2": v2, "expected": k}
         d = PairDraft(SUBJECT, "", "", Difficulty.SCHOOL, atype, "", question_en=q_en, question_ru=q_ru)
-        return _finish(_emit_exact(d, ans, steps_en, steps_ru, exact_params), "kinem_const", Difficulty.SCHOOL)
+        return _finish(
+            _emit_exact(d, ans, steps_en, steps_ru, exact_params, ans_ru=ans_ru),
+            "kinem_const",
+            Difficulty.SCHOOL,
+        )
     v = 2 * int(rng.integers(1, 16))  # 2..30 m/s
     t = int(rng.integers(2, 13))
     s = v * t
@@ -282,7 +332,10 @@ def g_kinem_const(rng: np.random.Generator, idx: int, atype: AnswerType) -> Pair
         extras = [(float(v + t), "added_values"), (float(s * 2), "factor_of_2")]
     else:
         q_en = f"How much time does a {agent_en} moving at a constant speed of {v} m/s need to cover {s} m?"
-        q_ru = f"Сколько времени понадобится {agent_ru} при равномерном движении со скоростью {v} m/s, чтобы пройти {s} m?"
+        q_ru = (
+            f"За какое время {agent_ru} при равномерном движении со скоростью "
+            f"{v} m/s преодолеет {s} m?"
+        )
         steps_en = [f"t = s / v = {s} / {v} = {t} s."]
         steps_ru = [f"t = s / v = {s} / {v} = {t} s."]
         value, units = float(t), "s"
@@ -300,17 +353,30 @@ def g_kinem_const(rng: np.random.Generator, idx: int, atype: AnswerType) -> Pair
 # --------------------------------------------------------------------------- #
 def g_newton2(rng: np.random.Generator, idx: int, atype: AnswerType) -> PairDraft:
     if atype == AnswerType.EXACT:
-        k = int(rng.choice([2, 3]))
-        q_en = (
-            f"If the net force acting on a body is increased by a factor of {k} while its mass stays "
-            f"the same, by what factor does the acceleration change?"
-        )
-        q_ru = (
-            f"Если равнодействующую силу, действующую на тело, увеличить в {k} раза при неизменной массе, "
-            f"во сколько раз изменится ускорение?"
-        )
-        steps_en = [f"a = F / m is directly proportional to F, so the acceleration grows by a factor of {k}."]
-        steps_ru = [f"a = F / m прямо пропорциональна F, поэтому ускорение вырастет в {k} раза."]
+        k = int(rng.choice([2, 3, 4]))
+        phr = int(rng.integers(0, 2))
+        if phr == 0:
+            q_en = (
+                f"If the net force acting on a body is increased by a factor of {k} while its mass stays "
+                f"the same, by what factor does the acceleration change?"
+            )
+            q_ru = (
+                f"Если равнодействующую силу, действующую на тело, увеличить в {k} раза при неизменной массе, "
+                f"во сколько раз изменится ускорение?"
+            )
+            steps_en = [f"a = F / m is directly proportional to F, so the acceleration grows by a factor of {k}."]
+            steps_ru = [f"a = F / m прямо пропорциональна F, поэтому ускорение вырастет в {k} раза."]
+        else:
+            q_en = (
+                f"The mass of a body is kept unchanged while the net force acting on it is made {k} times "
+                f"larger. By what factor does the magnitude of the acceleration grow?"
+            )
+            q_ru = (
+                f"Массу тела не меняют, а модуль действующей на него равнодействующей силы увеличивают "
+                f"в {k} раза. Во сколько раз вырастет модуль ускорения тела?"
+            )
+            steps_en = [f"Proportionality a ~ F/m: with m fixed, multiplying F by {k} multiplies a by {k}."]
+            steps_ru = [f"Пропорциональность a ~ F/m: при неизменном m умножение F на {k} умножает a на {k}."]
         d = PairDraft(SUBJECT, "", "", Difficulty.SCHOOL, atype, "", question_en=q_en, question_ru=q_ru)
         return _finish(_emit_exact(d, str(k), steps_en, steps_ru, {"k": k, "expected": k}), "newton2", Difficulty.SCHOOL)
     m = int(rng.integers(2, 51))
@@ -443,17 +509,53 @@ def g_power(rng: np.random.Generator, idx: int, atype: AnswerType) -> PairDraft:
 # --------------------------------------------------------------------------- #
 def g_heat_q(rng: np.random.Generator, idx: int, atype: AnswerType, difficulty: Difficulty) -> PairDraft:
     if atype == AnswerType.EXACT:
-        k = int(rng.choice([2, 3]))
-        q_en = (
-            f"The same amount of heat is supplied to two samples of water, and the second sample has "
-            f"{k} times the mass of the first. How many times smaller is its temperature change?"
-        )
-        q_ru = (
-            f"Двум порциям воды сообщают одинаковое количество теплоты, при этом масса второй порции "
-            f"в {k} раза больше массы первой. Во сколько раз меньше её изменение температуры?"
-        )
-        steps_en = [f"dT = Q / (m*c): with the same Q the temperature change is inversely proportional to the mass, i.e. {k} times smaller."]
-        steps_ru = [f"dT = Q / (m*c): при том же Q изменение температуры обратно пропорционально массе, то есть в {k} раза меньше."]
+        k = int(rng.choice([2, 3, 4]))
+        phr = int(rng.integers(0, 4))
+        if phr == 0:
+            q_en = (
+                f"The same amount of heat is supplied to two samples of water, and the second sample has "
+                f"{k} times the mass of the first. How many times smaller is its temperature change?"
+            )
+            q_ru = (
+                f"Двум порциям воды сообщают одинаковое количество теплоты, при этом масса второй порции "
+                f"в {k} раза больше массы первой. Во сколько раз меньше её изменение температуры?"
+            )
+            steps_en = [f"dT = Q / (m*c): with the same Q the temperature change is inversely proportional to the mass, i.e. {k} times smaller."]
+            steps_ru = [f"dT = Q / (m*c): при том же Q изменение температуры обратно пропорционально массе, то есть в {k} раза меньше."]
+        elif phr == 1:
+            q_en = (
+                f"Equal amounts of heat are delivered to two identical burners with {k} times as much water "
+                f"on the second one. How many times smaller is the temperature rise of the second portion?"
+            )
+            q_ru = (
+                f"Две одинаковые горелки отдают одинаковое количество теплоты, но на второй находится "
+                f"в {k} раза больше воды. Во сколько раз меньше она нагреется?"
+            )
+            steps_en = [f"For a fixed Q, dT is inversely proportional to m, hence the factor {k}."]
+            steps_ru = [f"При фиксированном Q величина dT обратно пропорциональна m, то есть множитель {k}."]
+        elif phr == 2:
+            q_en = (
+                f"An electric kettle heats {k} times more water than usual while transferring the same "
+                f"amount of heat as before. By what factor is the water's temperature rise reduced?"
+            )
+            q_ru = (
+                f"Электрический чайник нагревает в {k} раза больше воды, чем обычно, передавая то же "
+                f"количество теплоты, что и раньше. Во сколько раз уменьшится нагрев воды?"
+            )
+            steps_en = [f"dT = Q / (m*c): with Q fixed and m multiplied by {k}, the rise dT is divided by {k}."]
+            steps_ru = [f"dT = Q / (m*c): при умножении m на {k} и неизменном Q величина dT уменьшается в {k} раз."]
+        else:
+            q_en = (
+                f"Two vessels with water receive identical heat inputs from identical heaters, but the "
+                f"second vessel holds {k} times the mass of water. By what factor is its temperature "
+                f"rise smaller?"
+            )
+            q_ru = (
+                f"Два сосуда с водой получают от одинаковых нагревателей одинаковое количество теплоты, "
+                f"но во втором сосуде в {k} раза больше воды. Во сколько раз меньше он нагреется?"
+            )
+            steps_en = [f"Inverse proportionality of dT to m gives the factor {k}."]
+            steps_ru = [f"Обратная пропорциональность dT массе даёт множитель {k}."]
         d = PairDraft(SUBJECT, "", "", Difficulty.SCHOOL, atype, "", question_en=q_en, question_ru=q_ru)
         return _finish(_emit_exact(d, str(k), steps_en, steps_ru, {"k": k, "expected": k}), "heat_q", Difficulty.SCHOOL)
     m_tenths = int(rng.integers(1, 31))  # 0.1..3.0 kg
@@ -465,12 +567,13 @@ def g_heat_q(rng: np.random.Generator, idx: int, atype: AnswerType, difficulty: 
             dt = 2 * (dt // 2)
         q_heat = m * c * dt
         q_en = (
-            f"Heating {fmt(m)} kg of an unknown metal from {20} °C to {20 + dt} °C required {fmt(q_heat)} J of heat. "
-            f"What is the specific heat capacity of the metal?"
+            f"Heating a {fmt(m)} kg sample of an unknown substance from {20} °C to {20 + dt} °C "
+            f"required {fmt(q_heat)} J of heat. What is the substance's specific heat capacity?"
         )
         q_ru = (
-            f"Для нагревания {fmt(m)} kg неизвестного металла от {20} °C до {20 + dt} °C потребовалось "
-            f"{fmt(q_heat)} J теплоты. Чему равна удельная теплоёмкость этого металла?"
+            f"Для нагревания образца неизвестного вещества массой {fmt(m)} kg от {20} °C "
+            f"до {20 + dt} °C потребовалось {fmt(q_heat)} J теплоты. Чему равна удельная "
+            f"теплоёмкость этого вещества?"
         )
         steps_en = [
             f"Temperature change: dT = {dt} K.",
@@ -643,16 +746,51 @@ def g_work_energy(rng: np.random.Generator, idx: int, atype: AnswerType) -> Pair
 def g_momentum(rng: np.random.Generator, idx: int, atype: AnswerType) -> PairDraft:
     if atype == AnswerType.EXACT:
         k = int(rng.choice([2, 3, 4]))
-        q_en = (
-            f"By what factor does the momentum of a body increase if its speed grows {k}-fold "
-            f"while its mass stays constant?"
-        )
-        q_ru = (
-            f"Во сколько раз увеличится импульс тела, если его скорость возрастёт в {k} раза "
-            f"при неизменной массе?"
-        )
-        steps_en = [f"p = m*v is proportional to v, so the momentum increases by a factor of {k}."]
-        steps_ru = [f"p = m*v пропорционален скорости, поэтому импульс увеличится в {k} раза."]
+        phr = int(rng.integers(0, 4))
+        if phr == 0:
+            q_en = (
+                f"By what factor does the momentum of a body increase if its speed grows {k}-fold "
+                f"while its mass stays constant?"
+            )
+            q_ru = (
+                f"Во сколько раз увеличится импульс тела, если его скорость возрастёт в {k} раза "
+                f"при неизменной массе?"
+            )
+            steps_en = [f"p = m*v is proportional to v, so the momentum increases by a factor of {k}."]
+            steps_ru = [f"p = m*v пропорционален скорости, поэтому импульс увеличится в {k} раза."]
+        elif phr == 1:
+            q_en = (
+                f"The speed of a cart is raised {k}-fold and its load (mass) is not changed. By what factor "
+                f"does the magnitude of the cart's momentum grow?"
+            )
+            q_ru = (
+                f"Скорость тележки увеличили в {k} раза, а её загрузку (массу) не меняли. Во сколько раз "
+                f"возрос модуль импульса тележки?"
+            )
+            steps_en = [f"p = m*v with constant m: the factor is exactly {k}."]
+            steps_ru = [f"p = m*v при постоянной m: множитель равен {k}."]
+        elif phr == 2:
+            q_en = (
+                f"A truck travels along a highway; if its speed is made {k} times larger and its cargo is "
+                f"unchanged, how many times larger is its momentum?"
+            )
+            q_ru = (
+                f"Грузовик едет по шоссе; если его скорость станет в {k} раза больше, а груз не изменится, "
+                f"во сколько раз вырастет его импульс?"
+            )
+            steps_en = [f"Momentum is proportional to speed at fixed mass: factor {k}."]
+            steps_ru = [f"Импульс пропорционален скорости при неизменной массе: множитель {k}."]
+        else:
+            q_en = (
+                f"During a manoeuvre the velocity of a spacecraft grows by a factor of {k} while its mass "
+                f"remains the same. By what factor does |m*v| increase?"
+            )
+            q_ru = (
+                f"При манёвре скорость космического аппарата возрастает в {k} раза, а масса остаётся "
+                f"прежней. Во сколько раз увеличится модуль импульса |m*v|?"
+            )
+            steps_en = [f"|m*v| grows in proportion to |v|: the factor is {k}."]
+            steps_ru = [f"|m*v| растёт пропорционально |v|: множитель равен {k}."]
         d = PairDraft(SUBJECT, "", "", Difficulty.UNIVERSITY, atype, "", question_en=q_en, question_ru=q_ru)
         return _finish(_emit_exact(d, str(k), steps_en, steps_ru, {"k": k, "expected": k}), "momentum", Difficulty.UNIVERSITY)
     mode = int(rng.integers(0, 2))
@@ -780,11 +918,11 @@ def g_gas_law(rng: np.random.Generator, idx: int, atype: AnswerType) -> PairDraf
                 f"если первоначальное давление было {p1} kPa?"
             )
         steps_en = [
-            f"Boyle's law: p1 * V1 = p2 * V2.",
+            "Boyle's law: p1 * V1 = p2 * V2.",
             f"p2 = {p1} * {v1} / {v2} = {fmt(p2)} kPa.",
         ]
         steps_ru = [
-            f"Закон Бойля — Мариотта: p1 * V1 = p2 * V2.",
+            "Закон Бойля — Мариотта: p1 * V1 = p2 * V2.",
             f"p2 = {p1} * {v1} / {v2} = {fmt(p2)} kPa.",
         ]
         value, units = float(p2), "kPa"
@@ -793,8 +931,9 @@ def g_gas_law(rng: np.random.Generator, idx: int, atype: AnswerType) -> PairDraf
     else:  # Charles (isobaric)
         t1 = 10 * int(rng.integers(20, 41))  # 200..400 K
         ratio_num, ratio_den = [(3, 2), (4, 3), (5, 4), (2, 1), (3, 1)][int(rng.integers(0, 5))]
-        v2 = ratio_den * int(rng.integers(2, 7))
-        v1 = ratio_num * (v2 // ratio_den)
+        scale = int(rng.integers(2, 7))
+        v1 = ratio_den * scale
+        v2 = ratio_num * scale
         t2 = t1 * v2 // v1 if (t1 * v2) % v1 == 0 else t1 * v2 / v1
         q_en = (
             f"A gas is heated at constant pressure from {t1} K to {fmt(t2)} K, and its volume becomes {v2} L. "
@@ -805,11 +944,11 @@ def g_gas_law(rng: np.random.Generator, idx: int, atype: AnswerType) -> PairDraf
             f"Каким был начальный объём газа?"
         )
         steps_en = [
-            f"Charles's law: V1 / T1 = V2 / T2.",
+            "Charles's law: V1 / T1 = V2 / T2.",
             f"V1 = V2 * T1 / T2 = {v2} * {t1} / {fmt(t2)} = {fmt(v1)} L.",
         ]
         steps_ru = [
-            f"Закон Гей-Люссака: V1 / T1 = V2 / T2.",
+            "Закон Гей-Люссака: V1 / T1 = V2 / T2.",
             f"V1 = V2 * T1 / T2 = {v2} * {t1} / {fmt(t2)} = {fmt(v1)} L.",
         ]
         value, units = float(v1), "L"
@@ -825,23 +964,33 @@ def g_gas_law(rng: np.random.Generator, idx: int, atype: AnswerType) -> PairDraf
 def g_hydrostatic(rng: np.random.Generator, idx: int, atype: AnswerType) -> PairDraft:
     if atype == AnswerType.EXACT:
         k = int(rng.choice([2, 3, 4, 5]))
-        q_en = (
-            f"By what factor does the hydrostatic pressure of water grow if the depth increases "
-            f"{k}-fold?"
-        )
-        q_ru = (
-            f"Во сколько раз вырастет гидростатическое давление воды, если глубина погружения "
-            f"увеличится в {k} раза?"
-        )
-        steps_en = [f"P = rho*g*h is proportional to the depth h, so the pressure grows {k}-fold."]
-        steps_ru = [f"P = rho*g*h пропорциональна глубине h, поэтому давление вырастет в {k} раза."]
+        phr = int(rng.integers(0, 2))
+        if phr == 0:
+            q_en = f"By what factor does the hydrostatic pressure of water grow if the depth increases {k}-fold?"
+            q_ru = (
+                f"Во сколько раз вырастет гидростатическое давление воды, если глубина погружения "
+                f"увеличится в {k} раза?"
+            )
+            steps_en = [f"P = rho*g*h is proportional to the depth h, so the pressure grows {k}-fold."]
+            steps_ru = [f"P = rho*g*h пропорциональна глубине h, поэтому давление вырастет в {k} раза."]
+        else:
+            q_en = (
+                f"A diver measures gauge pressure in the water at two depths, the second one being "
+                f"{k} times deeper. How many times larger is the gauge-pressure reading there?"
+            )
+            q_ru = (
+                f"Аквалангист измеряет избыточное давление в воде на двух глубинах, вторая "
+                f"из которых в {k} раза больше первой. Во сколько раз больше будет второе показание?"
+            )
+            steps_en = [f"Gauge pressure rho*g*h grows linearly with depth, so the ratio is {k}."]
+            steps_ru = [f"Избыточное давление rho*g*h растёт линейно с глубиной, поэтому отношение равно {k}."]
         d = PairDraft(SUBJECT, "", "", Difficulty.UNIVERSITY, atype, "", question_en=q_en, question_ru=q_ru)
         return _finish(_emit_exact(d, str(k), steps_en, steps_ru, {"k": k, "expected": k}), "hydrostatic", Difficulty.UNIVERSITY)
     h = float(rng.choice([2.5, 3, 4, 5, 7.5, 10, 12.5, 15, 20, 25, 30, 40, 50]))
     if bool(rng.integers(0, 2)):
         press = 1000 * G98 * h
         q_en = f"Find the gauge pressure of water at a depth of {fmt(h)} m (rho = 1000 kg/m^3, g = 9.8 m/s^2)."
-        q_ru = f"Вычислите давление воды на глубине {fmt(h)} m (rho = 1000 kg/m^3, g = 9.8 m/s^2)."
+        q_ru = f"Вычислите избыточное давление воды на глубине {fmt(h)} m (rho = 1000 kg/m^3, g = 9.8 m/s^2)."
         steps_en = [f"P = rho * g * h = 1000 * 9.8 * {fmt(h)} = {fmt(press)} Pa."]
         steps_ru = [f"P = rho * g * h = 1000 * 9.8 * {fmt(h)} = {fmt(press)} Pa."]
         value, units = press, "Pa"
@@ -852,7 +1001,7 @@ def g_hydrostatic(rng: np.random.Generator, idx: int, atype: AnswerType) -> Pair
         press = 1000 * G98 * h
         force = press * area
         q_en = (
-            f"A horizontal port hole of area {fmt(area)} m^2 is located at a depth of {fmt(h)} m in fresh water "
+            f"A horizontal porthole of area {fmt(area)} m^2 is located at a depth of {fmt(h)} m in fresh water "
             f"(rho = 1000 kg/m^3, g = 9.8 m/s^2). What is the force of the water on it?"
         )
         q_ru = (
@@ -909,17 +1058,24 @@ def g_lenses(rng: np.random.Generator, idx: int, atype: AnswerType, difficulty: 
             f"Изображение предмета действительное или мнимое?"
         )
         steps_en = [
-            f"1/f = 1/d_o + 1/d_i: the sign of d_i depends on whether d_o is larger than f.",
+            "1/f = 1/d_o + 1/d_i: the sign of d_i depends on whether d_o is larger than f.",
             f"Here d_o = {d_o} cm and f = {f} cm, so the image is {ans}.",
         ]
         ans_ru = "действительное" if ans == "real" else "мнимое"
         steps_ru = [
-            f"1/f = 1/d_o + 1/d_i: знак d_i зависит от того, больше ли d_o, чем f.",
+            "1/f = 1/d_o + 1/d_i: знак d_i зависит от того, больше ли d_o, чем f.",
             f"Здесь d_o = {d_o} cm, а f = {f} cm, поэтому изображение {ans_ru}.",
         ]
         d = PairDraft(SUBJECT, "", "", difficulty, atype, "", question_en=q_en, question_ru=q_ru)
         return _finish(
-            _emit_exact(d, ans, steps_en, steps_ru, {"f": f, "do": d_o, "expected_text": ans, "kind": "real_virtual"}),
+            _emit_exact(
+                d,
+                ans,
+                steps_en,
+                steps_ru,
+                {"f": f, "do": d_o, "expected_text": ans, "kind": "real_virtual"},
+                ans_ru=ans_ru,
+            ),
             "lenses", difficulty,
         )
     f, d_o, d_i = _lens_triple(rng)
@@ -955,11 +1111,11 @@ def g_lenses(rng: np.random.Generator, idx: int, atype: AnswerType, difficulty: 
             f"от линзы. На каком расстоянии от линзы образуется изображение?"
         )
         steps_en = [
-            f"Thin-lens equation: 1/f = 1/d_o + 1/d_i.",
+            "Thin-lens equation: 1/f = 1/d_o + 1/d_i.",
             f"d_i = f*d_o/(d_o - f) = {f}*{d_o}/({d_o} - {f}) = {d_i} cm.",
         ]
         steps_ru = [
-            f"Формула тонкой линзы: 1/f = 1/d_o + 1/d_i.",
+            "Формула тонкой линзы: 1/f = 1/d_o + 1/d_i.",
             f"d_i = f*d_o/(d_o - f) = {f}*{d_o}/({d_o} - {f}) = {d_i} cm.",
         ]
         value, units = float(d_i), "cm"
@@ -974,52 +1130,238 @@ def g_lenses_uni(rng: np.random.Generator, idx: int, atype: AnswerType) -> PairD
 
 
 def g_lenses_olym(rng: np.random.Generator, idx: int, atype: AnswerType) -> PairDraft:
-    return g_lenses(rng, idx, atype, Difficulty.OLYMPIAD)
+    f1, d_o1, d_i1 = _lens_triple(rng)
+    f2, d_o2, d_i2 = _lens_triple(rng)
+    separation = d_i1 + d_o2
+    m1 = d_i1 / d_o1
+    m2 = d_i2 / d_o2
+    total_mag = m1 * m2
+    phr = idx % 3
+    if phr == 0:
+        q_en = (
+            f"Two thin converging lenses have focal lengths {f1} cm and {f2} cm and are {separation} cm "
+            f"apart. An object is {d_o1} cm before the first lens. Its first image lies between the lenses "
+            "and is a real object for the second lens. What is the magnitude of the total magnification?"
+        )
+        q_ru = (
+            f"Две тонкие собирающие линзы с фокусными расстояниями {f1} cm и {f2} cm находятся на "
+            f"расстоянии {separation} cm друг от друга. Предмет расположен в {d_o1} cm перед первой линзой; "
+            "её изображение лежит между линзами и служит действительным предметом для второй. "
+            "Чему равен модуль общего увеличения?"
+        )
+    elif phr == 1:
+        q_en = (
+            f"An optical bench holds two ideal converging lenses, f1 = {f1} cm and f2 = {f2} cm, separated "
+            f"by {separation} cm. A real object is {d_o1} cm to the left of lens 1, and the intermediate "
+            "image is before lens 2. Find the absolute overall lateral magnification."
+        )
+        q_ru = (
+            f"На оптической скамье установлены две идеальные собирающие линзы: f1 = {f1} cm и f2 = {f2} cm; "
+            f"расстояние между ними {separation} cm. Действительный предмет находится в {d_o1} cm слева от "
+            "первой линзы, а промежуточное изображение — перед второй. Найдите модуль полного поперечного увеличения."
+        )
+    else:
+        q_en = (
+            f"Light passes through two ideal thin converging lenses {separation} cm apart. Their focal lengths "
+            f"are {f1} cm and {f2} cm; the object distance for the first lens is {d_o1} cm. The first real "
+            "image becomes the second lens's real object. What total magnification magnitude results?"
+        )
+        q_ru = (
+            f"Свет проходит через две идеальные тонкие собирающие линзы, разделённые расстоянием {separation} cm. "
+            f"Их фокусные расстояния равны {f1} cm и {f2} cm, а предмет находится в {d_o1} cm от первой линзы. "
+            "Первое действительное изображение становится предметом для второй линзы. Каков модуль общего увеличения?"
+        )
+    steps_en = [
+        f"Lens 1 gives d_i1 = f1*d_o1/(d_o1-f1) = {d_i1} cm, so the second object distance is "
+        f"{separation} - {d_i1} = {d_o2} cm.",
+        f"Lens 2 gives d_i2 = f2*d_o2/(d_o2-f2) = {d_i2} cm.",
+        f"Magnification magnitudes multiply: ({d_i1}/{d_o1})*({d_i2}/{d_o2}) = {fmt(total_mag)}.",
+    ]
+    steps_ru = [
+        f"Первая линза даёт d_i1 = f1*d_o1/(d_o1-f1) = {d_i1} cm, поэтому расстояние до предмета "
+        f"для второй линзы равно {separation} - {d_i1} = {d_o2} cm.",
+        f"Вторая линза даёт d_i2 = f2*d_o2/(d_o2-f2) = {d_i2} cm.",
+        f"Модули увеличений перемножаются: ({d_i1}/{d_o1})*({d_i2}/{d_o2}) = {fmt(total_mag)}.",
+    ]
+    extras = [
+        (m1, "used_first_lens_only"),
+        (m2, "used_second_lens_only"),
+        (1 / total_mag, "inverted_total_magnification"),
+        ((d_i1 + d_i2) / (d_o1 + d_o2), "added_distances_before_ratio"),
+    ]
+    params = {
+        "kind": "two_lens",
+        "f1": f1,
+        "do1": d_o1,
+        "di1": d_i1,
+        "separation": separation,
+        "f2": f2,
+        "do2": d_o2,
+        "di2": d_i2,
+        "expected": total_mag,
+        "challenge_concepts": ["sequential thin-lens imaging", "compound magnification"],
+        "challenge_feature": "The intermediate-image position determines the second signed object distance.",
+    }
+    d = PairDraft(
+        SUBJECT,
+        "",
+        "",
+        Difficulty.OLYMPIAD,
+        atype,
+        "",
+        question_en=q_en,
+        question_ru=q_ru,
+    )
+    return _finish(
+        _emit(d, rng, atype, total_mag, "", steps_en, steps_ru, extras, params),
+        "lenses_olym",
+        Difficulty.OLYMPIAD,
+    )
 
 
 # --------------------------------------------------------------------------- #
 # Uniform circular motion (olympiad)
 # --------------------------------------------------------------------------- #
 def g_circular(rng: np.random.Generator, idx: int, atype: AnswerType) -> PairDraft:
-    if bool(rng.integers(0, 2)):
-        for _ in range(300):
-            v = int(rng.integers(2, 21))
-            a_num = int(rng.choice([10, 20, 25, 40, 50, 100]))  # a = v^2/r numerator
-            if v * v % a_num == 0:
-                r = v * v // a_num
-                if 2 <= r <= 400:
-                    break
+    if idx % 2 == 0:
+        mass = int(rng.integers(1, 7))
+        radius = int(rng.integers(3, 11))
+        height_factor = int(rng.integers(3, 6))
+        height = height_factor * radius
+        speed_sq_top = 20 * (height - 2 * radius)
+        normal = mass * (speed_sq_top / radius - 10)
+        phr = idx % 3
+        if phr == 0:
+            q_en = (
+                f"A {mass} kg bead starts from rest at height {height} m above the bottom of a vertical "
+                f"frictionless loop of radius {radius} m and moves on its inside (g = 10 m/s^2). "
+                "Assuming it remains in contact, what normal force does the track exert at the top?"
+            )
+            q_ru = (
+                f"Бусинка массой {mass} kg начинает движение из состояния покоя с высоты {height} m над "
+                f"нижней точкой вертикальной гладкой петли радиуса {radius} m и движется по её внутренней "
+                "стороне (g = 10 m/s^2). Считая, что контакт не теряется, найдите силу реакции в верхней точке?"
+            )
+        elif phr == 1:
+            q_en = (
+                f"A small {mass} kg cart is released from rest {height} m above the bottom of an ideal "
+                f"vertical loop with radius {radius} m. With no friction and g = 10 m/s^2, what is the "
+                "track's normal force on the cart at the loop's top?"
+            )
+            q_ru = (
+                f"Тележку массой {mass} kg отпускают без начальной скорости с высоты {height} m над нижней "
+                f"точкой идеальной вертикальной петли радиуса {radius} m. Трения нет, g = 10 m/s^2. "
+                "Какова сила реакции пути в верхней точке петли?"
+            )
         else:
-            v, r, a_val = 10, 20, 5.0
-        a_val = v * v / r
-        q_en = f"A car moves along a circular track of radius {r} m at a constant speed of {v} m/s. What is its centripetal acceleration?"
-        q_ru = f"Автомобиль движется по круговой трассе радиусом {r} m с постоянной скоростью {v} m/s. Чему равно его центростремительное ускорение?"
-        steps_en = [f"a = v^2 / r = {v}^2 / {r} = {fmt(a_val)} m/s^2."]
-        steps_ru = [f"a = v^2 / r = {v}^2 / {r} = {fmt(a_val)} m/s^2."]
-        value, units = a_val, "m/s^2"
-        extras = [(v / r if r else 0.0, "forgot_square"), (v * v * r, "multiplied_extra"), (2 * v * v / r, "factor_of_2")]
-        params = {"v": v, "r": r, "expected": a_val, "kind": "a"}
-    else:
-        t_per = int(rng.integers(2, 11))
-        r = 25 * int(rng.integers(1, 9))
-        v = 2 * 3.14 * r / t_per
-        q_en = (
-            f"A body moves uniformly along a circle of radius {r} m with a period of {t_per} s "
-            f"(pi = 3.14). What is its speed?"
-        )
-        q_ru = (
-            f"Тело равномерно движется по окружности радиусом {r} m с периодом обращения {t_per} s "
-            f"(pi = 3.14). Чему равна его скорость?"
-        )
+            q_en = (
+                f"Inside a smooth vertical circular track of radius {radius} m, a {mass} kg block is released "
+                f"from rest at height {height} m measured from the bottom. Take g = 10 m/s^2 and assume "
+                "continuous contact. Find the normal force at the highest point."
+            )
+            q_ru = (
+                f"Внутри гладкой вертикальной круговой дорожки радиуса {radius} m брусок массой {mass} kg "
+                f"отпускают без начальной скорости с высоты {height} m от нижней точки. Примите g = 10 m/s^2 "
+                "и считайте контакт непрерывным. Найдите силу реакции в верхней точке?"
+            )
         steps_en = [
-            f"v = 2*pi*r / T = 2 * 3.14 * {r} / {t_per} = {fmt(v)} m/s.",
+            f"Energy conservation from height {height} m to the top at 2R = {2 * radius} m gives "
+            f"v_top^2 = 2g({height} - {2 * radius}) = {fmt(speed_sq_top)} m^2/s^2.",
+            f"At the top, mg + N = m*v_top^2/R, so N = {mass}*({fmt(speed_sq_top)}/{radius} - 10) "
+            f"= {fmt(normal)} N.",
         ]
         steps_ru = [
-            f"v = 2*pi*r / T = 2 * 3.14 * {r} / {t_per} = {fmt(v)} m/s.",
+            f"Из сохранения энергии между высотой {height} m и верхней точкой 2R = {2 * radius} m: "
+            f"v_top^2 = 2g({height} - {2 * radius}) = {fmt(speed_sq_top)} m^2/s^2.",
+            f"В верхней точке mg + N = m*v_top^2/R, поэтому N = {mass}*({fmt(speed_sq_top)}/{radius} - 10) "
+            f"= {fmt(normal)} N.",
         ]
-        value, units = v, "m/s"
-        extras = [(3.14 * r / t_per if t_per else 0.0, "forgot_factor_2"), (2 * 3.14 * r * t_per, "multiplied_extra"), (2 * 3.14 * r, "forgot_period")]
-        params = {"T": t_per, "r": r, "expected": v, "kind": "v"}
+        value, units = normal, "N"
+        extras = [
+            (mass * speed_sq_top / radius, "forgot_weight_at_top"),
+            (mass * (speed_sq_top / radius + 10), "wrong_force_direction"),
+            (mass * 10, "returned_weight"),
+        ]
+        params = {
+            "kind": "vertical_loop_normal",
+            "mass": mass,
+            "radius": radius,
+            "height": height,
+            "g": 10.0,
+            "expected": normal,
+            "challenge_concepts": ["mechanical-energy conservation", "centripetal force balance"],
+            "challenge_feature": "At the top, gravity and the normal force point toward the center.",
+        }
+    else:
+        radius = 10 * int(rng.integers(2, 7))
+        mu = float(rng.choice([0.10, 0.15, 0.20, 0.25]))
+        sin_theta, cos_theta = 0.5, 0.866
+        ratio = (sin_theta + mu * cos_theta) / (cos_theta - mu * sin_theta)
+        max_speed = math.sqrt(radius * 10 * ratio)
+        phr = idx % 3
+        if phr == 0:
+            q_en = (
+                f"A car rounds a {radius} m radius road banked at 30°. The coefficient of static friction is "
+                f"{fmt(mu)}; take g = 10 m/s^2, sin 30° = 0.5, cos 30° = 0.866. At the high-speed "
+                "slipping threshold friction acts down the slope. What is the maximum speed?"
+            )
+            q_ru = (
+                f"Автомобиль проходит вираж радиуса {radius} m с углом наклона 30°. Коэффициент трения покоя "
+                f"равен {fmt(mu)}; g = 10 m/s^2, sin 30° = 0.5, cos 30° = 0.866. На пределе заноса при "
+                "большой скорости трение направлено вниз по склону. Какова максимальная скорость?"
+            )
+        elif phr == 1:
+            q_en = (
+                f"On a 30° banked circular test track of radius {radius} m, tire-road static friction has "
+                f"coefficient {fmt(mu)}. Using g = 10 m/s^2, sin 30° = 0.5 and cos 30° = 0.866, find the "
+                "largest speed before the car tends to slide outward."
+            )
+            q_ru = (
+                f"Круговая испытательная трасса радиуса {radius} m наклонена под углом 30°, коэффициент "
+                f"трения покоя шин равен {fmt(mu)}. При g = 10 m/s^2, sin 30° = 0.5 и cos 30° = 0.866 "
+                "найдите наибольшую скорость до начала скольжения автомобиля наружу?"
+            )
+        else:
+            q_en = (
+                f"A banked turn has radius {radius} m and angle 30°. With static-friction coefficient "
+                f"{fmt(mu)}, determine the upper limiting speed; use g = 10 m/s^2, sin 30° = 0.5 and "
+                "cos 30° = 0.866, and take limiting friction down the bank."
+            )
+            q_ru = (
+                f"Вираж радиуса {radius} m наклонён под углом 30°. При коэффициенте трения покоя {fmt(mu)} "
+                f"определите верхнюю предельную скорость; используйте g = 10 m/s^2, sin 30° = 0.5, "
+                "cos 30° = 0.866 и считайте предельное трение направленным вниз по склону?"
+            )
+        steps_en = [
+            "At impending outward slip, N*cos(theta) - mu*N*sin(theta) = mg, while "
+            "N*sin(theta) + mu*N*cos(theta) = m*v^2/r.",
+            f"Eliminating N gives v = sqrt(rg*(sin+mu*cos)/(cos-mu*sin)) = {fmt(max_speed)} m/s.",
+        ]
+        steps_ru = [
+            "На грани скольжения наружу N*cos(theta) - mu*N*sin(theta) = mg, а "
+            "N*sin(theta) + mu*N*cos(theta) = m*v^2/r.",
+            f"Исключая N, получаем v = sqrt(rg*(sin+mu*cos)/(cos-mu*sin)) = {fmt(max_speed)} m/s.",
+        ]
+        value, units = max_speed, "m/s"
+        extras = [
+            (math.sqrt(radius * 10 * sin_theta / cos_theta), "ignored_friction"),
+            (
+                math.sqrt(radius * 10 * (sin_theta - mu * cos_theta) / (cos_theta + mu * sin_theta)),
+                "used_low_speed_limit",
+            ),
+            (radius * 10 * ratio, "forgot_square_root"),
+        ]
+        params = {
+            "kind": "banked_friction_max",
+            "radius": radius,
+            "mu": mu,
+            "sin": sin_theta,
+            "cos": cos_theta,
+            "g": 10.0,
+            "expected": max_speed,
+            "challenge_concepts": ["static-friction limit", "banked centripetal force resolution"],
+            "challenge_feature": "The high-speed limit fixes friction down the bank and changes both force components.",
+        }
     d = PairDraft(SUBJECT, "", "", Difficulty.OLYMPIAD, atype, "", question_en=q_en, question_ru=q_ru)
     return _finish(_emit(d, rng, atype, value, units, steps_en, steps_ru, extras, params), "circular", Difficulty.OLYMPIAD)
 
@@ -1027,122 +1369,181 @@ def g_circular(rng: np.random.Generator, idx: int, atype: AnswerType) -> PairDra
 # --------------------------------------------------------------------------- #
 # Projectile motion (olympiad)
 # --------------------------------------------------------------------------- #
-def g_projectile(rng: np.random.Generator, idx: int, atype: AnswerType) -> PairDraft:
+def g_projectile(
+    rng: np.random.Generator,
+    idx: int,
+    atype: AnswerType,
+) -> PairDraft:
+    """Challenge projectile tasks with explicit idealizations and root handling."""
     if atype == AnswerType.EXACT:
-        q_en = (
-            "A ball is thrown at some fixed angle to the horizontal. By what factor does its range "
-            "increase if the initial speed is doubled (the angle is unchanged)?"
-        )
-        q_ru = (
-            "Мяч бросают под некоторым фиксированным углом к горизонту. Во сколько раз увеличится "
-            "дальность полёта, если начальную скорость удвоить (угол не меняется)?"
-        )
-        steps_en = [f"R = v0^2 * sin(2*theta) / g is proportional to v0^2, and 2^2 = 4."]
-        steps_ru = [f"R = v0^2 * sin(2*theta) / g пропорциональна v0^2, а 2^2 = 4."]
-        d = PairDraft(SUBJECT, "", "", Difficulty.OLYMPIAD, atype, "", question_en=q_en, question_ru=q_ru)
-        return _finish(_emit_exact(d, "4", steps_en, steps_ru, {"expected": 4}), "projectile", Difficulty.OLYMPIAD)
-    theta = int(rng.choice([30, 45, 60]))
-    v0 = int(rng.choice([n for n in range(10, 41, 2)]))
-    ask = int(rng.integers(0, 2))
-    if theta == 45:
-        if ask == 0:
-            h_max = v0 * v0 / 40
+        theta = int(rng.choice([20, 25, 30, 35, 40]))
+        other = 90 - theta
+        phr = idx % 4
+        if phr == 0:
             q_en = (
-                f"A ball is thrown from the ground at {theta}° to the horizontal with an initial speed of "
-                f"{v0} m/s (g = 10 m/s^2). What is the maximum height it reaches?"
+                "With negligible air resistance, a projectile is launched and lands at the same elevation. "
+                f"At fixed speed it reaches a target using angle {theta}°. What other angle in (0°, 90°) "
+                "gives the same range?"
             )
             q_ru = (
-                f"Мяч бросают с поверхности земли под углом {theta}° к горизонту с начальной скоростью "
-                f"{v0} m/s (g = 10 m/s^2). На какую максимальную высоту он поднимется?"
+                "Сопротивлением воздуха пренебрегают; снаряд стартует и падает на одной высоте. При фиксированной "
+                f"скорости он попадает в цель под углом {theta}°. Какой другой угол из (0°, 90°) даёт ту же дальность?"
             )
-            steps_en = [
-                f"Vertical component: v0y = v0 * sin(45°) = {fmt(v0 * 0.7071)} m/s; h = v0y^2 / (2*g) = {fmt(v0 * v0 / 40)} m.",
-            ]
-            steps_ru = [
-                f"Вертикальная составляющая: v0y = v0 * sin(45°) = {fmt(v0 * 0.7071)} m/s; h = v0y^2 / (2*g) = {fmt(v0 * v0 / 40)} m.",
-            ]
-            value, units = h_max, "m"
-            extras = [(v0 * v0 / 20, "factor_of_2"), (v0 * v0 / 10, "range_confusion"), (v0 * v0 / 80, "factor_of_4_small")]
-            params = {"theta": theta, "v0": v0, "ask": "height", "expected": h_max}
+        elif phr == 1:
+            q_en = (
+                f"A no-drag projectile travels between points at equal height. One launch angle is {theta}°, "
+                "and the speed is unchanged. Which second acute launch angle reaches the same point?"
+            )
+            q_ru = (
+                f"Снаряд без сопротивления воздуха летит между точками одной высоты. Один угол броска равен "
+                f"{theta}°, скорость не меняется. Какой второй острый угол приводит в ту же точку?"
+            )
+        elif phr == 2:
+            q_en = (
+                f"For ideal projectile motion with equal launch and landing elevations, angle {theta}° is one "
+                "solution for a specified range at fixed speed. What is the distinct companion angle?"
+            )
+            q_ru = (
+                f"При идеальном движении с одинаковыми высотами старта и падения угол {theta}° является одним "
+                "решением для заданной дальности при фиксированной скорости. Каков второй отличный угол?"
+            )
         else:
-            rng_val = v0 * v0 / 10
             q_en = (
-                f"A ball is thrown from the ground at {theta}° to the horizontal with an initial speed of "
-                f"{v0} m/s (g = 10 m/s^2). At what distance from the launch point does it land?"
+                f"Ignoring drag and keeping the launch speed fixed, a ball fired at {theta}° returns to its "
+                "launch height at a certain horizontal distance. At what other acute angle does it return at "
+                "that same distance?"
             )
             q_ru = (
-                f"Мяч бросают с поверхности земли под углом {theta}° к горизонту с начальной скоростью "
-                f"{v0} m/s (g = 10 m/s^2). На каком расстоянии от точки броска он упадёт?"
+                f"Пренебрегая сопротивлением и сохраняя скорость броска, мяч, запущенный под углом {theta}°, "
+                "возвращается на высоту старта на некотором расстоянии. При каком другом остром угле расстояние "
+                "будет тем же?"
             )
-            steps_en = [
-                f"Range: R = v0^2 * sin(2*theta) / g = {v0}^2 * sin(90°) / 10 = {fmt(rng_val)} m.",
-            ]
-            steps_ru = [
-                f"Дальность: R = v0^2 * sin(2*theta) / g = {v0}^2 * sin(90°) / 10 = {fmt(rng_val)} m.",
-            ]
-            value, units = rng_val, "m"
-            extras = [(v0 * v0 / 20, "factor_of_2"), (v0 * v0 / 40, "height_confusion"), (v0 * v0 / 5, "factor_of_2_other")]
-            params = {"theta": theta, "v0": v0, "ask": "range", "expected": rng_val}
-    elif theta == 30:
-        if ask == 0:
-            h_max = v0 * v0 / 160
-            q_en = (
-                f"A stone is thrown from the ground at {theta}° to the horizontal with an initial speed of "
-                f"{v0} m/s (g = 10 m/s^2, sin(30°) = 0.5). What is the maximum height it reaches?"
-            )
-            q_ru = (
-                f"Камень бросают с поверхности земли под углом {theta}° к горизонту с начальной скоростью "
-                f"{v0} m/s (g = 10 m/s^2, sin(30°) = 0.5). На какую максимальную высоту он поднимется?"
-            )
-            steps_en = [
-                f"v0y = v0 * sin(30°) = {fmt(v0 * 0.5)} m/s; h = v0y^2 / (2*g) = {fmt(h_max)} m.",
-            ]
-            steps_ru = [
-                f"v0y = v0 * sin(30°) = {fmt(v0 * 0.5)} m/s; h = v0y^2 / (2*g) = {fmt(h_max)} m.",
-            ]
-            value, units = h_max, "m"
-            extras = [(v0 * v0 / 40, "angle_confusion_45"), (v0 * v0 / 80, "factor_of_2"), (v0 * v0 / 20, "factor_of_4")]
-            params = {"theta": theta, "v0": v0, "ask": "height", "expected": h_max}
-        else:
-            t_flight = v0 / 10
-            q_en = (
-                f"A stone is thrown from the ground at {theta}° to the horizontal with an initial speed of "
-                f"{v0} m/s (g = 10 m/s^2, sin(30°) = 0.5). How long is it in the air?"
-            )
-            q_ru = (
-                f"Камень бросают с поверхности земли под углом {theta}° к горизонту с начальной скоростью "
-                f"{v0} m/s (g = 10 m/s^2, sin(30°) = 0.5). Сколько времени он будет находиться в полёте?"
-            )
-            steps_en = [
-                f"t = 2 * v0 * sin(30°) / g = 2 * {v0} * 0.5 / 10 = {fmt(t_flight)} s.",
-            ]
-            steps_ru = [
-                f"t = 2 * v0 * sin(30°) / g = 2 * {v0} * 0.5 / 10 = {fmt(t_flight)} s.",
-            ]
-            value, units = t_flight, "s"
-            extras = [(v0 / 5, "factor_of_2"), (v0 / 20, "forgot_factor_2"), (v0 / 10 + 1, "off_by_one")]
-            params = {"theta": theta, "v0": v0, "ask": "time", "expected": t_flight}
-    else:
-        h_max = 3 * v0 * v0 / 160
-        q_en = (
-            f"A ball is thrown from the ground at {theta}° to the horizontal with an initial speed of "
-            f"{v0} m/s (g = 10 m/s^2, sin(60°) = 0.866). What is the maximum height it reaches?"
-        )
-        q_ru = (
-            f"Мяч бросают с поверхности земли под углом {theta}° к горизонту с начальной скоростью "
-            f"{v0} m/s (g = 10 m/s^2, sin(60°) = 0.866). На какую максимальную высоту он поднимется?"
-        )
         steps_en = [
-            f"v0y = v0 * sin(60°) = {fmt(v0 * 0.866)} m/s; h = v0y^2 / (2*g) = {fmt(h_max)} m.",
+            "For equal launch and landing heights, R = v0^2*sin(2*theta)/g.",
+            f"sin(2*theta) is unchanged by 2*theta -> 180° - 2*theta, so the companion angle is "
+            f"90° - {theta}° = {other}°.",
         ]
         steps_ru = [
-            f"v0y = v0 * sin(60°) = {fmt(v0 * 0.866)} m/s; h = v0y^2 / (2*g) = {fmt(h_max)} m.",
+            "При одинаковых высотах старта и падения R = v0^2*sin(2*theta)/g.",
+            f"sin(2*theta) не меняется при замене 2*theta на 180° - 2*theta, поэтому второй угол равен "
+            f"90° - {theta}° = {other}°.",
         ]
-        value, units = h_max, "m"
-        extras = [(v0 * v0 / 40, "angle_confusion_45"), (3 * v0 * v0 / 80, "factor_of_2"), (v0 * v0 / 160, "angle_confusion_30")]
-        params = {"theta": theta, "v0": v0, "ask": "height", "expected": h_max}
-    d = PairDraft(SUBJECT, "", "", Difficulty.OLYMPIAD, atype, "", question_en=q_en, question_ru=q_ru)
-    return _finish(_emit(d, rng, atype, value, units, steps_en, steps_ru, extras, params), "projectile", Difficulty.OLYMPIAD)
+        params = {
+            "kind": "complementary_angle",
+            "theta": theta,
+            "expected": other,
+            "challenge_concepts": ["projectile range", "trigonometric supplementary-angle symmetry"],
+            "challenge_feature": "The same-range equation has two distinct acute-angle branches.",
+        }
+        d = PairDraft(
+            SUBJECT,
+            "",
+            "",
+            Difficulty.OLYMPIAD,
+            atype,
+            "",
+            question_en=q_en,
+            question_ru=q_ru,
+        )
+        return _finish(
+            _emit_exact(d, str(other), steps_en, steps_ru, params),
+            "projectile",
+            Difficulty.OLYMPIAD,
+        )
+
+    trig = {
+        30: (0.5, 0.866),
+        45: (0.7071, 0.7071),
+        60: (0.866, 0.5),
+    }
+    theta = int(rng.choice(list(trig)))
+    sin_theta, cos_theta = trig[theta]
+    v0 = int(rng.choice(range(12, 33, 2)))
+    height = 5 * int(rng.integers(1, 7))
+    vy = v0 * sin_theta
+    vx = v0 * cos_theta
+    discriminant = vy * vy + 20 * height
+    flight_time = (vy + math.sqrt(discriminant)) / 10
+    horizontal_range = vx * flight_time
+    phr = idx % 3
+    if phr == 0:
+        q_en = (
+            f"From a platform {height} m above level ground, a ball is launched at {v0} m/s and {theta}° "
+            f"above horizontal. Ignore drag; use g = 10 m/s^2, sin {theta}° = {sin_theta}, "
+            f"cos {theta}° = {cos_theta}. How far horizontally from the platform does it land?"
+        )
+        q_ru = (
+            f"С платформы высотой {height} m над горизонтальной землёй мяч бросают со скоростью {v0} m/s "
+            f"под углом {theta}° к горизонту. Сопротивлением пренебречь; g = 10 m/s^2, "
+            f"sin {theta}° = {sin_theta}, cos {theta}° = {cos_theta}. На каком горизонтальном расстоянии он упадёт?"
+        )
+    elif phr == 1:
+        q_en = (
+            f"A projectile leaves a cliff edge {height} m above flat ground with speed {v0} m/s at angle "
+            f"{theta}°. With no air resistance, g = 10 m/s^2, sin {theta}° = {sin_theta} and "
+            f"cos {theta}° = {cos_theta}, find its horizontal displacement before impact."
+        )
+        q_ru = (
+            f"Снаряд вылетает с края обрыва высотой {height} m над ровной землёй со скоростью {v0} m/s "
+            f"под углом {theta}°. Сопротивления воздуха нет; g = 10 m/s^2, sin {theta}° = {sin_theta}, "
+            f"cos {theta}° = {cos_theta}. Найдите горизонтальное перемещение до удара о землю?"
+        )
+    else:
+        q_en = (
+            f"An object is projected from a tower {height} m high at {v0} m/s, {theta}° above horizontal. "
+            f"Assume flat ground and negligible drag; take g = 10 m/s^2, sin {theta}° = {sin_theta}, "
+            f"cos {theta}° = {cos_theta}. What horizontal range is obtained?"
+        )
+        q_ru = (
+            f"Тело бросают с башни высотой {height} m со скоростью {v0} m/s под углом {theta}° к горизонту. "
+            f"Земля горизонтальна, сопротивлением пренебречь; g = 10 m/s^2, sin {theta}° = {sin_theta}, "
+            f"cos {theta}° = {cos_theta}. Какова горизонтальная дальность?"
+        )
+    steps_en = [
+        f"Vertical motion gives 0 = {height} + {fmt(vy)}t - 5t^2; the positive root is "
+        f"t = ({fmt(vy)} + sqrt({fmt(discriminant)}))/10 = {fmt(flight_time)} s.",
+        f"The horizontal speed is {v0}*{cos_theta} = {fmt(vx)} m/s, so x = v_x*t = "
+        f"{fmt(horizontal_range)} m.",
+    ]
+    steps_ru = [
+        f"По вертикали 0 = {height} + {fmt(vy)}t - 5t^2; положительный корень равен "
+        f"t = ({fmt(vy)} + sqrt({fmt(discriminant)}))/10 = {fmt(flight_time)} s.",
+        f"Горизонтальная скорость равна {v0}*{cos_theta} = {fmt(vx)} m/s, поэтому x = v_x*t = "
+        f"{fmt(horizontal_range)} m.",
+    ]
+    equal_height_time = 2 * vy / 10
+    extras = [
+        (vx * equal_height_time, "ignored_launch_height"),
+        (vx * math.sqrt(2 * height / 10), "ignored_initial_vertical_speed"),
+        (v0 * flight_time, "used_total_speed_horizontally"),
+    ]
+    params = {
+        "kind": "elevated_range",
+        "height": height,
+        "v0": v0,
+        "theta": theta,
+        "sin": sin_theta,
+        "cos": cos_theta,
+        "g": 10.0,
+        "expected": horizontal_range,
+        "challenge_concepts": ["vertical quadratic flight time", "horizontal component motion"],
+        "challenge_feature": "Only the positive time root is physical because launch and landing elevations differ.",
+    }
+    d = PairDraft(
+        SUBJECT,
+        "",
+        "",
+        Difficulty.OLYMPIAD,
+        atype,
+        "",
+        question_en=q_en,
+        question_ru=q_ru,
+    )
+    return _finish(
+        _emit(d, rng, atype, horizontal_range, "m", steps_en, steps_ru, extras, params),
+        "projectile",
+        Difficulty.OLYMPIAD,
+    )
 
 
 GENERATORS: dict[str, Any] = {

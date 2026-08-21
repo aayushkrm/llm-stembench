@@ -26,8 +26,6 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-import numpy as np
-
 from stembench.schemas import AnswerType, Split
 
 from . import chemistry_gen, math_gen, physics_gen
@@ -74,6 +72,16 @@ def _generate_subject(ctx: GenContext, module: Any) -> list[PairDraft]:
                     f"{subject}/{topic_key} idx={idx}: could not generate a sufficiently distinct "
                     f"question after {MAX_ATTEMPTS} attempts"
                 )
+            if draft.difficulty != difficulty:
+                raise RuntimeError(
+                    f"{subject}/{topic_key} idx={idx}: generator emitted difficulty "
+                    f"{draft.difficulty.value}, SPEC requires {difficulty.value}"
+                )
+            if draft.answer_type != atype:
+                raise RuntimeError(
+                    f"{subject}/{topic_key} idx={idx}: generator emitted answer type "
+                    f"{draft.answer_type.value}, SPEC requires {atype.value}"
+                )
             ctx.record(subject, _alias(module, topic_key), "en", draft.question_en)
             ctx.record(subject, _alias(module, topic_key), "ru", draft.question_ru)
             if atype == AnswerType.MC:
@@ -108,7 +116,14 @@ def assemble(seed: int) -> list[PairBundle]:
             split = Split.DEV if (n - 1) in dev_ids else Split.TEST
             base = _alias(module, draft.topic_key)
             mc_texts = list(draft.mc_en) if draft.answer_type == AnswerType.MC else None
-            records = verify_pair(base, dict(draft.params), mc_texts)
+            records = verify_pair(
+                base,
+                dict(draft.params),
+                mc_texts,
+                candidate_canonical=draft.canonical,
+                answer_type=draft.answer_type,
+                candidate_numeric_value=draft.numeric_value,
+            )
             for rec in records:
                 if not rec.passed:
                     failures.append(f"{pair_id} [{base}] {rec.method}: {rec.detail}")
@@ -197,6 +212,26 @@ def write_outputs(bundles: list[PairBundle], out_dir: Path, seed: int, metrics: 
                 "per_subject_language": metrics["max_jaccard_per_subject_language"],
                 "gate": "< 0.80",
             },
+            "structural_templates": {
+                "metric": "exact normalized question match after masking standalone numeric tokens",
+                "purpose": (
+                    "descriptive dependence audit; repeated procedural templates are reported, not rejected"
+                ),
+                "per_subject_language": metrics["structural_templates"],
+            },
+            "challenge_design_evidence": {
+                "caveat": (
+                    "generator metadata supports audit but does not replace independent expert difficulty review"
+                ),
+                "pairs": {
+                    bundle.pair_id: {
+                        "concepts": bundle.params["challenge_concepts"],
+                        "feature": bundle.params["challenge_feature"],
+                    }
+                    for bundle in bundles
+                    if bundle.difficulty.value == "olympiad"
+                },
+            },
             "verifiers": {
                 "methods": metrics["verifier_methods"],
                 "passed": metrics["verifier_passed"],
@@ -265,7 +300,7 @@ def main(argv: list[str] | None = None) -> int:
     print(f"[build] difficulty per subject: {metrics['difficulty_per_subject']}")
     print(f"[build] answer-type share: {metrics['answer_type_share']}")
     print(f"[build] MC letters: {metrics['mc_letter_distribution']}")
-    print(f"[build] max char-3gram Jaccard: {metrics['max_jaccard_overall']} {metrics['max_jaccard_pair']}")
+    print(f"[build] max word-3gram Jaccard: {metrics['max_jaccard_overall']} {metrics['max_jaccard_pair']}")
     print(f"[build] verifier pass rate: {metrics['verifier_pass_rate']} ({metrics['verifier_passed']} passed)")
     print(f"[build] dev pairs: {metrics['n_dev_pairs']}")
     print(f"[build] OK -> {args.out}")

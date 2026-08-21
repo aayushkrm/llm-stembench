@@ -92,16 +92,20 @@ def per_model_language_accuracy(runs: dict[str, list[dict]]) -> dict[str, dict[s
 def language_gaps(runs: dict[str, list[dict]], n_boot: int = 10000,
                   seed: int = 20260817) -> dict[str, Any]:
     """H4 per-model + H5 pooled EN-RU paired differences, cluster bootstrap on pair_id."""
-    per_model: dict[str, dict[str, float]] = {}
+    per_model: dict[str, dict[str, Any]] = {}
     pooled_pairs: dict[str, list[float]] = defaultdict(list)
+    pooled_templates: dict[str, str] = {}
     for key, recs in sorted(runs.items()):
         by_pair: dict[str, dict[str, float | None]] = defaultdict(dict)
+        pair_templates: dict[str, str] = {}
         for r in recs:
             if r["correctness"] is None:
                 continue
-            by_pair[_pair_id(r["item_id"])][r.get("language", "en")] = float(
+            pair_id = _pair_id(r["item_id"])
+            by_pair[pair_id][r.get("language", "en")] = float(
                 r["correctness"]
             )
+            pair_templates[pair_id] = r.get("template_id") or f"unknown:{pair_id}"
         pairs = {p: v for p, v in by_pair.items() if "en" in v and "ru" in v}
         if len(pairs) < 10:
             per_model[key] = {"n_pairs": len(pairs), "note": "too few complete pairs"}
@@ -114,9 +118,21 @@ def language_gaps(runs: dict[str, list[dict]], n_boot: int = 10000,
         res["acc_en"] = float(en.mean())
         res["acc_ru"] = float(ru.mean())
         res["n_pairs"] = len(ids)
+        template_clusters = np.array([pair_templates[pair_id] for pair_id in ids])
+        res["template_cluster_sensitivity"] = {
+            **bootstrap_difference_ci(
+                en,
+                ru,
+                clusters=template_clusters,
+                n_boot=n_boot,
+                seed=seed,
+            ),
+            "n_templates": int(len(np.unique(template_clusters))),
+        }
         per_model[key] = res
         for p in ids:
             pooled_pairs[p].append(pairs[p]["en"] - pairs[p]["ru"])
+            pooled_templates[p] = pair_templates[p]
     # H5 pooled across models, clustered on pair
     h5: dict[str, Any] = {"n_pairs": len(pooled_pairs)}
     if pooled_pairs:
@@ -135,6 +151,17 @@ def language_gaps(runs: dict[str, list[dict]], n_boot: int = 10000,
             diff=float(vals.mean()), ci_lo=float(lo), ci_hi=float(hi),
             p_bootstrap=float(p_boot),
         )
+        template_clusters = np.array([pooled_templates[pair_id] for pair_id in ids])
+        h5["template_cluster_sensitivity"] = {
+            **bootstrap_difference_ci(
+                vals,
+                np.zeros_like(vals),
+                clusters=template_clusters,
+                n_boot=n_boot,
+                seed=seed,
+            ),
+            "n_templates": int(len(np.unique(template_clusters))),
+        }
     # BH within the H4 family
     testable = {k: v for k, v in per_model.items() if "p_bootstrap" in v}
     if testable:
@@ -174,7 +201,7 @@ def category_breakdowns(runs: dict[str, list[dict]]) -> dict[str, Any]:
         }
     # difficulty trend per model (school >= university >= olympiad descriptive)
     trends = {}
-    for key, recs in sorted(runs.items()):
+    for key, _recs in sorted(runs.items()):
         d = out[key]["by_difficulty"]
         seq = [d.get(level, {}).get("acc", float("nan")) for level in
                ("school", "university", "olympiad")]

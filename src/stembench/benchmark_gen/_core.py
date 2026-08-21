@@ -30,8 +30,9 @@ from __future__ import annotations
 import hashlib
 import math
 import unicodedata
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Any, Callable, Optional
+from typing import Any
 
 import numpy as np
 
@@ -51,8 +52,9 @@ VERSION = "0.1.0-candidate"
 
 # Generation-time anti-duplicate guard: a new question must stay below this
 # word-3gram Jaccard similarity against every previously emitted question of
-# the SAME topic key and subject (in either language).
-GEN_SIMILARITY_CAP = 0.72
+# the SAME topic key and subject (in either language).  Kept strictly below
+# the hard QC gate so generation never emits a pair that QC would reject.
+GEN_SIMILARITY_CAP = 0.78
 # Hard QC gate for near-duplicates across the whole subject+language group.
 QC_SIMILARITY_CAP = 0.80
 
@@ -235,7 +237,7 @@ class PairDraft:
     difficulty: Difficulty
     answer_type: AnswerType
     canonical: str  # value string for numeric/exact; becomes the letter for MC
-    numeric_value: Optional[float] = None
+    numeric_value: float | None = None
     units: str = ""
     question_en: str = ""
     question_ru: str = ""
@@ -272,7 +274,10 @@ def pick_distractors(
         cf = float(cand)
         if not math.isfinite(cf):
             continue
-        if _rel_diff(cf, value_f) < 0.05 and abs(cf - value_f) < 0.5:
+        # Mirror qc_mc's hard gate exactly.  The former conjunction with an
+        # absolute-distance check admitted off-by-one distractors for large
+        # answers even when they differed by far less than 2%.
+        if _rel_diff(cf, value_f) <= 0.02:
             continue  # too close to the canonical answer
         if any(_rel_diff(cf, prev) < 0.05 and abs(cf - prev) < 0.5 for prev, _ in usable):
             continue  # duplicate of an already picked distractor
@@ -353,10 +358,20 @@ def make_items(
     verifiers: list[VerifierRecord],
 ) -> tuple[BenchmarkItem, BenchmarkItem]:
     """Assemble the (en, ru) BenchmarkItem pair from a finalized draft."""
+    variant = next(
+        (
+            str(draft.params[key])
+            for key in ("template_id", "kind", "variant", "ask")
+            if key in draft.params
+        ),
+        "default",
+    )
+    template_id = f"{draft.subject.value}:{draft.topic_key}:{variant}:{draft.answer_type.value}"
     common = dict(
         pair_id=pair_id,
         subject=draft.subject,
         topic=draft.topic,
+        template_id=template_id,
         difficulty=draft.difficulty,
         answer_type=draft.answer_type,
         canonical_answer=draft.canonical,
@@ -371,6 +386,7 @@ def make_items(
         creation_method=f"template+parameters, seeded (seed={seed})",
         translator="parallel templates authored bilingually",
         annotation_version="0",
+        quality_flags=["expert_review_pending"],
         split=split,
         contamination_notes="generated 2026-08-17; parameters post-cutoff",
         verifier=verifiers,

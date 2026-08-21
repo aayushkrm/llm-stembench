@@ -16,7 +16,7 @@ import numpy as np
 
 from stembench.schemas import AnswerType, Difficulty, Subject
 
-from ._core import PairDraft, fmt, pick_distractors, sol_en, sol_ru
+from ._core import PairDraft, fmt, sol_en, sol_ru
 from .math_gen import _mc_numeric, _set_numeric, _std_pool, pick_distractors_str
 
 SUBJECT = Subject.CHEMISTRY
@@ -79,8 +79,8 @@ RUBRICS: dict[tuple[str, Difficulty], tuple[str, str]] = {
         "Вывод простейшей формулы по массовым долям.",
     ),
     ("limiting", Difficulty.OLYMPIAD): (
-        "Limiting-reagent analysis with a full mole comparison.",
-        "Определение лимитирующего реагента через сравнение количеств вещества.",
+        "Combines purity-corrected mole inventories, limiting-reagent extent, and percent yield.",
+        "Сочетает поправку на чистоту, сравнение стехиометрических степеней превращения и выход продукта.",
     ),
     ("econfig", Difficulty.SCHOOL): (
         "Reading ground-state electron configurations of main-group and d-block atoms.",
@@ -115,9 +115,9 @@ SPEC = [
     ("econfig", Difficulty.SCHOOL, 4, AnswerType.EXACT),
     ("reactions", Difficulty.SCHOOL, 8, AnswerType.EXACT),
     ("reactions", Difficulty.SCHOOL, 6, AnswerType.MC),
-    ("stoich_mass", Difficulty.UNIVERSITY, 6, AnswerType.NUMERIC),
-    ("stoich_mass", Difficulty.UNIVERSITY, 4, AnswerType.MC),
-    ("molarity", Difficulty.UNIVERSITY, 8, AnswerType.NUMERIC),
+    ("stoich_mass_uni", Difficulty.UNIVERSITY, 6, AnswerType.NUMERIC),
+    ("stoich_mass_uni", Difficulty.UNIVERSITY, 4, AnswerType.MC),
+    ("molarity_uni", Difficulty.UNIVERSITY, 8, AnswerType.NUMERIC),
     ("dilution", Difficulty.UNIVERSITY, 8, AnswerType.NUMERIC),
     ("dilution", Difficulty.UNIVERSITY, 4, AnswerType.MC),
     ("gas_moles", Difficulty.UNIVERSITY, 8, AnswerType.NUMERIC),
@@ -127,8 +127,8 @@ SPEC = [
     ("empirical", Difficulty.UNIVERSITY, 4, AnswerType.EXACT),
     ("empirical", Difficulty.UNIVERSITY, 4, AnswerType.MC),
     ("balancing", Difficulty.UNIVERSITY, 10, AnswerType.MC),
-    ("reactions", Difficulty.UNIVERSITY, 8, AnswerType.EXACT),
-    ("reactions", Difficulty.UNIVERSITY, 4, AnswerType.MC),
+    ("reactions_uni", Difficulty.UNIVERSITY, 8, AnswerType.EXACT),
+    ("reactions_uni", Difficulty.UNIVERSITY, 4, AnswerType.MC),
     ("limiting", Difficulty.OLYMPIAD, 10, AnswerType.NUMERIC),
     ("limiting", Difficulty.OLYMPIAD, 6, AnswerType.MC),
     ("limiting", Difficulty.OLYMPIAD, 2, AnswerType.EXACT),
@@ -249,20 +249,30 @@ PRECIP_REACTIONS: tuple[tuple[str, str, str], ...] = (
     ("AgNO3", "KBr", "AgBr"),
     ("CaCl2", "Na2CO3", "CaCO3"),
     ("Ba(NO3)2", "K2SO4", "BaSO4"),
+    ("ZnCl2", "NaOH", "Zn(OH)2"),
+    ("CuCl2", "Na2CO3", "CuCO3"),
+    ("FeSO4", "KOH", "Fe(OH)2"),
+    ("AgNO3", "K2CO3", "Ag2CO3"),
+    ("BaCl2", "AgNO3", "AgCl"),
+    ("MgCl2", "NaOH", "Mg(OH)2"),
 )
 
 GAS_REACTIONS: tuple[tuple[str, str, str, str], ...] = (
-    # reagent1, reagent2, gas product, en/ru description handled in template
+    # reagent1, reagent2, gas product, reaction kind
     ("CaCO3", "HCl", "CO2", "acid_carbonate"),
     ("Na2CO3", "HCl", "CO2", "acid_carbonate"),
+    ("K2CO3", "HNO3", "CO2", "acid_carbonate"),
     ("Zn", "HCl", "H2", "metal_acid"),
     ("Mg", "H2SO4", "H2", "metal_acid"),
+    ("Al", "HCl", "H2", "metal_acid"),
+    ("Fe", "H2SO4", "H2", "metal_acid"),
     ("CH4", "O2", "CO2", "combustion"),
     ("C", "O2", "CO2", "combustion"),
+    ("C3H8", "O2", "CO2", "combustion"),
 )
 
 BALANCING_POOL: tuple[tuple[str, tuple[int, ...], tuple[int, ...]], ...] = (
-    # (equation, correct coefficients, perturbed coefficients)
+    # (skeleton equation, correct coefficients, perturbed coefficients)
     ("Fe2O3 + CO -> Fe + CO2", (1, 3, 2, 3), (1, 2, 2, 3)),
     ("H2 + O2 -> H2O", (2, 1, 2), (1, 1, 1)),
     ("CH4 + O2 -> CO2 + H2O", (1, 2, 1, 2), (1, 1, 1, 2)),
@@ -281,7 +291,7 @@ LIMITING_POOL: tuple[tuple[str, tuple[int, int, int], str], ...] = (
     # equation, (coeff reagent1, coeff reagent2, coeff product), product formula
     ("N2 + 3 H2 -> 2 NH3", (1, 3, 2), "NH3"),
     ("Zn + 2 HCl -> ZnCl2 + H2", (1, 2, 1), "H2"),
-    ("CH4 + 2 O2 -> CO2 + 2 H2O", (1, 2, 1), "H2O"),
+    ("CH4 + 2 O2 -> CO2 + 2 H2O", (1, 2, 2), "H2O"),
     ("2 H2 + O2 -> 2 H2O", (2, 1, 2), "H2O"),
     ("Fe2O3 + 3 CO -> 2 Fe + 3 CO2", (1, 3, 2), "Fe"),
     ("Mg + 2 HCl -> MgCl2 + H2", (1, 2, 1), "H2"),
@@ -331,6 +341,21 @@ def _finish(d: PairDraft, key: str, difficulty: Difficulty) -> PairDraft:
     return d
 
 
+def _chem_numeric_pool(
+    value: float, extras: list[tuple[float, str]]
+) -> list[tuple[float, str]]:
+    """Plausible numeric errors that remain distinct at chemistry scales."""
+    return _std_pool(
+        value,
+        [
+            (value / 2, "factor_of_2_half"),
+            (value * 10, "decimal_shift_x10"),
+            (value / 10, "decimal_shift_div10"),
+            *extras,
+        ],
+    )
+
+
 def _emit(
     d: PairDraft,
     rng: np.random.Generator,
@@ -349,7 +374,7 @@ def _emit(
         d.solution_en = sol_en(steps_en, d.canonical, units)
         d.solution_ru = sol_ru(steps_ru, d.canonical, units)
     else:
-        _mc_numeric(d, rng, value, _std_pool(value, extras), units)
+        _mc_numeric(d, rng, value, _chem_numeric_pool(value, extras), units)
         d.solution_en = sol_en(steps_en, fmt(value), units)
         d.solution_ru = sol_ru(steps_ru, fmt(value), units)
     d.params = params
@@ -361,21 +386,23 @@ def _emit(
 # --------------------------------------------------------------------------- #
 def g_molar_mass(rng: np.random.Generator, idx: int, atype: AnswerType) -> PairDraft:
     formula, en_name, ru_name = _compound(rng)
+    counts = parse_formula(formula)
     mm = molar_mass(formula)
-    q_en = f"Calculate the molar mass of {en_name} ({formula})."
-    q_ru = f"Вычислите молярную массу {ru_name} ({formula})."
-    parts_en = " + ".join(f"{cnt}*{ATOMIC_WEIGHTS[el]}" for el, cnt in parse_formula(formula).items())
+    q_en = f"What is the molar mass of {en_name} ({formula})?"
+    q_ru = f"Чему равна молярная масса вещества «{ru_name}» ({formula})?"
+    count_text = ", ".join(f"{el}: {cnt}" for el, cnt in counts.items())
+    parts_en = " + ".join(f"{cnt}*{ATOMIC_WEIGHTS[el]}" for el, cnt in counts.items())
     steps_en = [
-        f"Atom counts in {formula}: {parse_formula(formula)}.",
+        f"Atom counts in {formula}: {count_text}.",
         f"M = {parts_en} = {fmt(mm)} g/mol.",
     ]
     steps_ru = [
-        f"Число атомов в {formula}: {parse_formula(formula)}.",
+        f"Число атомов в {formula}: {count_text}.",
         f"M = {parts_en} = {fmt(mm)} g/mol.",
     ]
     # plausible error: miscounted atoms of one element
     extras: list[tuple[float, str]] = []
-    for el, cnt in parse_formula(formula).items():
+    for el, cnt in counts.items():
         if cnt > 1:
             wrong = mm - ATOMIC_WEIGHTS[el]
             extras.append((wrong, f"atom_count_error_{el}"))
@@ -398,7 +425,10 @@ def g_stoich_mass(rng: np.random.Generator, idx: int, atype: AnswerType, difficu
         mass = round(n_target * mm, 2)
         n_val = mass / mm
         q_en = f"How many moles of {en_name} ({formula}) are contained in {fmt(mass)} g of it?"
-        q_ru = f"Какое количество вещества (моль) содержится в {fmt(mass)} g {ru_name} ({formula})?"
+        q_ru = (
+            f"Какое количество вещества (mol) содержится в {fmt(mass)} g "
+            f"вещества «{ru_name}» ({formula})?"
+        )
         steps_en = [
             f"M({formula}) = {fmt(mm)} g/mol.",
             f"n = m / M = {fmt(mass)} / {fmt(mm)} = {fmt(n_val)} mol.",
@@ -417,7 +447,7 @@ def g_stoich_mass(rng: np.random.Generator, idx: int, atype: AnswerType, difficu
             n_val = round(float(rng.uniform(0.2, 3.5)), 2)
         mass = round(n_val * mm, 2)
         q_en = f"What is the mass of {fmt(n_val)} mol of {en_name} ({formula})?"
-        q_ru = f"Какова масса {fmt(n_val)} mol {ru_name} ({formula})?"
+        q_ru = f"Какова масса {fmt(n_val)} mol вещества «{ru_name}» ({formula})?"
         steps_en = [
             f"M({formula}) = {fmt(mm)} g/mol.",
             f"m = n * M = {fmt(n_val)} * {fmt(mm)} = {fmt(mass)} g.",
@@ -451,8 +481,14 @@ def g_molarity(rng: np.random.Generator, idx: int, atype: AnswerType, difficulty
         n_val = c_target * v_lit
         q_en = f"A solution contains {fmt(n_val)} mol of solute in {fmt(v_lit)} L of solution. What is its molar concentration?"
         q_ru = f"В {fmt(v_lit)} L раствора содержится {fmt(n_val)} mol растворённого вещества. Чему равна молярная концентрация раствора?"
-        steps_en = [f"c = n / V = {fmt(n_val)} / {fmt(v_lit)} = {fmt(c_target)} mol/L."]
-        steps_ru = [f"c = n / V = {fmt(n_val)} / {fmt(v_lit)} = {fmt(c_target)} mol/L."]
+        steps_en = [
+            f"Use the molarity definition c = n / V with n = {fmt(n_val)} mol and V = {fmt(v_lit)} L.",
+            f"Substitution gives c = {fmt(n_val)} / {fmt(v_lit)} = {fmt(c_target)} mol/L.",
+        ]
+        steps_ru = [
+            f"Используем определение молярной концентрации c = n / V при n = {fmt(n_val)} mol и V = {fmt(v_lit)} L.",
+            f"Подстановка даёт c = {fmt(n_val)} / {fmt(v_lit)} = {fmt(c_target)} mol/L.",
+        ]
         value, units = c_target, "mol/L"
         extras = [(n_val * v_lit, "multiplied_values"), (n_val + v_lit, "added_values")]
         params = {"n": n_val, "v": v_lit, "expected": c_target}
@@ -468,7 +504,7 @@ def g_molarity(rng: np.random.Generator, idx: int, atype: AnswerType, difficulty
             f"brought to {fmt(v_lit)} L. What is the molar concentration of the solution?"
         )
         q_ru = (
-            f"{fmt(mass)} g {ru_name} ({formula}) растворили в воде, и объём раствора довели до "
+            f"{fmt(mass)} g вещества «{ru_name}» ({formula}) растворили в воде, и объём раствора довели до "
             f"{fmt(v_lit)} L. Чему равна молярная концентрация полученного раствора?"
         )
         steps_en = [
@@ -513,11 +549,11 @@ def g_dilution(rng: np.random.Generator, idx: int, atype: AnswerType) -> PairDra
             f"раствора с концентрацией {fmt(c1)} mol/L, разбавляя его водой?"
         )
         steps_en = [
-            f"Moles of solute are conserved: C1*V1 = C2*V2.",
+            "Moles of solute are conserved: C1*V1 = C2*V2.",
             f"V2 = {fmt(c1)} * {fmt(v1)} / {fmt(c2)} = {fmt(v2)} L.",
         ]
         steps_ru = [
-            f"Количество растворённого вещества сохраняется: C1*V1 = C2*V2.",
+            "Количество растворённого вещества сохраняется: C1*V1 = C2*V2.",
             f"V2 = {fmt(c1)} * {fmt(v1)} / {fmt(c2)} = {fmt(v2)} L.",
         ]
         value, units = v2, "L"
@@ -575,11 +611,11 @@ def g_gas_moles(rng: np.random.Generator, idx: int, atype: AnswerType) -> PairDr
         f"{fmt(p_kpa)} kPa и температуре {t_kelvin} K (R = 8.314 L*kPa/(mol*K))?"
     )
     steps_en = [
-        f"Ideal gas law: p*V = n*R*T.",
+        "Ideal gas law: p*V = n*R*T.",
         f"n = p*V / (R*T) = {fmt(p_kpa)} * {fmt(v_lit)} / (8.314 * {t_kelvin}) = {fmt(n_val)} mol.",
     ]
     steps_ru = [
-        f"Уравнение Менделеева — Клапейрона: p*V = n*R*T.",
+        "Уравнение Менделеева — Клапейрона: p*V = n*R*T.",
         f"n = p*V / (R*T) = {fmt(p_kpa)} * {fmt(v_lit)} / (8.314 * {t_kelvin}) = {fmt(n_val)} mol.",
     ]
     value, units = n_val, "mol"
@@ -596,6 +632,7 @@ def g_ph_strong(rng: np.random.Generator, idx: int, atype: AnswerType) -> PairDr
     k = int(rng.integers(2, 6))  # c = 10^-k
     is_acid = bool(rng.integers(0, 2))
     c_val = 10.0**-k
+    phr = int(rng.integers(0, 4))
     if is_acid:
         acid, acid_ru = (
             ("HCl", "хлороводородной кислоты HCl")
@@ -603,8 +640,18 @@ def g_ph_strong(rng: np.random.Generator, idx: int, atype: AnswerType) -> PairDr
             else ("HNO3", "азотной кислоты HNO3")
         )
         ph = float(k)
-        q_en = f"Calculate the pH of an aqueous solution of the strong acid {acid} with molar concentration c = {c_val:g} mol/L."
-        q_ru = f"Вычислите pH водного раствора сильной {acid_ru} с молярной концентрацией c = {c_val:g} mol/L."
+        if phr == 0:
+            q_en = f"What is the pH of an aqueous solution of the strong acid {acid} with molar concentration c = {c_val:g} mol/L?"
+            q_ru = f"Чему равен pH водного раствора сильной {acid_ru} с молярной концентрацией c = {c_val:g} mol/L?"
+        elif phr == 1:
+            q_en = f"A laboratory prepares an aqueous solution of {acid} (a strong acid) with c = {c_val:g} mol/L. What is its pH?"
+            q_ru = f"В лаборатории приготовили водный раствор {acid_ru} (сильная кислота) с концентрацией c = {c_val:g} mol/L. Чему равен pH этого раствора?"
+        elif phr == 2:
+            q_en = f"The concentration of {acid} in an aqueous solution is c = {c_val:g} mol/L. What is the pH of this solution?"
+            q_ru = f"Концентрация {acid_ru} в водном растворе равна c = {c_val:g} mol/L. Чему равен pH этого раствора?"
+        else:
+            q_en = f"An aqueous solution of {acid}, a strong monoprotic acid, has molar concentration c = {c_val:g} mol/L. What pH does it have?"
+            q_ru = f"Водный раствор {acid_ru} — сильной одноосновной кислоты — имеет молярную концентрацию c = {c_val:g} mol/L. Какое значение pH он имеет?"
         steps_en = [
             f"Strong acid: [H+] = c = {c_val:g} mol/L.",
             f"pH = -log10([H+]) = {k}.",
@@ -616,10 +663,24 @@ def g_ph_strong(rng: np.random.Generator, idx: int, atype: AnswerType) -> PairDr
         extras = [(float(k + 1), "off_by_one"), (float(14 - k), "acid_base_confusion"), (float(k - 1), "off_by_one")]
         params = {"kind": "acid", "c_exp": -k, "expected": ph}
     else:
-        base, base_ru = ("NaOH", "гидроксида натрия NaOH") if bool(rng.integers(0, 2)) else ("KOH", "гидроксида калия KOH")
+        base, base_ru = (
+            ("NaOH", "гидроксида натрия NaOH")
+            if bool(rng.integers(0, 2))
+            else ("KOH", "гидроксида калия KOH")
+        )
         ph = float(14 - k)
-        q_en = f"Calculate the pH of an aqueous solution of the strong base {base} with molar concentration c = {c_val:g} mol/L."
-        q_ru = f"Вычислите pH водного раствора сильного основания {base_ru} с молярной концентрацией c = {c_val:g} mol/L."
+        if phr == 0:
+            q_en = f"What is the pH of an aqueous solution of the strong base {base} with molar concentration c = {c_val:g} mol/L?"
+            q_ru = f"Чему равен pH водного раствора сильного основания {base_ru} с молярной концентрацией c = {c_val:g} mol/L?"
+        elif phr == 1:
+            q_en = f"A laboratory prepares an aqueous solution of {base} (a strong base) with c = {c_val:g} mol/L. What is its pH?"
+            q_ru = f"В лаборатории приготовили водный раствор {base_ru} (сильное основание) с концентрацией c = {c_val:g} mol/L. Чему равен pH этого раствора?"
+        elif phr == 2:
+            q_en = f"The concentration of {base} in an aqueous solution is c = {c_val:g} mol/L. What is the pH of this solution?"
+            q_ru = f"Концентрация {base_ru} в водном растворе равна c = {c_val:g} mol/L. Чему равен pH этого раствора?"
+        else:
+            q_en = f"An aqueous solution of {base}, a strong base that dissociates completely, has molar concentration c = {c_val:g} mol/L. What pH does it have?"
+            q_ru = f"Водный раствор {base_ru} — сильного основания, полностью диссоциирующего, — имеет молярную концентрацию c = {c_val:g} mol/L. Какое значение pH он имеет?"
         steps_en = [
             f"Strong base: [OH-] = c = {c_val:g} mol/L, pOH = {k}.",
             f"pH = 14 - pOH = 14 - {k} = {14 - k}.",
@@ -644,7 +705,7 @@ def g_percent_comp(rng: np.random.Generator, idx: int, atype: AnswerType) -> Pai
         counts = parse_formula(formula)
         best = max(counts, key=lambda el: ATOMIC_WEIGHTS[el] * counts[el])
         q_en = f"Which element has the highest mass fraction in {en_name} ({formula})?"
-        q_ru = f"Какой элемент имеет наибольшую массовую долю в {ru_name} ({formula})?"
+        q_ru = f"Какой элемент имеет наибольшую массовую долю в веществе «{ru_name}» ({formula})?"
         steps_en = [
             "Mass contributions: "
             + ", ".join(f"{el}: {fmt(ATOMIC_WEIGHTS[el] * cnt)}" for el, cnt in counts.items())
@@ -668,8 +729,11 @@ def g_percent_comp(rng: np.random.Generator, idx: int, atype: AnswerType) -> Pai
     mm = molar_mass(formula)
     el = sorted(counts)[int(rng.integers(0, len(counts)))]
     pct = 100.0 * ATOMIC_WEIGHTS[el] * counts[el] / mm
-    q_en = f"Calculate the mass fraction of {EN_ELEMENT_NAMES.get(el, el)} in {en_name} ({formula}), in percent."
-    q_ru = f"Вычислите массовую долю {RU_ELEMENT_NAMES.get(el, el)} в {ru_name} ({formula}) в процентах."
+    q_en = f"What is the mass fraction, in percent, of {EN_ELEMENT_NAMES.get(el, el)} in {en_name} ({formula})?"
+    q_ru = (
+        f"Чему равна массовая доля {RU_ELEMENT_NAMES.get(el, el)} "
+        f"в веществе «{ru_name}» ({formula}), в процентах?"
+    )
     steps_en = [
         f"M({formula}) = {fmt(mm)} g/mol; the element contributes {fmt(ATOMIC_WEIGHTS[el] * counts[el])} g/mol.",
         f"w = {fmt(ATOMIC_WEIGHTS[el] * counts[el])} / {fmt(mm)} * 100% = {fmt(pct)}%.",
@@ -713,6 +777,16 @@ def _formula_reverse(formula: str) -> str:
     return "".join(el + (str(cnt) if cnt > 1 else "") for el, cnt in items)
 
 
+def _formula_double_first(formula: str) -> str:
+    """Double only the first element's subscript: MgO -> Mg2O."""
+    counts = parse_formula(formula)
+    out = []
+    for i, (el, cnt) in enumerate(counts.items()):
+        c = 2 * cnt if i == 0 else cnt
+        out.append(el + (str(c) if c > 1 else ""))
+    return "".join(out)
+
+
 def g_empirical(rng: np.random.Generator, idx: int, atype: AnswerType) -> PairDraft:
     pcts, formula = EMPIRICAL_POOL[int(rng.integers(0, len(EMPIRICAL_POOL)))]
     el_list = list(pcts)
@@ -733,13 +807,15 @@ def g_empirical(rng: np.random.Generator, idx: int, atype: AnswerType) -> PairDr
     up = _formula_shift(formula, 1)
     down = _formula_shift(formula, -1)
     reversed_f = _formula_reverse(formula)
+    first2x = _formula_double_first(formula)
     wrongs = [
         (doubled, "molecular_instead_of_empirical") if doubled != formula else None,
         (up, "subscript_off_by_one") if up != formula else None,
         (down, "subscript_off_by_one") if down != formula else None,
         (reversed_f, "element_order_swap") if reversed_f != formula else None,
+        (first2x, "one_subscript_doubled") if first2x != formula else None,
     ]
-    wrongs = [(t_, tag) for t_, tag in wrongs if t_ and t_ != formula]
+    wrongs = [(t_, tag) for t_, tag in (w for w in wrongs if w is not None) if t_ and t_ != formula]
     if len(wrongs) < 3:
         wrongs.append(("H2O", "unrelated_formula"))
     d = PairDraft(SUBJECT, "", "", Difficulty.UNIVERSITY, atype, "", question_en=q_en, question_ru=q_ru)
@@ -810,18 +886,29 @@ SOLUBLE_BY_ANION = {
 def g_reactions(rng: np.random.Generator, idx: int, atype: AnswerType, difficulty: Difficulty) -> PairDraft:
     if bool(rng.integers(0, 2)):  # precipitation
         r1, r2, precip = PRECIP_REACTIONS[int(rng.integers(0, len(PRECIP_REACTIONS)))]
-        q_en = f"Aqueous solutions of {r1} and {r2} are mixed and a precipitate forms. Which substance precipitates?"
-        q_ru = f"Смешивают водные растворы {r1} и {r2}, и образуется осадок. Какое вещество выпадает в осадок?"
+        phr = int(rng.integers(0, 2))
+        if phr == 0:
+            q_en = f"Aqueous solutions of {r1} and {r2} are mixed and a precipitate forms. Which substance precipitates?"
+            q_ru = f"Смешивают водные растворы {r1} и {r2}, и образуется осадок. Какое вещество выпадает в осадок?"
+        else:
+            q_en = (
+                f"What insoluble compound is formed when a solution of {r1} is poured into a solution "
+                f"of {r2} (both aqueous)?"
+            )
+            q_ru = (
+                f"Какое нерастворимое соединение образуется, если раствор {r1} прилить к раствору "
+                f"{r2} (оба раствора водные)?"
+            )
         steps_en = [
-            f"Ion exchange swaps the partners: the cations pair with the opposite anions.",
+            "Ion exchange swaps the partners: the cations pair with the opposite anions.",
             f"By the solubility rules the insoluble product {precip} precipitates.",
         ]
         steps_ru = [
-            f"Реакция обмена меняет партнёров: катионы соединяются с чужими анионами.",
+            "Реакция обмена меняет партнёров: катионы соединяются с чужими анионами.",
             f"По правилам растворимости нерастворимый продукт {precip} выпадает в осадок.",
         ]
         ans = precip
-        others = [r1, r2, "NaNO3", "KNO3", "NaCl", "H2O"]
+        others = [r1, r2, "NaNO3", "KNO3", "NaCl", "KCl", "H2O"]
         params = {"kind": "precip", "r1": r1, "r2": r2, "expected_text": precip}
     else:  # gas evolution
         r1, r2, gas, kind = GAS_REACTIONS[int(rng.integers(0, len(GAS_REACTIONS)))]
@@ -829,33 +916,38 @@ def g_reactions(rng: np.random.Generator, idx: int, atype: AnswerType, difficult
             q_en = f"{r1} reacts with an excess of dilute {r2}. Which gas is released?"
             q_ru = f"{r1} реагирует с избытком разбавленной {r2}. Какой газ при этом выделяется?"
             steps_en = [
-                f"A metal above hydrogen in the activity series displaces it from the acid.",
+                "A metal above hydrogen in the activity series displaces it from the acid.",
                 f"The evolved gas is {gas}.",
             ]
             steps_ru = [
-                f"Металл, стоящий в ряду активности до водорода, вытесняет его из кислоты.",
+                "Металл, стоящий в ряду активности до водорода, вытесняет его из кислоты.",
                 f"Выделяющийся газ — это {gas}.",
             ]
         elif kind == "acid_carbonate":
-            q_en = f"{r1} reacts with an excess of dilute {r2}. Which gas is released?"
-            q_ru = f"{r1} реагирует с избытком разбавленной {r2}. Какой газ при этом выделяется?"
+            phr = int(rng.integers(0, 2))
+            if phr == 0:
+                q_en = f"{r1} reacts with an excess of dilute {r2}. Which gas is released?"
+                q_ru = f"{r1} реагирует с избытком разбавленной {r2}. Какой газ при этом выделяется?"
+            else:
+                q_en = f"Dilute {r2} is added dropwise to solid {r1} until it dissolves completely. What gas escapes?"
+                q_ru = f"К твердому {r1} по каплям добавляют разбавленную {r2} до полного растворения. Какой газ при этом выделяется?"
             steps_en = [
-                f"An acid acting on a carbonate releases carbon dioxide.",
+                "An acid acting on a carbonate releases carbon dioxide.",
                 f"The evolved gas is {gas}.",
             ]
             steps_ru = [
-                f"При действии кислоты на карбонат выделяется углекислый газ.",
+                "При действии кислоты на карбонат выделяется углекислый газ.",
                 f"Выделяющийся газ — это {gas}.",
             ]
         else:
             q_en = f"{r1} burns completely in {r2}. Which gas is the main combustion product?"
             q_ru = f"{r1} полностью сгорает в {r2}. Какой газ является основным продуктом горения?"
             steps_en = [
-                f"Complete combustion of a hydrocarbon or carbon gives carbon dioxide and water.",
+                "Complete combustion of a hydrocarbon or carbon gives carbon dioxide and water.",
                 f"The gaseous product is {gas}.",
             ]
             steps_ru = [
-                f"Полное сгорание углеводорода или углерода даёт углекислый газ и воду.",
+                "Полное сгорание углеводорода или углерода даёт углекислый газ и воду.",
                 f"Газообразный продукт — это {gas}.",
             ]
         ans = gas
@@ -895,8 +987,6 @@ def g_reactions_uni(rng: np.random.Generator, idx: int, atype: AnswerType) -> Pa
 def g_balancing(rng: np.random.Generator, idx: int, atype: AnswerType) -> PairDraft:
     eq, correct, wrong_seed = BALANCING_POOL[int(rng.integers(0, len(BALANCING_POOL)))]
     letters = "abcd"[: len(correct)]
-    rhs = eq.split("->")[1].strip()
-    lhs = eq.split("->")[0].strip()
     q_en = f"Balance the equation {eq}. Which set of coefficients ({', '.join(letters)}) makes it balanced?"
     q_ru = f"Уравняйте уравнение {eq}. Какой набор коэффициентов ({', '.join(letters)}) его уравнивает?"
     corr_str = "(" + ", ".join(str(x) for x in correct) + ")"
@@ -940,72 +1030,140 @@ def g_balancing(rng: np.random.Generator, idx: int, atype: AnswerType) -> PairDr
 def g_limiting(rng: np.random.Generator, idx: int, atype: AnswerType) -> PairDraft:
     eq, coeffs, product = LIMITING_POOL[int(rng.integers(0, len(LIMITING_POOL)))]
     c1, c2, cp = coeffs
-    lhs_parts = [re.sub(r"^[0-9]+\s*", "", p) for p in eq.split("->")[0].split(" + ")]
+    lhs_parts = [re.sub(r"^[0-9]+\s*", "", p).strip() for p in eq.split("->")[0].split(" + ")]
     m1_formula, m2_formula = lhs_parts[0], lhs_parts[1]
     mm1, mm2, mmp = molar_mass(m1_formula), molar_mass(m2_formula), molar_mass(product)
-    n1 = float(rng.integers(1, 7)) + float(rng.choice([0.0, 0.25, 0.5]))
-    n2 = float(rng.integers(1, 9)) + float(rng.choice([0.0, 0.25, 0.5]))
-    mass1 = round(n1 * mm1, 2)
-    mass2 = round(n2 * mm2, 2)
-    n1p = mass1 / mm1
-    n2p = mass2 / mm2
+    purity1 = int(rng.choice([65, 70, 75, 80, 85, 90, 95]))
+    purity2 = int(rng.choice([60, 70, 75, 80, 85, 90, 95]))
+    extent1_target = float(rng.integers(3, 13)) / 2
+    extent_ratio = float(rng.choice([0.5, 0.65, 1.5, 1.8]))
+    extent2_target = extent1_target * extent_ratio
+    mass1 = round(extent1_target * c1 * mm1 / (purity1 / 100), 2)
+    mass2 = round(extent2_target * c2 * mm2 / (purity2 / 100), 2)
+    pure_mass1 = mass1 * purity1 / 100
+    pure_mass2 = mass2 * purity2 / 100
+    n1p = pure_mass1 / mm1
+    n2p = pure_mass2 / mm2
     lim_first = n1p / c1 <= n2p / c2
     limiting_formula = m1_formula if lim_first else m2_formula
     n_product = min(n1p / c1, n2p / c2) * cp
-    mass_product = n_product * mmp
-    q_en = (
-        f"In the reaction {eq}, {fmt(mass1)} g of {m1_formula} is mixed with {fmt(mass2)} g of {m2_formula}. "
-        f"What mass of {product} is formed?"
-    )
-    q_ru = (
-        f"В реакции {eq} смешали {fmt(mass1)} g вещества {m1_formula} и {fmt(mass2)} g вещества {m2_formula}. "
-        f"Какая масса {product} при этом образуется?"
-    )
+    theoretical_mass = n_product * mmp
+    yield_pct = int(rng.choice([60, 65, 70, 75, 80, 85, 90, 95]))
+    mass_product = theoretical_mass * yield_pct / 100
+    phr = idx % 3
+    if phr == 0:
+        q_en = (
+            f"For the reaction {eq}, a {fmt(mass1)} g sample containing {purity1}% {m1_formula} by mass "
+            f"is mixed with a {fmt(mass2)} g sample containing {purity2}% {m2_formula}. Impurities are inert. "
+            f"If the isolated yield of {product} is {yield_pct}%, what mass of {product} is obtained?"
+        )
+        q_ru = (
+            f"Для реакции {eq} смешали образец массой {fmt(mass1)} g с массовой долей {m1_formula} "
+            f"{purity1}% и образец массой {fmt(mass2)} g с массовой долей {m2_formula} {purity2}%. "
+            f"Примеси инертны. Если выход выделенного {product} равен {yield_pct}%, какая масса {product} получена?"
+        )
+    elif phr == 1:
+        q_en = (
+            f"In {eq}, {fmt(mass1)} g of an impure {m1_formula} sample ({purity1}% active material by mass) "
+            f"reacts with {fmt(mass2)} g of an impure {m2_formula} sample ({purity2}% active material). "
+            f"All impurities are inert and the product yield is {yield_pct}%. How many grams of {product} are isolated?"
+        )
+        q_ru = (
+            f"В реакции {eq} участвуют {fmt(mass1)} g образца {m1_formula} с содержанием основного вещества "
+            f"{purity1}% и {fmt(mass2)} g образца {m2_formula} с содержанием {purity2}%. Все примеси инертны, "
+            f"выход продукта равен {yield_pct}%. Сколько граммов {product} выделено?"
+        )
+    else:
+        q_en = (
+            f"A synthesis follows {eq}. The charge contains {fmt(mass1)} g of {purity1}% pure {m1_formula} "
+            f"and {fmt(mass2)} g of {purity2}% pure {m2_formula}; the remainder is inert. At {yield_pct}% "
+            f"yield relative to the limiting reagent, what mass of {product} is recovered?"
+        )
+        q_ru = (
+            f"Синтез идёт по уравнению {eq}. Взяли {fmt(mass1)} g образца {m1_formula} чистотой {purity1}% "
+            f"и {fmt(mass2)} g образца {m2_formula} чистотой {purity2}%; остальное — инертные примеси. "
+            f"При выходе {yield_pct}% относительно лимитирующего реагента какая масса {product} выделена?"
+        )
     steps_en = [
-        f"n({m1_formula}) = {fmt(mass1)} / {fmt(mm1)} = {fmt(n1p)} mol; n({m2_formula}) = {fmt(mass2)} / {fmt(mm2)} = {fmt(n2p)} mol.",
+        f"Correct for purity: n({m1_formula}) = {fmt(mass1)}*{purity1 / 100:g}/{fmt(mm1)} "
+        f"= {fmt(n1p)} mol and n({m2_formula}) = {fmt(mass2)}*{purity2 / 100:g}/{fmt(mm2)} "
+        f"= {fmt(n2p)} mol.",
         f"Divide by the coefficients: {fmt(n1p)} / {c1} = {fmt(n1p / c1)} and {fmt(n2p)} / {c2} = {fmt(n2p / c2)}; "
         f"the limiting reagent is {limiting_formula}.",
-        f"n({product}) = {fmt(n_product)} mol, so m = {fmt(n_product)} * {fmt(mmp)} = {fmt(mass_product)} g.",
+        f"The theoretical {product} mass is {fmt(n_product)}*{fmt(mmp)} = {fmt(theoretical_mass)} g; "
+        f"applying {yield_pct}% yield gives {fmt(theoretical_mass)}*{yield_pct / 100:g} = {fmt(mass_product)} g.",
     ]
     steps_ru = [
-        f"n({m1_formula}) = {fmt(mass1)} / {fmt(mm1)} = {fmt(n1p)} mol; n({m2_formula}) = {fmt(mass2)} / {fmt(mm2)} = {fmt(n2p)} mol.",
+        f"Учтём чистоту: n({m1_formula}) = {fmt(mass1)}*{purity1 / 100:g}/{fmt(mm1)} = {fmt(n1p)} mol, "
+        f"а n({m2_formula}) = {fmt(mass2)}*{purity2 / 100:g}/{fmt(mm2)} = {fmt(n2p)} mol.",
         f"Разделим на коэффициенты: {fmt(n1p)} / {c1} = {fmt(n1p / c1)} и {fmt(n2p)} / {c2} = {fmt(n2p / c2)}; "
         f"лимитирующий реагент — {limiting_formula}.",
-        f"n({product}) = {fmt(n_product)} mol, поэтому m = {fmt(n_product)} * {fmt(mmp)} = {fmt(mass_product)} g.",
+        f"Теоретическая масса {product}: {fmt(n_product)}*{fmt(mmp)} = {fmt(theoretical_mass)} g; "
+        f"при выходе {yield_pct}% получаем {fmt(theoretical_mass)}*{yield_pct / 100:g} = {fmt(mass_product)} g.",
     ]
     d = PairDraft(SUBJECT, "", "", Difficulty.OLYMPIAD, atype, "", question_en=q_en, question_ru=q_ru)
     if atype == AnswerType.EXACT:
+        d.question_en = (
+            f"In the reaction {eq}, a {fmt(mass1)} g sample containing {purity1}% {m1_formula} by mass "
+            f"is mixed with a {fmt(mass2)} g sample containing {purity2}% {m2_formula}. "
+            f"Assuming all impurities are inert, which reactant is limiting?"
+        )
+        d.question_ru = (
+            f"В реакции {eq} смешали образец массой {fmt(mass1)} g с массовой долей {m1_formula} "
+            f"{purity1}% и образец массой {fmt(mass2)} g с массовой долей {m2_formula} {purity2}%. "
+            f"Считая все примеси инертными, какой из реагентов является лимитирующим?"
+        )
         d.canonical = limiting_formula
-        d.solution_en = sol_en(steps_en[:2] + [f"The limiting reagent is {limiting_formula}."], limiting_formula, "")
-        d.solution_ru = sol_ru(steps_ru[:2] + [f"Лимитирующий реагент — {limiting_formula}."], limiting_formula, "")
+        d.solution_en = sol_en(steps_en[:2], limiting_formula, "")
+        d.solution_ru = sol_ru(steps_ru[:2], limiting_formula, "")
         d.params = {
             "eq": eq, "coeffs": coeffs, "mass1": mass1, "mass2": mass2,
-            "f1": m1_formula, "f2": m2_formula, "expected_text": limiting_formula, "kind": "limiting_formula",
+            "f1": m1_formula, "f2": m2_formula, "product": product,
+            "purity1": purity1, "purity2": purity2,
+            "expected_text": limiting_formula, "kind": "limiting_formula",
+            "challenge_concepts": ["sample-purity mass correction", "limiting-reagent extent comparison"],
+            "challenge_feature": "Inert sample mass must be removed before comparing stoichiometric extents.",
         }
         return _finish(d, "limiting", Difficulty.OLYMPIAD)
     if atype == AnswerType.MC:
+        gross_n1 = mass1 / mm1
+        gross_n2 = mass2 / mm2
+        ignored_purity_theoretical = min(gross_n1 / c1, gross_n2 / c2) * cp * mmp
         extras = [
-            (n1p / c1 * cp * mmp, "assumed_first_limiting"),
-            (n2p / c2 * cp * mmp, "assumed_second_limiting"),
+            (theoretical_mass, "forgot_percent_yield"),
+            (ignored_purity_theoretical * yield_pct / 100, "ignored_sample_purity"),
+            (ignored_purity_theoretical, "ignored_purity_and_yield"),
         ]
-        if abs(extras[0][0] - mass_product) < 1e-9:
-            extras[0] = (mass_product * 1.5, "factor_of_1_5")
-        if abs(extras[1][0] - mass_product) < 1e-9:
-            extras[1] = (mass_product * 0.5, "factor_of_2_half")
-        _mc_numeric(d, rng, mass_product, _std_pool(mass_product, extras), "g")
-        d.solution_en = sol_en(steps_en, fmt(mass_product), "g")
-        d.solution_ru = sol_ru(steps_ru, fmt(mass_product), "g")
         d.params = {
             "eq": eq, "coeffs": coeffs, "mass1": mass1, "mass2": mass2,
-            "f1": m1_formula, "f2": m2_formula, "expected": mass_product, "kind": "product_mass",
+            "f1": m1_formula, "f2": m2_formula, "product": product,
+            "purity1": purity1, "purity2": purity2, "yield_pct": yield_pct,
+            "expected": mass_product, "kind": "product_mass",
+            "challenge_concepts": [
+                "sample-purity mass correction",
+                "limiting-reagent extent comparison",
+                "percent-yield conversion",
+            ],
+            "challenge_feature": "Yield applies only after the purity-corrected limiting extent is found.",
         }
+        _mc_numeric(d, rng, mass_product, _chem_numeric_pool(mass_product, extras), "g")
+        d.solution_en = sol_en(steps_en, fmt(mass_product), "g")
+        d.solution_ru = sol_ru(steps_ru, fmt(mass_product), "g")
         return _finish(d, "limiting", Difficulty.OLYMPIAD)
     _set_numeric(d, mass_product, "g")
     d.solution_en = sol_en(steps_en, d.canonical, "g")
     d.solution_ru = sol_ru(steps_ru, d.canonical, "g")
     d.params = {
         "eq": eq, "coeffs": coeffs, "mass1": mass1, "mass2": mass2,
-        "f1": m1_formula, "f2": m2_formula, "expected": mass_product, "kind": "product_mass",
+        "f1": m1_formula, "f2": m2_formula, "product": product,
+        "purity1": purity1, "purity2": purity2, "yield_pct": yield_pct,
+        "expected": mass_product, "kind": "product_mass",
+        "challenge_concepts": [
+            "sample-purity mass correction",
+            "limiting-reagent extent comparison",
+            "percent-yield conversion",
+        ],
+        "challenge_feature": "Yield applies only after the purity-corrected limiting extent is found.",
     }
     return _finish(d, "limiting", Difficulty.OLYMPIAD)
 

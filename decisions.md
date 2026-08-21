@@ -86,3 +86,32 @@ expert human validation still required before v1.0 (pre-release labeling).
 dataset published as a ready-to-upload versioned bundle + script (HuggingFace upload
 itself requires an external HF token ⇒ blocked/ready state, honestly labeled). Paper is a
 draft; no venue submission. Dataset version `v0.1.0-candidate` until expert validation.
+
+## D9 — Reject the first candidate build and redesign the challenge tier
+**Decision.** Do not use the first technically green 624-pair build for Stage 2. Replace
+all seven initially labeled olympiad families in place with multi-concept challenge
+tasks while preserving the preregistered counts, stable pair order, and answer-type mix.
+Require generator-declared concepts and a concrete challenge feature for every such
+item, then oversample the tier during genuine expert review.
+**Alternatives.** Relabel all 84 items to school/university and leave zero olympiad
+coverage; retain the labels and merely caveat them.
+**Evidence.** An independent read-only audit found all 84 pairs failed the benchmark's
+own difficulty rubric: direct remainder/binomial/quadratic tasks, one-formula circular/
+projectile/lens tasks, and standard limiting-reagent calculations.
+**Consequences.** Stage 2 is delayed until a rebuilt candidate passes verification and
+manual/model-agent review. Declared challenge metadata is an auditable design guard,
+not expert validation; `v0.1.0-candidate` and the human release gate remain unchanged.
+
+## D10 — Report procedural-template dependence explicitly
+**Decision.** Add stable `template_id` metadata, a number-masked structural duplication
+report, dev/test overlap counts, and template-cluster bootstrap sensitivity estimates
+alongside the primary pair-clustered bilingual analysis.
+**Alternatives.** Treat parameter changes as independent based on digit-preserving
+word-3gram Jaccard alone; split the small candidate immediately by whole topic families.
+**Evidence.** The rejected build's 624 EN questions collapsed to 305 unique normalized
+strings after standalone numbers were masked; 430 pairs belonged to repeated structural
+groups and most physics dev templates also appeared in test.
+**Consequences.** The original Jaccard gate remains useful for near-verbatim text but is
+not described as conceptual independence. Dev is restricted to format validation, and
+all inferential claims receive a template-cluster sensitivity check; a future expert-
+validated release may adopt a fully template-held-out split.

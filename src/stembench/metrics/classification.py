@@ -28,7 +28,6 @@ def prf(cm: np.ndarray, average: str = "macro") -> dict[str, float]:
     average: 'macro' (unweighted class mean), 'micro' (global counts),
     'weighted' (support-weighted), 'none' (per class only).
     """
-    k = cm.shape[0]
     tp = np.diag(cm).astype(float)
     fp = cm.sum(axis=0) - tp
     fn = cm.sum(axis=1) - tp

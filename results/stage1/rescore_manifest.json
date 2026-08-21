@@ -1,0 +1,113 @@
+{
+  "schema_version": 1,
+  "operation": "offline_rescore_from_stored_raw_responses",
+  "parser_change": "MC answer letter must not be part of a longer word",
+  "provider_calls": 0,
+  "applied": true,
+  "runs": [
+    {
+      "run_id": "S1-P1",
+      "files": [
+        {
+          "path": "results/stage1/S1-P1/openrouter__google_gemma-4-31b-it_free.jsonl",
+          "records": 5,
+          "eligible": 0,
+          "changed": 0,
+          "correctness_flips": 0,
+          "sha256_before": "12a54edbed57bc95ea164aaf5009a15d287f21bb4dac7bf0df52c16818ec0591",
+          "sha256_after": "12a54edbed57bc95ea164aaf5009a15d287f21bb4dac7bf0df52c16818ec0591"
+        },
+        {
+          "path": "results/stage1/S1-P1/openrouter__openai_gpt-oss-20b_free.jsonl",
+          "records": 22,
+          "eligible": 20,
+          "changed": 0,
+          "correctness_flips": 0,
+          "sha256_before": "dc00384d5e58d764f6153b798707c313b0a7e991097c45289e9f0020b3b09309",
+          "sha256_after": "dc00384d5e58d764f6153b798707c313b0a7e991097c45289e9f0020b3b09309"
+        },
+        {
+          "path": "results/stage1/S1-P1/openrouter__z-ai_glm-5.2_free.jsonl",
+          "records": 17,
+          "eligible": 15,
+          "changed": 0,
+          "correctness_flips": 0,
+          "sha256_before": "3156767c687b37c0b04841bb0b831e803ff5d50dc0f161698a7146762a54459d",
+          "sha256_after": "3156767c687b37c0b04841bb0b831e803ff5d50dc0f161698a7146762a54459d"
+        },
+        {
+          "path": "results/stage1/S1-P1/zen__hy3-free.jsonl",
+          "records": 60,
+          "eligible": 51,
+          "changed": 0,
+          "correctness_flips": 0,
+          "sha256_before": "80178772acc30a5067a667205154a3c36b84647c648f1dedd58c48d8b3bf0194",
+          "sha256_after": "80178772acc30a5067a667205154a3c36b84647c648f1dedd58c48d8b3bf0194"
+        },
+        {
+          "path": "results/stage1/S1-P1/zen__laguna-s-2.1-free.jsonl",
+          "records": 60,
+          "eligible": 48,
+          "changed": 0,
+          "correctness_flips": 0,
+          "sha256_before": "1c2834b54d1b426218f426a143eac7f36b60081cf94201d3fe5594c0bbb24baa",
+          "sha256_after": "1c2834b54d1b426218f426a143eac7f36b60081cf94201d3fe5594c0bbb24baa"
+        },
+        {
+          "path": "results/stage1/S1-P1/zen__nemotron-3.5-lightning-free.jsonl",
+          "records": 60,
+          "eligible": 60,
+          "changed": 0,
+          "correctness_flips": 0,
+          "sha256_before": "df1e02fc21e817cca93d284aec2f1177e65219209af2742a66d427dffffb43e8",
+          "sha256_after": "df1e02fc21e817cca93d284aec2f1177e65219209af2742a66d427dffffb43e8"
+        }
+      ],
+      "totals": {
+        "records": 224,
+        "eligible": 194,
+        "changed": 0,
+        "correctness_flips": 0
+      }
+    },
+    {
+      "run_id": "S1-P2",
+      "files": [
+        {
+          "path": "results/stage1/S1-P2/zen__hy3-free.jsonl",
+          "records": 120,
+          "eligible": 107,
+          "changed": 0,
+          "correctness_flips": 0,
+          "sha256_before": "188f1d530ce2af64662a4b842c55c19f8d2778a410b96cdc95a27b26fffe12cd",
+          "sha256_after": "188f1d530ce2af64662a4b842c55c19f8d2778a410b96cdc95a27b26fffe12cd"
+        },
+        {
+          "path": "results/stage1/S1-P2/zen__laguna-s-2.1-free.jsonl",
+          "records": 120,
+          "eligible": 110,
+          "changed": 1,
+          "correctness_flips": 1,
+          "sha256_before": "60155129bc96fdc97b29d38a6f2bf5083e68bc8cca33cc53405829e23b59bf96",
+          "sha256_after": "a36c4c67721defecbc5e9b1233803075efe8d4c1db50fbf0831aeb1faff1cc67"
+        },
+        {
+          "path": "results/stage1/S1-P2/zen__nemotron-3.5-lightning-free.jsonl",
+          "records": 120,
+          "eligible": 120,
+          "changed": 3,
+          "correctness_flips": 1,
+          "sha256_before": "560a2cb92950396d91ceb2ca87f6e154271854db9a4a1892d247799edfbcb194",
+          "sha256_after": "6432966b0b9763267ce5ed6d4a12529ea7dca0e909f3f726f57ea0dd83bf52f2"
+        }
+      ],
+      "totals": {
+        "records": 360,
+        "eligible": 337,
+        "changed": 4,
+        "correctness_flips": 2
+      }
+    }
+  ],
+  "completed_at": "2026-08-17T14:01:39.801064+00:00"
+}

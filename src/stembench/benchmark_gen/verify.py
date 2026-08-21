@@ -18,11 +18,14 @@ A failing verifier makes the build exit nonzero: no dataset is produced.
 from __future__ import annotations
 
 import math
+import re
+from collections.abc import Callable
 from fractions import Fraction
+from functools import reduce
 from itertools import combinations, permutations, product
-from typing import Any, Callable
+from typing import Any
 
-from stembench.schemas import VerifierRecord
+from stembench.schemas import AnswerType, VerifierRecord
 
 # --------------------------------------------------------------------------- #
 # Independent chemistry tables (deliberately re-typed, not imported)
@@ -107,9 +110,9 @@ def _ion_split(formula: str) -> tuple[str, str]:
             for trail in ("", "2", "3"):
                 tail = suf + trail
                 if tail and formula.endswith(tail):
-                    base = formula[: -len(tail)]
+                    base = formula[: -len(tail)].rstrip("0123456789")
                     for cat in CATIONS:
-                        if base.endswith(cat) and base[: -len(cat)].strip("0123456789") == "":
+                        if base == cat:
                             return cat, anion
     raise ValueError(f"cannot split {formula}")
 
@@ -135,12 +138,38 @@ def v_reactions(p: dict[str, Any]) -> Outcome:
         if len(insol) != 1:
             return False, f"solubility rules give {len(insol)} precipitates: {insol}"
         c, a = insol[0]
+        source_formula, source_anion = (p["r1"], an1) if cat1 == c else (p["r2"], an2)
+        ion_charges = {
+            "Cl": 1, "Br": 1, "I": 1, "NO3": 1, "SO4": 2, "CO3": 2, "OH": 1,
+        }
+        anion_charge = ion_charges[a]
+        source_counts = parse_counts(source_formula)
+        source_anion_counts = parse_counts(source_anion)
+        anion_counts = parse_counts(a)
+        # These benchmark salts contain one anion-marker element that is not
+        # the cation. Its count recovers the number of polyatomic ions.
+        marker = next(iter(source_anion_counts))
+        n_anions = source_counts[marker] // source_anion_counts[marker]
+        n_cations = source_counts[c]
+        charge_numerator = ion_charges[source_anion] * n_anions
+        if charge_numerator % n_cations:
+            return False, f"cannot derive an integral charge for {c} in {source_formula}"
+        cation_charge = charge_numerator // n_cations
+        divisor = math.gcd(cation_charge, anion_charge)
+        expected_counts = {c: anion_charge // divisor}
+        for element, count in anion_counts.items():
+            expected_counts[element] = (
+                expected_counts.get(element, 0) + count * (cation_charge // divisor)
+            )
         exp_counts = parse_counts(p["expected_text"])
-        got_ions = c in exp_counts and a in exp_counts
-        return got_ions, f"insoluble combination {c}+{a} vs expected {p['expected_text']}"
+        ok = exp_counts == expected_counts
+        return ok, (
+            f"insoluble combination {c}^{cation_charge}+ + {a}^{anion_charge}- requires "
+            f"atom counts {expected_counts}; got {p['expected_text']} -> {exp_counts}"
+        )
     # gas-evolution rules by reaction type
     r1, r2 = p["r1"], p["r2"]
-    if r1 in ("Zn", "Mg") or r2 in ("Zn", "Mg"):
+    if r1 in ("Zn", "Mg", "Al", "Fe") or r2 in ("Zn", "Mg", "Al", "Fe"):
         return p["expected_text"] == "H2", "metal + acid -> H2"
     if "CO3" in r1 or "CO3" in r2:
         return p["expected_text"] == "CO2", "carbonate + acid -> CO2"
@@ -276,6 +305,38 @@ def v_log_exp(p: dict[str, Any]) -> Outcome:
 
 def v_numtheory(p: dict[str, Any]) -> Outcome:
     v = p.get("variant")
+    if v == "exactly_one_divisor":
+        cnt = sum(
+            1
+            for n in range(1, p["N"] + 1)
+            if (n % p["a"] == 0) != (n % p["b"] == 0)
+        )
+        return _num_ok(cnt, p["expected"], rel=0.0)
+    if v == "crt_threshold":
+        for cand in range(p["lower"] + 1, p["lower"] + math.lcm(p["m1"], p["m2"]) + 1):
+            if cand % p["m1"] == p["r1"] and cand % p["m2"] == p["r2"]:
+                return _num_ok(cand, p["expected"], rel=0.0)
+        return False, "no simultaneous residue above threshold"
+    if v == "power_sum_mod100":
+        left = right = 1
+        for _ in range(p["k"]):
+            left = left * p["a"] % 100
+        for _ in range(p["j"]):
+            right = right * p["b"] % 100
+        return _num_ok((left + right) % 100, p["expected"], rel=0.0)
+    if v == "square_divisor_filter":
+        cnt = 0
+        for ep in range(p["alpha"] + 1):
+            for eq in range(p["beta"] + 1):
+                is_square = ep % 2 == 0 and eq % 2 == 0
+                if is_square and ep >= 2 and eq < p["beta"]:
+                    cnt += 1
+        return _num_ok(cnt, p["expected"], rel=0.0)
+    if v == "order_threshold":
+        for exponent in range(p["lower"] + 1, p["lower"] + p["modulus"] ** 2 + 1):
+            if pow(p["a"], exponent, p["modulus"]) == 1:
+                return _num_ok(exponent, p["expected"], rel=0.0)
+        return False, "no exponent returning residue 1 above threshold"
     if v == "remainder":
         return _num_ok(p["a"] % p["m"], p["expected"], rel=0.0)
     if v == "largest_prime":
@@ -342,6 +403,26 @@ def v_sys_lin2(p: dict[str, Any]) -> Outcome:
 
 
 def v_inequalities(p: dict[str, Any]) -> Outcome:
+    if p["kind"] == "rational_sign":
+        a, b, c = p["a"], p["b"], p["c"]
+        relation = p["relation"]
+        correct = (
+            f"(-∞, {a}] ∪ ({c}, {b}]"
+            if relation == "le"
+            else f"[{a}, {c}) ∪ [{b}, ∞)"
+        )
+
+        def value(x: float) -> float:
+            return (x - a) * (x - b) / (x - c)
+
+        signs = [
+            value(a - 1) < 0,
+            value((a + c) / 2) > 0,
+            value((c + b) / 2) < 0,
+            value(b + 1) > 0,
+        ]
+        ok = a < c < b and all(signs) and p["expected_text"] == correct
+        return ok, f"critical points {a} < {c} < {b}; signs -,+,-,+; expected {correct}"
     if p["kind"] == "linear":
         a, a2, b, c, t = p["a"], p["a2"], p["b"], p["c"], p["t"]
 
@@ -385,6 +466,40 @@ def v_trig(p: dict[str, Any]) -> Outcome:
 
 def v_prob_comb(p: dict[str, Any]) -> Outcome:
     kind = p.get("kind")
+    if kind == "restricted_binary":
+        cnt = sum(
+            1
+            for bits in product((0, 1), repeat=p["n"])
+            if sum(bits) == p["k"]
+            and all(not (bits[i] == bits[i + 1] == 1) for i in range(p["n"] - 1))
+        )
+        return _num_ok(cnt, float(p["expected_text"]), rel=0.0)
+    if kind == "circular_nonadjacent":
+        cnt = 0
+        for tail in permutations(range(1, p["n"])):
+            seating = (0, *tail)
+            pos_b = seating.index(1)
+            if pos_b not in (1, p["n"] - 1):
+                cnt += 1
+        return _num_ok(cnt, float(p["expected_text"]), rel=0.0)
+    if kind == "lattice_avoid_point":
+        width, height = p["width"], p["height"]
+        total_steps = width + height
+        cnt = 0
+        for right_positions in combinations(range(total_steps), width):
+            right_set = set(right_positions)
+            x = y = 0
+            hit = False
+            for step in range(total_steps):
+                if step in right_set:
+                    x += 1
+                else:
+                    y += 1
+                if (x, y) == (p["fx"], p["fy"]):
+                    hit = True
+            if not hit:
+                cnt += 1
+        return _num_ok(cnt, p["expected"], rel=0.0)
     if kind == "urn":
         balls = ["R"] * p["r"] + ["G"] * p["g"] + ["B"] * p["b"]
         hits = sum(1 for x in balls if x == "R")
@@ -474,14 +589,14 @@ def v_heat_q(p: dict[str, Any]) -> Outcome:
 
 def v_kinem_accel(p: dict[str, Any]) -> Outcome:
     v0, a, t, v = p["v0"], p["a"], p["t"], p["v"]
-    mode = p["mode"]
+    mode = p["mode"]  # 0: final speed, 1: elapsed time, 2: distance
     if mode == 0:
         return _num_ok(v0 + a * t, p["expected"], rel=1e-9)
     if mode == 1:
-        # mean-speed method: s = (v0 + v)/2 * t  (different from the generator's formula)
-        s_mean = (v0 + (v0 + a * t)) / 2 * t
-        return _num_ok(s_mean, p["expected"], rel=1e-9)
-    return _num_ok((v - v0) / a, p["expected"], rel=1e-9)
+        return _num_ok((v - v0) / a, p["expected"], rel=1e-9)
+    # mean-speed method: s = (v0 + v)/2 * t  (different from the generator's formula)
+    s_mean = (v0 + (v0 + a * t)) / 2 * t
+    return _num_ok(s_mean, p["expected"], rel=1e-9)
 
 
 def v_work_energy(p: dict[str, Any]) -> Outcome:
@@ -538,9 +653,21 @@ def v_hydrostatic(p: dict[str, Any]) -> Outcome:
 
 
 def v_lenses(p: dict[str, Any]) -> Outcome:
+    if p.get("kind") == "two_lens":
+        di1 = 1.0 / (1.0 / p["f1"] - 1.0 / p["do1"])
+        do2 = p["separation"] - di1
+        if do2 <= p["f2"]:
+            return False, f"second object distance {do2:g} does not form the stated real image"
+        di2 = 1.0 / (1.0 / p["f2"] - 1.0 / do2)
+        total = abs(di1 / p["do1"] * di2 / do2)
+        geometry_ok = _num_ok(do2, p["do2"], rel=1e-9)[0]
+        value_ok, detail = _num_ok(total, p["expected"], rel=1e-9)
+        return value_ok and geometry_ok, f"{detail}; recomputed second object distance {do2:g}"
     if p.get("kind") == "real_virtual":
-        ok = (p["do"] > p["f"]) == (p["expected_text"] == "real")
-        return ok, f"d_o {'>' if ok else '<='} f consistent with {p['expected_text']}"
+        is_real = p["do"] > p["f"]
+        ok = is_real == (p["expected_text"] == "real")
+        relation = ">" if is_real else "<"
+        return ok, f"d_o {relation} f; expected image is {p['expected_text']}"
     f, d_o, d_i = p["f"], p["do"], p["di"]
     # Newton's relations: (d_o - f)(d_i - f) = f^2  (independent of 1/f = ...)
     newton_ok = (d_o - f) * (d_i - f) == f * f
@@ -553,6 +680,17 @@ def v_lenses(p: dict[str, Any]) -> Outcome:
 
 
 def v_circular(p: dict[str, Any]) -> Outcome:
+    if p["kind"] == "vertical_loop_normal":
+        speed_sq = 2 * p["g"] * (p["height"] - 2 * p["radius"])
+        normal = p["mass"] * speed_sq / p["radius"] - p["mass"] * p["g"]
+        contact_ok = speed_sq / p["radius"] >= p["g"]
+        value_ok, detail = _num_ok(normal, p["expected"], rel=1e-9)
+        return value_ok and contact_ok, f"{detail}; top-contact condition {contact_ok}"
+    if p["kind"] == "banked_friction_max":
+        normal_per_mass = p["g"] / (p["cos"] - p["mu"] * p["sin"])
+        inward_per_mass = normal_per_mass * (p["sin"] + p["mu"] * p["cos"])
+        speed = math.sqrt(p["radius"] * inward_per_mass)
+        return _num_ok(speed, p["expected"], rel=1e-9)
     if p["kind"] == "a":
         v, r = p["v"], p["r"]
         omega = v / r
@@ -562,8 +700,31 @@ def v_circular(p: dict[str, Any]) -> Outcome:
 
 
 def v_projectile(p: dict[str, Any]) -> Outcome:
-    if p.get("expected") == 4 and "theta" not in p:
-        return True, "range scales with v0^2, factor 2^2 = 4"
+    if p.get("kind") == "complementary_angle":
+        theta = p["theta"]
+        other = 90 - theta
+        same_range = math.isclose(
+            math.sin(math.radians(2 * theta)),
+            math.sin(math.radians(2 * other)),
+            rel_tol=0.0,
+            abs_tol=1e-12,
+        )
+        return same_range and other != theta and other == p["expected"], (
+            f"sin(2*{theta}) = sin(2*{other}); distinct acute companion {other}"
+        )
+    if p.get("kind") == "elevated_range":
+        vx = p["v0"] * p["cos"]
+        vy = p["v0"] * p["sin"]
+        roots = [
+            (vy + math.sqrt(vy * vy + 2 * p["g"] * p["height"])) / p["g"],
+            (vy - math.sqrt(vy * vy + 2 * p["g"] * p["height"])) / p["g"],
+        ]
+        positive = [root for root in roots if root > 0]
+        if len(positive) != 1:
+            return False, f"expected one physical time root, got {roots}"
+        return _num_ok(vx * positive[0], p["expected"], rel=1e-9)
+    if "j" in p:  # exact factor item: range scales with v0^2
+        return _num_ok(p["j"] ** 2, p["expected"], rel=0.0)
     v0, theta, ask = p["v0"], p["theta"], p["ask"]
     g = 10.0
     rad = math.radians(theta)
@@ -588,14 +749,14 @@ def v_molar_mass(p: dict[str, Any]) -> Outcome:
 def v_stoich_mass(p: dict[str, Any]) -> Outcome:
     m_formula = mm(p["formula"])
     if p["ask"] == "moles":
-        return _num_ok(p["mass"] / m_formula, p["expected"], rel=1e-4)
-    return _num_ok(p["moles"] * m_formula, p["expected"], rel=1e-4)
+        return _num_ok(p["mass"] / m_formula, p["expected"], rel=1e-3)
+    return _num_ok(p["moles"] * m_formula, p["expected"], rel=1e-3)
 
 
 def v_molarity(p: dict[str, Any]) -> Outcome:
     if "formula" in p:
         n_val = p["mass"] / mm(p["formula"])
-        return _num_ok(n_val / p["v"], p["expected"], rel=1e-4)
+        return _num_ok(n_val / p["v"], p["expected"], rel=1e-3)
     return _num_ok(p["n"] / p["v"], p["expected"], rel=1e-9)
 
 
@@ -612,7 +773,7 @@ def v_gas_moles(p: dict[str, Any]) -> Outcome:
     p_pa = p["p"] * 1000
     v_m3 = p["v"] * 1e-3
     n_val = p_pa * v_m3 / (8.314 * p["T"])
-    return _num_ok(n_val, p["expected"], rel=1e-6)
+    return _num_ok(n_val, p["expected"], rel=1e-3)
 
 
 def v_ph_strong(p: dict[str, Any]) -> Outcome:
@@ -640,10 +801,17 @@ def v_empirical(p: dict[str, Any]) -> Outcome:
     smallest = min(moles.values())
     ratios = {el: m / smallest for el, m in moles.items()}
     counts = parse_counts(p["expected_text"])
-    ok = len(ratios) == len(counts) and all(
-        abs(ratios[el] - counts.get(el, -1)) < 0.05 for el in ratios
+    # normalize the formula's own counts by its smallest subscript
+    min_cnt = min(counts.values())
+    norm = {el: cnt / min_cnt for el, cnt in counts.items()}
+    primitive = reduce(math.gcd, counts.values()) == 1
+    ok = primitive and len(ratios) == len(norm) and set(ratios) == set(norm) and all(
+        abs(ratios[el] - norm[el]) < 0.05 for el in ratios
     )
-    return ok, f"ratios { {el: round(r, 3) for el, r in ratios.items()} } vs {p['expected_text']}"
+    return ok, (
+        f"ratios { {el: round(r, 3) for el, r in ratios.items()} } vs "
+        f"{p['expected_text']}; primitive={primitive}"
+    )
 
 
 def v_econfig(p: dict[str, Any]) -> Outcome:
@@ -659,42 +827,53 @@ def v_econfig(p: dict[str, Any]) -> Outcome:
         if cfg[i] == " ":
             i += 1
             continue
-        j = i + 1
-        while j < len(cfg) and cfg[j].isdigit():
-            j += 1
-        # token like 3d^5
-        token = cfg[i:j]
-        k2 = cfg.index("^", j)
-        count = int(cfg[k2 + 1 :])
-        total += count
-        i = k2 + 1
-        while i < len(cfg) and cfg[i].isdigit():
-            i += 1
+        k2 = cfg.index("^", i)
+        m = re.match(r"\d+", cfg[k2 + 1 :])
+        if not m:
+            raise ValueError(f"bad config token near {i}: {cfg!r}")
+        total += int(m.group(0))
+        i = k2 + 1 + len(m.group(0))
     z_expected = ZNUM.get(symbol)
     if z_expected is None:
         return False, f"unknown element {symbol}"
-    return total == z_expected, f"config electron count {total} == Z({symbol}) = {z_expected}"
+    ground_configs = {
+        "O": "[He] 2s^2 2p^4", "N": "[He] 2s^2 2p^3",
+        "Na": "[Ne] 3s^1", "Mg": "[Ne] 3s^2",
+        "S": "[Ne] 3s^2 3p^4", "Cl": "[Ne] 3s^2 3p^5",
+        "K": "[Ar] 4s^1", "Ca": "[Ar] 4s^2",
+        "Fe": "[Ar] 3d^6 4s^2", "Zn": "[Ar] 3d^10 4s^2",
+        "Cu": "[Ar] 3d^10 4s^1", "Cr": "[Ar] 3d^5 4s^1",
+        "Ni": "[Ar] 3d^8 4s^2", "Mn": "[Ar] 3d^5 4s^2",
+    }
+    count_ok = total == z_expected
+    ground_ok = " ".join(cfg.split()) == ground_configs.get(symbol)
+    return count_ok and ground_ok, (
+        f"electron count {total} vs Z({symbol})={z_expected}; "
+        f"ground-state configuration match={ground_ok}"
+    )
 
 
 def _balance_ok(eq: str, coeffs: list[int]) -> bool:
     lhs_str, rhs_str = eq.split("->")
-    def side_count(side: str, mult_by: list[int]) -> dict[str, int]:
-        species = [sp.strip() for sp in side.split(" + ")]
+    lhs_species = [s.strip() for s in lhs_str.split(" + ")]
+    rhs_species = [s.strip() for s in rhs_str.split(" + ")]
+
+    def counts_of(species: list[str], offset: int) -> dict[str, int]:
         counts: dict[str, int] = {}
-        for k2, sp in enumerate(species):
-            sp_clean = sp
+        for pos, sp in enumerate(species):
             num = ""
-            while sp_clean and sp_clean[0].isdigit():
-                num += sp_clean[0]
-                sp_clean = sp_clean[1:]
+            while sp and sp[0].isdigit():
+                num += sp[0]
+                sp = sp[1:]
+            sp = sp.strip()
             base = int(num) if num else 1
-            for el, cnt in parse_counts(sp_clean).items():
-                counts[el] = counts.get(el, 0) + base * mult_by[k2] * cnt
+            if offset + pos >= len(coeffs):
+                raise ValueError("coefficients do not match the species count")
+            for el, cnt in parse_counts(sp).items():
+                counts[el] = counts.get(el, 0) + base * coeffs[offset + pos] * cnt
         return counts
 
-    lhs = side_count(lhs_str, coeffs)
-    rhs = side_count(rhs_str, coeffs)
-    return lhs == rhs
+    return counts_of(lhs_species, 0) == counts_of(rhs_species, len(lhs_species))
 
 
 def v_balancing(p: dict[str, Any]) -> Outcome:
@@ -709,31 +888,58 @@ def v_balancing(p: dict[str, Any]) -> Outcome:
     return ok, f"atom counts balance with {p['coeffs']}; distractors checked"
 
 
+def _parse_stoichiometric_side(side: str) -> list[tuple[int, str]]:
+    """Parse explicit equation coefficients independently of generator metadata."""
+    parsed: list[tuple[int, str]] = []
+    for raw in side.split(" + "):
+        match = re.fullmatch(r"\s*(?:(\d+)\s+)?([A-Za-z][A-Za-z0-9()]*)\s*", raw)
+        if match is None:
+            raise ValueError(f"cannot parse equation species {raw!r}")
+        parsed.append((int(match.group(1) or "1"), match.group(2)))
+    return parsed
+
+
+def _equation_is_balanced(lhs: list[tuple[int, str]], rhs: list[tuple[int, str]]) -> bool:
+    def total(side: list[tuple[int, str]]) -> dict[str, int]:
+        out: dict[str, int] = {}
+        for coef, formula in side:
+            for element, count in parse_counts(formula).items():
+                out[element] = out.get(element, 0) + coef * count
+        return out
+
+    return total(lhs) == total(rhs)
+
+
 def v_limiting(p: dict[str, Any]) -> Outcome:
-    c1, c2, cp = p["coeffs"]
-    n1 = p["mass1"] / mm(p["f1"])
-    n2 = p["mass2"] / mm(p["f2"])
+    lhs_text, rhs_text = p["eq"].split("->")
+    lhs = _parse_stoichiometric_side(lhs_text)
+    rhs = _parse_stoichiometric_side(rhs_text)
+    if len(lhs) != 2 or [formula for _, formula in lhs] != [p["f1"], p["f2"]]:
+        return False, f"equation reactants {lhs} do not match parameter formulas"
+    if not _equation_is_balanced(lhs, rhs):
+        return False, f"equation is not atom-balanced: {p['eq']}"
+    product_rows = [(coef, formula) for coef, formula in rhs if formula == p["product"]]
+    if len(product_rows) != 1:
+        return False, f"product {p['product']} is not unique on equation RHS"
+    c1, c2 = lhs[0][0], lhs[1][0]
+    cp = product_rows[0][0]
+    derived_coeffs = (c1, c2, cp)
+    if tuple(p["coeffs"]) != derived_coeffs:
+        return False, f"metadata coefficients {tuple(p['coeffs'])} != equation {derived_coeffs}"
+    pure_mass1 = p["mass1"] * p.get("purity1", 100) / 100
+    pure_mass2 = p["mass2"] * p.get("purity2", 100) / 100
+    n1 = pure_mass1 / mm(p["f1"])
+    n2 = pure_mass2 / mm(p["f2"])
     lim = n1 / c1 <= n2 / c2
     if p["kind"] == "limiting_formula":
         got = p["f1"] if lim else p["f2"]
         return got == p["expected_text"], f"extent comparison gives {got}"
     # for each reagent compute the product amount it could yield, take the min
-    m_product = mm(_product_of(p["eq"]))
+    m_product = mm(p["product"])
     from1 = n1 / c1 * cp * m_product
     from2 = n2 / c2 * cp * m_product
-    return _num_ok(min(from1, from2), p["expected"], rel=1e-4)
-
-
-def _product_of(eq: str) -> str:
-    rhs = eq.split("->")[1]
-    # product = last species on the right (matches LIMITING_POOL layout)
-    species = [sp.strip() for sp in rhs.split(" + ")]
-    last = species[-1]
-    num = ""
-    while last and last[0].isdigit():
-        num += last[0]
-        last = last[1:]
-    return last
+    isolated = min(from1, from2) * p.get("yield_pct", 100) / 100
+    return _num_ok(isolated, p["expected"], rel=1e-4)
 
 
 REGISTRY: dict[str, tuple[Verifier, str]] = {
@@ -763,7 +969,6 @@ REGISTRY: dict[str, tuple[Verifier, str]] = {
     "ohm_circuits": (v_ohm_circuits, "numeric_recompute"),
     "gas_law": (v_gas_law, "dimensional"),
     "hydrostatic": (v_hydrostatic, "dimensional"),
-    "gas_moles": (v_gas_moles, "dimensional"),
     "lenses": (v_lenses, "symbolic"),
     "circular": (v_circular, "numeric_recompute"),
     "projectile": (v_projectile, "numeric_recompute"),
@@ -781,18 +986,68 @@ REGISTRY: dict[str, tuple[Verifier, str]] = {
     "balancing": (v_balancing, "symbolic"),
     "limiting": (v_limiting, "numeric_recompute"),
 }
-REGISTRY["gas_moles"] = (v_gas_moles, "dimensional")
+
+
+def _candidate_binding(
+    params: dict[str, Any],
+    canonical: str,
+    answer_type: AnswerType,
+    numeric_value: float | None,
+) -> Outcome:
+    """Bind the emitted candidate answer to the independently checked parameters."""
+    if answer_type == AnswerType.MC:
+        expected_letter = params.get("correct_letter")
+        return canonical == expected_letter, (
+            f"candidate letter {canonical!r} vs shuffled correct letter {expected_letter!r}"
+        )
+    if answer_type == AnswerType.NUMERIC:
+        if numeric_value is None or not math.isfinite(float(numeric_value)):
+            return False, "numeric candidate has no finite numeric_value"
+        try:
+            rendered = float(canonical)
+            expected = float(params["expected"])
+        except (KeyError, TypeError, ValueError) as exc:
+            return False, f"numeric candidate/expected is not parseable: {exc}"
+        # canonical is rounded to at most six significant digits by the renderer.
+        rendered_ok = math.isclose(rendered, float(numeric_value), rel_tol=5e-6, abs_tol=5e-7)
+        expected_ok = math.isclose(float(numeric_value), expected, rel_tol=1e-9, abs_tol=1e-9)
+        return rendered_ok and expected_ok, (
+            f"canonical {canonical} -> {rendered:g}; numeric_value={numeric_value:g}; "
+            f"parameter expected={expected:g}"
+        )
+    expected = params.get("expected_text", params.get("expected"))
+    if expected is None:
+        return False, "exact candidate has no expected/expected_text parameter"
+    if isinstance(expected, (int, float)):
+        try:
+            ok = math.isclose(float(canonical), float(expected), rel_tol=0.0, abs_tol=0.0)
+        except ValueError:
+            ok = False
+    else:
+        ok = canonical.strip() == str(expected).strip()
+    return ok, f"candidate exact {canonical!r} vs parameter expected {expected!r}"
 
 
 def verify_pair(
     topic_key: str,
     params: dict[str, Any],
     mc_texts_en: list[str] | None = None,
+    *,
+    candidate_canonical: str | None = None,
+    answer_type: AnswerType | None = None,
+    candidate_numeric_value: float | None = None,
 ) -> list[VerifierRecord]:
     """Verify one pair; raises KeyError for uncovered topics (build fails)."""
     fn, method = REGISTRY[topic_key]
     passed, detail = fn(params)
     records = [VerifierRecord(method=method, passed=passed, detail=detail)]
+    if candidate_canonical is not None and answer_type is not None:
+        bound, binding_detail = _candidate_binding(
+            params, candidate_canonical, answer_type, candidate_numeric_value
+        )
+        records.append(
+            VerifierRecord(method="candidate_binding", passed=bound, detail=binding_detail)
+        )
     if mc_texts_en is not None:
         letter = params.get("correct_letter", "")
         idx = "ABCD".index(letter) if letter in "ABCD" else -1

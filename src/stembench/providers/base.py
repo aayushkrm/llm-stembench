@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Any, Optional
+from typing import Any
 
 
 class ProviderError(Exception):
@@ -24,9 +24,9 @@ class Completion:
     content: str = ""
     finish_reason: str = ""
     usage: dict[str, Any] = field(default_factory=dict)
-    logprobs: Optional[list[dict[str, Any]]] = None  # normalized top_logprobs if exposed
+    logprobs: list[dict[str, Any]] | None = None  # normalized top_logprobs if exposed
     model_reported: str = ""
-    cost: Optional[float] = None
+    cost: float | None = None
     raw: dict[str, Any] = field(default_factory=dict)  # response JSON minus secrets
 
 
@@ -42,8 +42,8 @@ class Provider(ABC):
         messages: list[dict[str, str]],
         max_tokens: int,
         temperature: float = 0.0,
-        top_p: Optional[float] = None,
-        seed: Optional[int] = None,
+        top_p: float | None = None,
+        seed: int | None = None,
         request_logprobs: bool = True,
     ) -> Completion:
         """Return one completion. Raises ProviderError/DailyBudgetExceeded."""
@@ -51,5 +51,5 @@ class Provider(ABC):
     @abstractmethod
     def supports_logprobs(self, model: str) -> bool: ...
 
-    def close(self) -> None:  # optional
-        pass
+    def close(self) -> None:  # optional hook
+        return None  # noqa: B027
