@@ -18,7 +18,7 @@ Statuses: `not started` | `in progress` | `complete` | `partial` | `blocked`.
 | R2.3 | χ² requirement + paired-correct tests (Ph.2, §7.3) | McNemar/Cochran implemented+used; χ² implemented+tested | `metrics/significance.py`; S1-P2 addendum (Q=7.30, p=0.026; post-hoc BH) | complete |
 | R2.4 | Cohen's κ / multi-rater (Ph.2) | Implemented, tested; human κ NOT reported (no humans) | `metrics/agreement.py`; `scripts/aggregate_annotations.py` | complete |
 | R3.1 | Error taxonomy ≥10 categories + adjudication (Ph.3) | Taxonomy doc | `docs/error_taxonomy.md` (E0–E10, adjudication order) | complete |
-| R3.2 | Classify 100–200 incorrect responses (Ph.3) | Annotated sample, annotator declared | 71 real errors annotated (model-annotated); **shortfall vs 100–200 documented** per contract §7.4 | partial |
+| R3.2 | Classify 100–200 incorrect responses (Ph.3) | Annotated sample, annotator declared | **160 real errors annotated** (71 Stage 1 + 89 Stage 2 per D13; model-annotated, never human); distributions + CIs per stage and combined in `results/error_analysis/` | complete |
 | R3.3 | Error distribution with uncertainty | Table + figure with CIs | `results/stage1/error_analysis/{error_distribution.json, figures/error_taxonomy.png}` | complete |
 | R4.1 | Stage 1 course-project report (Ph.4) | Full report, traceable | `reports/stage1_report.md` (incl. S1-P2 addendum + merged errors) | complete |
 | R5.1 | Benchmark spec + card + guidelines (Ph.5) | Docs complete | `docs/benchmark_spec.md`, `docs/benchmark_card.md` → `docs/dataset_card.md`, `docs/annotation/` (RU+EN) | complete |
@@ -27,9 +27,9 @@ Statuses: `not started` | `in progress` | `complete` | `partial` | `blocked`.
 | R6.3 | Bilingual pairing | pair_id links; identical answers | QC pair-completeness gate; byte-identical rebuild (CI-enforced) | complete |
 | R7.1 | 2–3 experts, κ ≥ 0.75 (Ph.7) | Human labels + agreement | `docs/annotation/` package ready | **blocked** (no human experts; release gate; candidate label) |
 | R7.2 | HF dataset v1 (Ph.7) | Published or ready bundle | `scripts/publish_hf.py` + card + hash; blocked on HF token | partial (ready, not published) |
-| R8.1 | Full-scale run 6–8 models (Ph.8) | 6–8 real model runs | `results/stage2/S2-E1/`: 8 models, 5 complete at n=100 (520 evals, cost 0); gemma/gpt-oss/glm budget-capped at n=1/17/2 (OR 50/day shared; resume command in manifest notes) | partial (5/8 at full n; resume documented) |
+| R8.1 | Full-scale run 6–8 models (Ph.8) | 6–8 real model runs | `results/stage2/S2-E1/`: 8 models, 5 complete at n=100 (520 evals, cost 0; rescored D14: ox-alpha 91, lightning 85, hy3 82, ultra 79, laguna 78); gemma/gpt-oss/glm budget-capped at n=1/17/2 (OR 50/day shared; resume scheduled) | partial (5/8 at full n; resume in progress) |
 | R8.2 | Metrics by subject/language/difficulty | Breakdowns with CIs | `results/stage2/S2-E1/analysis/stage2_analysis.json` (`categories`, `per_model_language`, small cells flagged) | complete |
-| R9.1 | Hypothesis testing incl. RU–EN gap (Ph.9) | Paired cluster stats per registry | H4/H5 pair-clustered bootstrap + BH + template-cluster sensitivity: pooled +0.005 [−0.041, +0.050] p=0.82 (null, robust to template clustering) | complete |
+| R9.1 | Hypothesis testing incl. RU–EN gap (Ph.9) | Paired cluster stats per registry | H4/H5 pair-clustered bootstrap + BH + template-cluster sensitivity: pooled −0.0003 [−0.041, +0.039] p=0.99 (null, robust to template clustering) | complete |
 | R9.2 | Heatmaps, CI plots, visualizations (Ph.9) | Script-generated figures | `results/stage2/S2-E1/analysis/figures/`: subject/difficulty/answer-type heatmaps, accuracy CI plot, language-gap forest | complete |
 | R10.1 | Publish code to GitHub (Ph.10) | Non-destructive push to origin main | pushed `9f2685c..1f59de7` to `origin main` (GitHub `aayushkrm/llm-stembench`); working tree clean | complete |
 | R10.2 | Paper draft (Ph.10) | Full EN draft + RU abstract | `paper/paper.md` (all sections incl. §6.4 with S2-E1 results), `paper/abstract_ru.md` (synchronized, null-gap result) | complete (draft; not submitted) |
@@ -51,5 +51,6 @@ Statuses: `not started` | `in progress` | `complete` | `partial` | `blocked`.
 
 ## Maintenance note
 Statuses point at inspectable evidence only. Blocked items name the smallest external
-action. R3.2 is partial by design: 71 real errors exist (all annotated); manufacturing
-cases to reach 100 would violate the contract's shortfall rule.
+action. R3.2 reached the 100–200 target only by extending the pool to Stage 2's real
+errors (D13) — never by manufacturing cases; the Stage-1-only shortfall is part of
+the record.

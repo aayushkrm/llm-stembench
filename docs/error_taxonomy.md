@@ -49,7 +49,9 @@ work (Lightman et al. 2023), and hallucination benchmarks (TruthfulQA, HaluEval)
    E6 (no usable answer) > E10 (refusal/empty) > E8 (item defect, if known) >
    E5 (wrong question) > E1 (fact) > E9 (invented fact) > E2 (logic) > E3 (arithmetic)
    > E4 (units) > E7 (language-induced) > E0.
-7. **Storage**: `results/stage1/error_analysis/annotations.jsonl` — one line per
+7. **Storage**: `results/stage1/error_analysis/annotations.jsonl` (Stage 1) and
+   `results/stage2/error_analysis/annotations.jsonl` (Stage 2, added by decisions.md
+   D13) — one line per
    annotated response with raw response, item, gold, labels, primary, evidence quote,
    annotator identity, and timestamp. Distribution tables/figures regenerate from it.
 

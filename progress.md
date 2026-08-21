@@ -180,6 +180,36 @@ independent verifier, determinism, and artifact-freshness gate passes.
 - goal.md: all rows terminal — complete except R3.2/R7.1/R7.2/R8.1 partial/blocked
   by documented external gates.
 
+## 2026-08-22 (session 3 continued: scoring-corrected results, error pool to target)
+
+- OpenRouter budget counter (local-date keyed) already 50/50 for today; scheduled a
+  detached resume for local Aug 23 00:05 (= UTC Aug 22 17:05, clean both locally and
+  server-side; nohup pid 51825, log /tmp/s2_run3.log, launcher /tmp/s2_resume.sh
+  sources .env without printing it).
+- Error-annotation extension (D13) started on S2-E1's 108 real errors → immediately
+  surfaced a **genuine scoring bug**: the numeric unit check extracted units from the
+  whole response, failing numerically correct answers (19 records; "unit=A" on a
+  rubles item, "unit=J/(kg·K)" on a heat answer).
+- Fixed (D14): answer-scoped unit extraction (`answer_units`), membership matching
+  ("399000 J (399 kJ)" passes), separator/exponent normalization (kg·m/s ≡ kg*m/s,
+  mol L⁻¹ ≡ mol/L, "kg m/s"), molar M ≡ mol/L (case-preserving); runner now stores
+  unit/tolerance/alternatives in each record's `extra`; 6 new regression tests.
+  Rescored S2-E1: **19 False→True, 0 True→False** (rescore_manifest.json; per-record
+  pre_rescore provenance preserved).
+- Corrected standings: **ox-alpha 91 (leads; was 80), lightning 85, hy3 82,
+  ultra 79, laguna 78**; H4/H5 still null (pooled −0.0003 [−0.041, +0.039] p=0.99;
+  template-clustered unchanged); ox olympiad 100% (12/12), math 100%; its only weak
+  cell is exact-string answers (50%). Analysis + 5 figures regenerated.
+- Annotated all 89 post-correction Stage 2 errors (2 subagents + 1 slice by the main
+  agent after a concurrency-limit failure; 19 flipped records dropped from the
+  subagent batches). Stage 2 distribution: E10 48.3%, E6 51.7%, zero knowledge-
+  category errors. **Combined pool 160 real annotated errors — the 100–200 contract
+  target is met** (R3.2 complete). Combined: E10 54.4%, E6 33.8%, E8 8.8%, E0 1.9%,
+  E1 1.2%.
+- Reports/paper/abstracts (EN+RU)/audit/goal/decisions updated with corrected
+  numbers and the methods finding (protocol artifacts moved scores more than model
+  choice; the annotation loop caught it).
+
 ### Project state (end of session)
 Everything achievable under the standing constraints (zero spend, no human
 participants, no unauthorized publication) is done, verified, and published to the

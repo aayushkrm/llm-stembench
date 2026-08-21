@@ -1,0 +1,49 @@
+{
+  "n_annotated": 160,
+  "annotator": "ZCode agent (GLM-5.3) — model-annotated, not human",
+  "primary_distribution": {
+    "E0": {
+      "n": 3,
+      "share": 0.01875,
+      "ci_lo": 0.00639685075325945,
+      "ci_hi": 0.0536701120993143
+    },
+    "E1": {
+      "n": 2,
+      "share": 0.0125,
+      "ci_lo": 0.0034346711081265323,
+      "ci_hi": 0.044425369184091026
+    },
+    "E10": {
+      "n": 87,
+      "share": 0.54375,
+      "ci_lo": 0.4664502260758939,
+      "ci_hi": 0.6189982318465993
+    },
+    "E6": {
+      "n": 54,
+      "share": 0.3375,
+      "ci_lo": 0.26880525616204454,
+      "ci_hi": 0.41381475726869477
+    },
+    "E8": {
+      "n": 14,
+      "share": 0.0875,
+      "ci_lo": 0.05283679339459573,
+      "ci_hi": 0.14150631762189603
+    }
+  },
+  "multilabel_incidence": {
+    "E0": 0.01875,
+    "E1": 0.0125,
+    "E10": 0.54375,
+    "E2": 0.00625,
+    "E5": 0.00625,
+    "E6": 0.34375,
+    "E8": 0.0875
+  },
+  "source_files": [
+    "results/stage1/error_analysis/annotations_merged.jsonl",
+    "results/stage2/error_analysis/annotations.jsonl"
+  ]
+}

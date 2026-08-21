@@ -149,3 +149,34 @@ already right and did not change. S1-P1 gemma is now honestly 0 evaluated.
 **Consequences.** Coverage reporting can no longer overstate what providers actually
 answered; no empirical analysis number changed (loaders always excluded these
 records).
+
+## D13 — Extend the annotated error pool with Stage 2 real errors
+**Decision.** Annotate all real incorrect/parse-failure responses from run S2-E1
+with the same taxonomy and protocol (E0–E10, adjudication order, evidence quotes,
+explicitly model-annotated) and report the combined distribution.
+**Rationale.** The contract's 100–200 target was defined when only the Stage 1 pilot
+existed (71 real errors). Stage 2 produced additional genuine errors; annotating
+them creates real evidence, whereas manufacturing cases to reach a count is
+forbidden (contract §7.4 shortfall rule). Scope extension is recorded here; the
+Stage 1-only distribution remains available unchanged.
+**Consequences.** Annotator identity stays "model-annotated, never human" in every
+artifact; κ machinery remains reserved for the human validation stage.
+
+## D14 — Answer-scoped numeric unit check (found via error annotation; rescore)
+**Decision.** Numeric unit enforcement reads units only from the answer-scoped
+region (final `Answer:` segment, else last line), accepts the required unit as any
+stated token (e.g. "399000 J (399 kJ)"), normalizes separator spellings
+(kg·m/s ≡ kg*m/s), negative exponents (mol L⁻¹ ≡ mol/L), implicit spaces
+("kg m/s"), and treats molar M ≡ mol/L (case-preserving so metre m ≠ M). Run S2-E1
+was rescored (`rescore_manifest.json`, provenance preserved per record); the runner
+now records unit/tolerance/alternatives metadata in each record's `extra`.
+**Evidence.** The original whole-response extractor captured units out of reasoning
+text ("unit=A" on a rubles item, "unit=J/(kg·K)" on a heat answer), failing
+numerically correct answers: 19 records False→True (ox-alpha +11, laguna +6,
+ultra +2 points), 0 True→False. Stage 1 was unaffected (MMLU is MC-only). All
+analysis artifacts, reports, the paper, and both abstracts regenerated from the
+corrected records.
+**Consequences.** Corrected standings: ox-alpha 91 (leads; previously 80),
+lightning 85, hy3 82, ultra 79, laguna 78; H4/H5 remain null. The episode is
+reported as a methods finding: protocol/scoring artifacts moved measured accuracy
+by more than model choice, and the annotation loop is what surfaced it.

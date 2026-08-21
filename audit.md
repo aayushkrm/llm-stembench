@@ -29,11 +29,16 @@ was silently weakened; every deviation is recorded in `decisions.md` (D1–D12).
    `python -m stembench.analysis_stage2 results/stage2/S2-E1` (bilingual analysis +
    figures). Raw records are committed; loaders exclude synthetic `fake__*` files.
 5. **Error taxonomy / who annotated.** Taxonomy E0–E10: `docs/error_taxonomy.md`.
-   **All 71 real incorrect responses** annotated by the **AI agent (GLM) —
-   model-annotated, never described as human**; evidence quotes per item in
-   `results/stage1/error_analysis/annotations_merged.jsonl`; distribution with
-   Wilson CIs in `error_distribution.json` (+ figure). Shortfall vs the 100–200
-   target reported (71 real errors existed; manufacturing more would violate §7.4).
+   **160 real incorrect responses annotated** (71 Stage 1 + 89 Stage 2, the latter
+   added by decisions.md D13) by the **AI agent (GLM) — model-annotated, never
+   described as human**; evidence quotes per item in
+   `results/stage1/error_analysis/annotations_merged.jsonl` and
+   `results/stage2/error_analysis/annotations_merged.jsonl`; distributions with
+   Wilson CIs per stage and combined (`results/error_analysis/error_distribution.json`,
+   + figures). The 100–200 target is met with real errors only (the original
+   Stage-1-only shortfall of 71 is documented in the earlier audit revision; no
+   cases were manufactured). Stage 2 finds only E10 (48%) and E6 (52%) — no
+   knowledge-category errors on the machine-verified benchmark.
 6. **Bilingual sizes / validation / hashes.** 624 pairs = 1,248 records raw **and**
    accepted (post-QC build is the dataset; ≥600/≥500 targets met). Independent
    verification: 1,516/1,516 pass (second code path). Determinism: byte-identical
@@ -44,15 +49,16 @@ was silently weakened; every deviation is recorded in `decisions.md` (D1–D12).
    The full validation package (bilingual guidelines, blind workflow, adjudication,
    calibration set, agreement tooling) is ready: `docs/annotation/`. The dataset is
    labeled `v0.1.0-candidate` — **this is the primary release blocker**.
-8. **Stage 2 models / missing cells.** 8 models ran (S2-E1 final, 2026-08-22; 520
-   evaluations, cost $0): **complete at n=100** — Zen nemotron-3.5-lightning (85
-   correct), hy3 (82), nemotron-3-ultra (77), laguna-s-2.1 (72) and OpenRouter
-   **stealth/ox-alpha (80; `reasoning_effort: max`, uncapped per D11, 0 parse
-   failures)**; **budget-capped below target** — gemma-4-31b (n=1), gpt-oss-20b
-   (n=17), glm-5.2 (n=2), all three blocked by the shared 50-requests/day OpenRouter
-   free cap (50/50 used; resume command in the manifest extends them after reset).
-   Headline result: **no EN–RU language gap** (H4/H5 null; pooled +0.005
-   [−0.041, +0.050], p=0.82; robust to template clustering).
+8. **Stage 2 models / missing cells.** 8 models ran (S2-E1; 520 evaluations, cost
+   $0; rescored 2026-08-22 per D14 — answer-scoped unit check, 19 False→True flips,
+   0 True→False, manifest kept): **complete at n=100** — OpenRouter
+   **stealth/ox-alpha (91 correct; `reasoning_effort: max`, uncapped per D11, 0
+   parse failures)**, Zen nemotron-3.5-lightning (85), hy3 (82), nemotron-3-ultra
+   (79), laguna-s-2.1 (78); **budget-capped below target** — gemma-4-31b (n=1),
+   gpt-oss-20b (n=17), glm-5.2 (n=2), blocked by the shared 50-requests/day
+   OpenRouter free cap (resume scheduled/available; see blockers). Headline result:
+   **no EN–RU language gap** (H4/H5 null; pooled −0.0003 [−0.041, +0.039], p=0.99;
+   robust to template clustering).
 9. **Traceability of claims.** Every number in `reports/` and `paper/` cites its
    generated artifact; reports regenerate by command (`docs/reproducibility.md`);
    no hand-entered result values (verified by the placeholder sweep at this audit).
@@ -86,6 +92,11 @@ was silently weakened; every deviation is recorded in `decisions.md` (D1–D12).
   had counted retryable error records as evaluated; runner fixed and all three
   manifests recomputed from raw JSONL (gemma S1-P1 now honestly 0 evaluated;
   no analysis number changed).
+- Unit-scoring bug (D14) found via Stage 2 error annotation and fixed: numeric unit
+  extraction now answer-scoped with equivalence normalization; S2-E1 rescored
+  (19 False→True, 0 True→False; `results/stage2/S2-E1/rescore_manifest.json`);
+  analysis, figures, report, paper, and abstracts regenerated from the corrected
+  records.
 - Placeholder/secret sweep: no `TODO/TBD/XXX/PLACEHOLDER` markers in reports/paper;
   no key-shaped strings in tracked files (CI enforces on push).
 

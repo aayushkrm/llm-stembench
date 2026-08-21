@@ -1,0 +1,25 @@
+{
+  "n_annotated": 89,
+  "annotator": "ZCode agent (GLM-5.3 subagent) — model-annotated, not human",
+  "primary_distribution": {
+    "E10": {
+      "n": 43,
+      "share": 0.48314606741573035,
+      "ci_lo": 0.38219270234386304,
+      "ci_hi": 0.5854941474955613
+    },
+    "E6": {
+      "n": 46,
+      "share": 0.5168539325842697,
+      "ci_lo": 0.4145058525044388,
+      "ci_hi": 0.6178072976561371
+    }
+  },
+  "multilabel_incidence": {
+    "E10": 0.48314606741573035,
+    "E6": 0.5168539325842697
+  },
+  "source_files": [
+    "results/stage2/error_analysis/annotations.jsonl"
+  ]
+}
