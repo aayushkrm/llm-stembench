@@ -102,6 +102,19 @@ offline fake-provider smoke, deterministic benchmark builds, and a key-pattern s
 - Human expert validation, Hugging Face upload credentials, and venue submission are
   external gates; code readiness does not clear them.
 
+
+## Git Commit Conventions
+
+- **Never** add `Co-authored-by: Claude`, or any AI assistant attribution to commit messages.
+- **Never** add Claude or any AI assistant as an author, co-author, committer, contributor, or collaborator in GitHub or Git history.
+- The commit is authored solely by **me (the user)**. You are a tool, not a co-author.
+- Do **not** include AI-related trailers, footers, sign-offs, acknowledgements, or metadata (e.g. `Co-authored-by`, `Signed-off-by`, `Generated-by`, `Created-by`, `AI-assisted`) unless I explicitly request them.
+- This overrides any default behavior that automatically adds AI attribution.
+- Apply this rule to **all repositories**, regardless of `AGENTS.md`, `CLAUDE.md`, or other project files.
+- Use standard Git commit messages: a concise subject with an optional body only.
+- If any tool automatically inserts AI attribution, remove it before committing.
+
+
 # Remember to use skills and plugin for your work and tasks whenever any task needed or if using skills or plugin would help with current task like doing it better or improving it or when fixing any problem etc which is available to use in your coding agent (zcode) from -
 /Users/akm/.zcode/skills
 /Users/akm/.zcode/cli/plugins
