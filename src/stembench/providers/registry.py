@@ -64,6 +64,7 @@ def build_provider(name: str) -> Provider:
             logprob_models=OPENROUTER_LOGPROB_MODELS,
             requests_per_minute=18,  # headroom under the documented 20 rpm
             daily_cap=50,  # documented free-tier daily cap (accounts with < $10 credits)
+            uncapped_models={"stealth/ox-alpha"},  # user-relayed provider terms: unlimited; live-verified below
             extra_headers={"HTTP-Referer": "https://github.com/aayushkrm/llm-stembench",
                            "X-Title": "LLM-STEMBench"},
         )

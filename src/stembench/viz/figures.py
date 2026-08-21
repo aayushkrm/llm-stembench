@@ -89,7 +89,9 @@ def accuracy_ci_plot(metrics: dict, out_dir: Path) -> None:
     plt.close(fig)
 
 
-def subject_heatmap(by_subject: dict, out_dir: Path) -> None:
+def subject_heatmap(by_subject: dict, out_dir: Path,
+                    out_name: str = "subject_heatmap.png",
+                    title: str = "Accuracy by subject (cells with n<5 blank)") -> None:
     out_dir.mkdir(parents=True, exist_ok=True)
     models = sorted(by_subject)
     subjects = sorted({s for m in models for s in by_subject[m]})
@@ -112,9 +114,9 @@ def subject_heatmap(by_subject: dict, out_dir: Path) -> None:
             if not np.isnan(M[i, j]):
                 ax.text(j, i, f"{M[i, j]:.2f}", ha="center", va="center", fontsize=6)
     fig.colorbar(im, ax=ax, shrink=0.8, label="accuracy")
-    ax.set_title("Accuracy by subject (cells with n<5 blank)", fontsize=9)
+    ax.set_title(title, fontsize=9)
     fig.tight_layout()
-    fig.savefig(out_dir / "subject_heatmap.png")
+    fig.savefig(out_dir / out_name)
     plt.close(fig)
 
 

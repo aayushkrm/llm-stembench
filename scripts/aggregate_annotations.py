@@ -68,7 +68,7 @@ def main() -> None:
     pairwise = {}
     for a, b in itertools.combinations(raters, 2):
         ra, rb = [], []
-        for item_id, rr in sorted(by_item.items()):
+        for _item_id, rr in sorted(by_item.items()):
             if a in rr and b in rr and rr[a]["correct"] in CORRECT_CODES \
                     and rr[b]["correct"] in CORRECT_CODES:
                 ra.append(CORRECT_CODES[rr[a]["correct"]])

@@ -49,6 +49,13 @@ def _cmd_report(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_analyze_stage2(args: argparse.Namespace) -> int:
+    from stembench.analysis_stage2 import generate_stage2_report
+
+    generate_stage2_report(Path(args.run), out_dir=Path(args.out) if args.out else None)
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(prog="stembench")
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -66,6 +73,12 @@ def main(argv: list[str] | None = None) -> int:
     rep.add_argument("--run", required=True, help="run directory containing manifest.json")
     rep.add_argument("--out", default=None)
     rep.set_defaults(func=_cmd_report)
+
+    s2 = sub.add_parser("analyze-stage2",
+                        help="paired bilingual analysis + figures for a Stage 2 run")
+    s2.add_argument("--run", required=True, help="run directory containing *.jsonl records")
+    s2.add_argument("--out", default=None)
+    s2.set_defaults(func=_cmd_analyze_stage2)
 
     args = p.parse_args(argv)
     return args.func(args)

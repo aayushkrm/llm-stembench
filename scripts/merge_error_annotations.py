@@ -46,7 +46,7 @@ def main() -> None:
 
     n = len(rows)
     primary = Counter(r["primary"] for r in rows)
-    multi = Counter(l for r in rows for l in r.get("labels", []))
+    multi = Counter(lab for r in rows for lab in r.get("labels", []))
     from stembench.metrics.intervals import wilson_interval
 
     dist = {

@@ -101,12 +101,17 @@ class OpenAICompatProvider(Provider):
         daily_cap: int | None = None,
         timeout_s: float = 180.0,
         extra_headers: dict[str, str] | None = None,
+        uncapped_models: set[str] | None = None,
     ):
         self.name = name
         self.base_url = base_url.rstrip("/")
         self.api_key_env = api_key_env
         self.free_models = set(free_models)
         self.logprob_models = logprob_models or set()
+        # Models exempt from the provider's shared daily cap (e.g. sponsor-unlimited
+        # free models); still zero-spend (must be on the free allowlist) and still
+        # client-side rate-spaced. Set from verified provider terms, not per-run.
+        self.uncapped_models = uncapped_models or set()
         self._min_interval = 60.0 / requests_per_minute
         self.budget, self._spacing_lock, self._last_request_ts = _shared_state(
             name, daily_cap, self._min_interval
@@ -182,7 +187,8 @@ class OpenAICompatProvider(Provider):
         for attempt in range(3):
             # Provider quotas count HTTP attempts, not logical benchmark items.
             # Reserve each retry separately so the hard daily cap cannot be exceeded.
-            self.budget.reserve()
+            if model not in self.uncapped_models:
+                self.budget.reserve()
             self._space_requests()
             try:
                 resp = self._client_http().post(

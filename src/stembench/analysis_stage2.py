@@ -262,8 +262,13 @@ def generate_stage2_report(run_dir: Path, out_dir: Path | None = None) -> dict[s
         encoding="utf-8",
     )
     try:
-        from stembench.viz.figures import language_gap_forest
+        from stembench.viz.figures import (
+            accuracy_ci_plot,
+            language_gap_forest,
+            subject_heatmap,
+        )
 
+        fig_dir = out_dir / "figures"
         h4 = report["language_gaps"]["H4_per_model"]
         forest = {
             k: v for k, v in h4.items()
@@ -272,8 +277,42 @@ def generate_stage2_report(run_dir: Path, out_dir: Path | None = None) -> dict[s
         if forest:
             language_gap_forest(
                 {k.split("::")[-1]: v for k, v in forest.items()},
-                out_dir / "figures",
+                fig_dir,
             )
+        cats = {m: c for m, c in report["categories"].items()
+                if isinstance(c, dict) and "by_subject" in c}
+        subject_heatmap({m: c["by_subject"] for m, c in cats.items()}, fig_dir)
+        subject_heatmap(
+            {m: c["by_difficulty"] for m, c in cats.items()}, fig_dir,
+            out_name="difficulty_heatmap.png",
+            title="Accuracy by difficulty tier (cells with n<5 blank)",
+        )
+        subject_heatmap(
+            {m: c["by_answer_type"] for m, c in cats.items()}, fig_dir,
+            out_name="answer_type_heatmap.png",
+            title="Accuracy by answer format (cells with n<5 blank)",
+        )
+        # lenient accuracy (parse failure = incorrect) with Wilson CIs
+        metrics_like: dict[str, dict[str, Any]] = {}
+        for key, entry in report["per_model_language"].items():
+            n = entry["en"]["n"] + entry["ru"]["n"]
+            correct = entry["en"]["correct"] + entry["ru"]["correct"]
+            lo, hi = wilson_interval(correct, n or 1)
+            metrics_like[key] = {"accuracy_lenient": {
+                "acc": correct / n if n else float("nan"),
+                "ci_lo": lo, "ci_hi": hi, "n": n,
+            }}
+        accuracy_ci_plot(metrics_like, fig_dir)
     except Exception as e:  # noqa: BLE001
         report["figure_error"] = str(e)
     return report
+
+
+if __name__ == "__main__":
+    import sys
+
+    run_dir = Path(sys.argv[1] if len(sys.argv) > 1 else "results/stage2/S2-E1")
+    rep = generate_stage2_report(run_dir)
+    if rep.get("figure_error"):
+        print("figure error:", rep["figure_error"], file=sys.stderr)
+    print(f"analysis written to {run_dir / 'analysis' / 'stage2_analysis.json'}")

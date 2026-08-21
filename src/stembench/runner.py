@@ -277,7 +277,9 @@ def _run_one_model(
             if not line:
                 continue
             r = json.loads(line)
-            if r.get("error_status") in ("daily_budget_exceeded",):
+            if r.get("error_status") in (
+                "daily_budget_exceeded", "rate_limited", "timeout", "provider_error",
+            ):
                 continue
             total_done += 1
             if r.get("correctness") is True:

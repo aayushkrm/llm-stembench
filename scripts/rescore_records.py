@@ -20,7 +20,6 @@ from typing import Any
 
 from stembench.scoring import score_exact, score_mc, score_numeric
 
-
 SCORING_FIELDS = ("parsed_answer", "parse_method", "correctness", "error_status")
 
 
