@@ -2,14 +2,17 @@
 
 ## Code + data repository (GitHub: aayushkrm/llm-stembench)
 
-- [ ] `pytest tests/ -q` green from clean checkout
-- [ ] `ruff check src tests` clean
-- [ ] CI workflow green (includes offline e2e + benchmark determinism + secret scan)
-- [ ] `git status` clean; no secrets in tracked files (`.env` untracked)
-- [ ] Raw run records committed (`results/**/!(*fake__*)`), manifests complete
-- [ ] `goal.md` and `audit.md` reconciled; every claim in README/reports/paper has an
+- [x] `pytest tests/ -q` green from clean checkout (205 tests; CI 3.10 + 3.12)
+- [x] `ruff check src tests scripts` clean
+- [x] CI workflow green (includes offline e2e + benchmark determinism + secret scan;
+      latest runs 32525859748 and later)
+- [x] `git status` clean; no secrets in tracked files (`.env` untracked; CI secret
+      scan passing)
+- [x] Raw run records committed (`results/**/!(*fake__*)`), manifests complete
+      (S2-E1 carries rescore_manifest.json with per-record provenance)
+- [x] `goal.md` and `audit.md` reconciled; every claim in README/reports/paper has an
       artifact path
-- [ ] Version tagged (annotated tag) matching CHANGELOG
+- [x] Version tagged (annotated tag) matching CHANGELOG (`v0.2.0`)
 
 ## Dataset release (HuggingFace Datasets) — READY-RUN-ONCE-PUBLISHED state
 
@@ -32,8 +35,9 @@ Preconditions (current status):
 
 ## Honesty gates (checked at audit)
 
-- [ ] no synthetic/fake records in any empirical table
-- [ ] model-annotated labels never described as human
-- [ ] pre-release dataset version labeled candidate; no human κ reported
-- [ ] `audit.md` states final status (complete/partial/blocked) with blockers and the
-      smallest external action for each
+- [x] no synthetic/fake records in any empirical table (loaders exclude `fake__*`)
+- [x] model-annotated labels never described as human (annotator field verbatim in
+      every annotation record)
+- [x] pre-release dataset version labeled candidate; no human κ reported
+- [x] `audit.md` states final status (PARTIAL) with blockers and the smallest
+      external action for each
