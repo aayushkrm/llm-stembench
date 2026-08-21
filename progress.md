@@ -182,10 +182,14 @@ independent verifier, determinism, and artifact-freshness gate passes.
 
 ## 2026-08-22 (session 3 continued: scoring-corrected results, error pool to target)
 
-- OpenRouter budget counter (local-date keyed) already 50/50 for today; scheduled a
-  detached resume for local Aug 23 00:05 (= UTC Aug 22 17:05, clean both locally and
-  server-side; nohup pid 51825, log /tmp/s2_run3.log, launcher /tmp/s2_resume.sh
-  sources .env without printing it).
+- OpenRouter budget counter (local-date keyed) already 50/50 for today; the detached
+  job was upgraded from a single resume to a **daily loop** (pid 56525, first fire
+  local Aug 23 00:05, then every 24 h, up to 10 windows or until all 8 models report
+  status complete; log /tmp/s2_run3.log, launcher /tmp/s2_resume.sh sources .env
+  without printing it; each iteration runs the tracker-capped resume — at most the
+  documented 50 requests/day — then refreshes the Stage 2 analysis). gemma/gpt-oss/
+  glm need ~280 requests total ≈ 6 windows at 50/day, so R8.1 reaches full n only
+  after several days; the loop advances it autonomously each day.
 - Error-annotation extension (D13) started on S2-E1's 108 real errors → immediately
   surfaced a **genuine scoring bug**: the numeric unit check extracted units from the
   whole response, failing numerically correct answers (19 records; "unit=A" on a
