@@ -126,7 +126,9 @@ Commits on `main`: 9f2685c (initial) → 72828c4 (core pipeline + prereg docs) �
 b5bc046 → 0a82950 (Stage 1 results) → 17ac8e7 (tests+benchmark+errors) →
 fee503c (ox-alpha) → 3e9bcf0 (honest manifest counts, stage-2 figures, CLI) →
 f7162a7 (S2-E1 results, reports, paper, audit) → 1f59de7 (pytest pythonpath CI
-fix). Remote: **pushed non-destructively to `origin main`** (`9f2685c..1f59de7`);
+fix) → 1a1500f (final status docs) → 866b4cd (answer-scoped unit fix + rescore,
+D14) → 628c481 (89-error annotation, combined pool 160, D13). Remote: **pushed
+non-destructively to `origin main`** (`9f2685c..628c481`);
 first GitHub-Actions CI run green (32522130061: secret-scan + tests on 3.10/3.12
 incl. lint, coverage, offline e2e, benchmark determinism). `.env` never tracked
 (CI secret scan passing).
