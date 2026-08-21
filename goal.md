@@ -31,7 +31,7 @@ Statuses: `not started` | `in progress` | `complete` | `partial` | `blocked`.
 | R8.2 | Metrics by subject/language/difficulty | Breakdowns with CIs | `results/stage2/S2-E1/analysis/stage2_analysis.json` (`categories`, `per_model_language`, small cells flagged) | complete |
 | R9.1 | Hypothesis testing incl. RU–EN gap (Ph.9) | Paired cluster stats per registry | H4/H5 pair-clustered bootstrap + BH + template-cluster sensitivity: pooled +0.005 [−0.041, +0.050] p=0.82 (null, robust to template clustering) | complete |
 | R9.2 | Heatmaps, CI plots, visualizations (Ph.9) | Script-generated figures | `results/stage2/S2-E1/analysis/figures/`: subject/difficulty/answer-type heatmaps, accuracy CI plot, language-gap forest | complete |
-| R10.1 | Publish code to GitHub (Ph.10) | Non-destructive push to origin main | 3 local commits (more pending); push authorized, not yet done | in progress |
+| R10.1 | Publish code to GitHub (Ph.10) | Non-destructive push to origin main | pushed `9f2685c..1f59de7` to `origin main` (GitHub `aayushkrm/llm-stembench`); working tree clean | complete |
 | R10.2 | Paper draft (Ph.10) | Full EN draft + RU abstract | `paper/paper.md` (all sections incl. §6.4 with S2-E1 results), `paper/abstract_ru.md` (synchronized, null-gap result) | complete (draft; not submitted) |
 | E1 | Provider-agnostic adapters (§7.2) | ≥2 real + fake | `providers/` (openrouter, zen, ollama, fake) | complete |
 | E2 | Determinism/seeds/stratification recorded | Config+manifests store seeds | manifests; deterministic sampling tested | complete |
@@ -42,7 +42,7 @@ Statuses: `not started` | `in progress` | `complete` | `partial` | `blocked`.
 | E7 | Dry-run/cost estimator/smoke/fake provider | CLI modes offline | `--dry-run`; budget trackers; fake provider | complete |
 | E8 | Config-driven regeneration | One command regenerates | `stembench report`; `docs/reproducibility.md` | complete |
 | T1 | Tests throughout (§10) | Suite green; critical coverage | 192 passed, ruff clean; critical modules 76–100% covered (audit.md) | complete |
-| T2 | CI workflow | Actions: lint+tests+e2e+determinism+secrets | `.github/workflows/ci.yml` (runs on push; first GitHub run pending push) | in progress |
+| T2 | CI workflow | Actions: lint+tests+e2e+determinism+secrets | `.github/workflows/ci.yml`; first GitHub run green (run 32522130061: secret-scan + test 3.10 + test 3.12 incl. lint/coverage/e2e/determinism) | complete |
 | Q1 | README/architecture/troubleshooting | Docs complete | `README.md`, `docs/architecture.md`, `docs/reproducibility.md` | complete |
 | Q2 | LICENSE/CITATION/changelog/dataset card/checklist | Present, consistent | repo root + `docs/dataset_card.md`, `docs/release_checklist.md` | complete |
 | A1 | Zero paid spend | Free endpoints only; cost 0 | allowlists + zero-spend guard (tested); all manifests cost 0 | complete |

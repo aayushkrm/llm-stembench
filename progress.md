@@ -169,7 +169,20 @@ independent verifier, determinism, and artifact-freshness gate passes.
 - Stage 2 report §4/§5/§9 filled (§3 updated to 8 models + ox-alpha decoding note);
   paper §6.4 written; EN + RU abstracts updated with the null-gap result.
 
-### Next milestone
-Final audit numbers, placeholder/secret sweep, full tests + ruff, commit, push to
-origin main. Remaining external gates: expert validation (v0.1.0-candidate), HF
-token, OR budget-capped models resume, venue decision.
+- Final audit pass: audit.md numbers finalized; placeholder/secret sweep clean; 197
+  tests + ruff green; README's documented `stembench analyze-stage2` command actually
+  implemented (CLI subcommand + module entry point).
+- Committed (3e9bcf0 code fixes, f7162a7 results/docs) and **pushed to `origin main`**
+  (`9f2685c..1f59de7`). First CI run failed (bare pytest could not import `scripts/`
+  — locally masked by `python -m pytest` putting CWD on sys.path); fixed with
+  `pythonpath` ini option (1f59de7); CI green (run 32522130061: secret-scan, tests
+  on 3.10/3.12 with lint/coverage/offline-e2e/benchmark-determinism).
+- goal.md: all rows terminal — complete except R3.2/R7.1/R7.2/R8.1 partial/blocked
+  by documented external gates.
+
+### Project state (end of session)
+Everything achievable under the standing constraints (zero spend, no human
+participants, no unauthorized publication) is done, verified, and published to the
+repository. Remaining gates are external: human expert validation (dataset stays
+v0.1.0-candidate), HF write token, OpenRouter daily-budget resume for
+gemma/gpt-oss/glm, venue authorization for the paper.

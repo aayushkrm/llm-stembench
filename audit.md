@@ -60,11 +60,13 @@ was silently weakened; every deviation is recorded in `decisions.md` (D1–D12).
     offline, green; ruff clean) → dry-run e2e → deterministic benchmark rebuild
     (hash-checked) → `stembench report` regenerates all tables/figures from committed
     records. CI runs the same on push (incl. secret scan + build determinism).
-11. **Tests / what could not run.** 197 tests green locally (critical modules:
-    parsing 98%, calibration/significance 100%, classification 97%, providers 94%,
-    intervals 81%, agreement 76% coverage). Not runnable: live-provider paths in CI
-    (no secrets in CI), Ollama adapter (no local server), first GitHub-Actions run
-    (pending push). Live API behavior verified in-session with real runs instead.
+11. **Tests / what could not run.** 197 tests green locally and on GitHub Actions
+    (3.10 + 3.12; critical modules: parsing 98%, calibration/significance 100%,
+    classification 97%, providers 94%, intervals 81%, agreement 76% coverage). Not
+    runnable in CI: live-provider paths (no secrets in CI) and the Ollama adapter
+    (no local server). Live API behavior was verified in-session with real runs
+    instead. The first CI run failed (bare `pytest` could not import `scripts/`);
+    fixed via `pythonpath` ini option (commit 1f59de7) and re-verified green.
 12. **Actually pushed/released vs ready.** **Pushed:** repository to `origin main`
     (non-destructive; commit list below). **Ready but NOT published:** HF dataset
     bundle (needs write token), paper submission (no venue authorization), v1.0
@@ -111,5 +113,9 @@ was silently weakened; every deviation is recorded in `decisions.md` (D1–D12).
 
 Commits on `main`: 9f2685c (initial) → 72828c4 (core pipeline + prereg docs) →
 b5bc046 → 0a82950 (Stage 1 results) → 17ac8e7 (tests+benchmark+errors) →
-fee503c (ox-alpha) → *(final: results, reports, paper, audit)*. Remote: pushed
-non-destructively to `origin main`; `.env` never tracked (CI secret scan).
+fee503c (ox-alpha) → 3e9bcf0 (honest manifest counts, stage-2 figures, CLI) →
+f7162a7 (S2-E1 results, reports, paper, audit) → 1f59de7 (pytest pythonpath CI
+fix). Remote: **pushed non-destructively to `origin main`** (`9f2685c..1f59de7`);
+first GitHub-Actions CI run green (32522130061: secret-scan + tests on 3.10/3.12
+incl. lint, coverage, offline e2e, benchmark determinism). `.env` never tracked
+(CI secret scan passing).
