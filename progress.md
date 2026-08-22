@@ -183,13 +183,19 @@ independent verifier, determinism, and artifact-freshness gate passes.
 ## 2026-08-22 (session 3 continued: scoring-corrected results, error pool to target)
 
 - OpenRouter budget counter (local-date keyed) already 50/50 for today; the detached
-  job was upgraded from a single resume to a **daily loop** (pid 56525, first fire
-  local Aug 23 00:05, then every 24 h, up to 10 windows or until all 8 models report
-  status complete; log /tmp/s2_run3.log, launcher /tmp/s2_resume.sh sources .env
-  without printing it; each iteration runs the tracker-capped resume — at most the
-  documented 50 requests/day — then refreshes the Stage 2 analysis). gemma/gpt-oss/
-  glm need ~280 requests total ≈ 6 windows at 50/day, so R8.1 reaches full n only
-  after several days; the loop advances it autonomously each day.
+  job was upgraded from a single resume to a **daily loop**, then made wall-clock
+  aware (fires within ~5 min of the machine being awake after each local 00:05;
+  up to 10 windows or until all 8 models report status complete; log
+  /tmp/s2_run3.log; sources .env without printing it; each iteration runs the
+  tracker-capped resume — at most the documented 50 requests/day — then refreshes
+  the Stage 2 analysis). gemma/gpt-oss/glm need ~280 requests total ≈ 6 windows at
+  50/day, so R8.1 reaches full n only after several days. **Re-arm after any
+  shutdown** (the process dies with the OS; the script survives in /tmp):
+  `nohup /tmp/s2_clock_loop.sh > /tmp/s2_run3.log 2>&1 &` — or recreate it from this
+  note (loop: wait until next local 00:05 in 300 s wall-clock chunks →
+  `stembench run --config configs/stage2_eval.yaml` → `stembench analyze-stage2
+  --run results/stage2/S2-E1` → break when all manifest model statuses are
+  complete → repeat daily, max 10).
 - Error-annotation extension (D13) started on S2-E1's 108 real errors → immediately
   surfaced a **genuine scoring bug**: the numeric unit check extracted units from the
   whole response, failing numerically correct answers (19 records; "unit=A" on a
